@@ -34,36 +34,60 @@ class OddsCacheService {
   }
 
   /**
-   * Get odds for a fixture - fetches from API if not in cache (1gom.kim approach)
+   * Get odds for a fixture - fetches from API if not in cache
    * @param {number} fixtureId - Fixture ID
    * @param {Object} footballApi - FootballApi instance
    * @param {Object} fixtureData - Optional fixture data (avoids extra API call)
+   * @param {Array} bookmakerIds - Array of bookmaker IDs to fetch (default: [8,1,18,3])
    * @returns {Promise<Object|null>} - Odds data or null
    */
-  async getOrFetchOdds(fixtureId, footballApi, fixtureData = null) {
+  async getOrFetchOdds(fixtureId, footballApi, fixtureData = null, bookmakerIds = [8, 9, 1, 11, 18, 6, 16, 29, 7, 13, 31, 10, 5, 3, 28, 12]) {
     try {
       // Try cache first
       const cachedOdds = await this.getOdds(fixtureId);
-
       if (cachedOdds) {
+        console.log(`   [OddsCache] Hit for fixture ${fixtureId}`);
+        // Filter cached odds to requested bookmakers
+        if (bookmakerIds && bookmakerIds.length > 0) {
+          const filtered = cachedOdds.filter(b => bookmakerIds.includes(b.id));
+          console.log(`   [OddsCache] Filtered to ${filtered.length}/${cachedOdds.length} requested bookmakers`);
+          return filtered.length > 0 ? filtered : cachedOdds;
+        }
         return cachedOdds;
       }
 
       // Cache miss - fetch from API
-      console.log(`   [OddsCache] Fetching from API for fixture ${fixtureId}...`);
+      console.log(`   [OddsCache] Fetching ALL bookmakers from API for fixture ${fixtureId}... (will filter to [${bookmakerIds.join(',')}])`);
 
-      // Fetch ALL bookmakers from API (don't filter - API-Sports doesn't support multiple bookmaker IDs well)
-      const oddsParams = { fixture: fixtureId };
+      const oddsParams = {
+        fixture: fixtureId
+        // NOTE: Temporarily fetch ALL bookmakers, then filter in code
+        // API-Football format may not support multiple bookmaker IDs
+      };
 
+      // Use .get() method (footballApi is axios instance, not FootballApi class)
       const oddsResponse = await footballApi.get('/odds', { params: oddsParams });
-      const oddsData = oddsResponse.data?.response || [];
+      let oddsData = oddsResponse.data?.response || [];
 
       if (!oddsData || oddsData.length === 0) {
         console.log(`   [OddsCache] No odds available from API for fixture ${fixtureId}`);
         return null;
       }
 
-      console.log(`   [OddsCache] ✓ Fetched ${oddsData.length} odds records from API`);
+      console.log(`   [OddsCache] ✓ Fetched odds from API`);
+
+      // Filter bookmakers if needed
+      if (oddsData.length > 0 && bookmakerIds && bookmakerIds.length > 0) {
+        const allBookmakers = oddsData[0]?.bookmakers || [];
+        const filteredBookmakers = allBookmakers.filter(b => bookmakerIds.includes(b.id));
+
+        if (filteredBookmakers.length > 0) {
+          oddsData[0].bookmakers = filteredBookmakers;
+          console.log(`   [OddsCache] Filtered to ${filteredBookmakers.length}/${allBookmakers.length} requested bookmakers`);
+        } else {
+          console.log(`   [OddsCache] ⚠️ No requested bookmakers found, using all ${allBookmakers.length} bookmakers`);
+        }
+      }
 
       // Get fixture details - use provided data or fetch from API
       if (!fixtureData) {
@@ -82,12 +106,11 @@ class OddsCacheService {
         console.log(`   [OddsCache] ✓ Using provided fixture data (saved 1 API call)`);
       }
 
-      // Save to cache for future requests
+      // Save to cache
       await this.saveOdds(fixtureData, oddsData);
-      console.log(`   [OddsCache] ✓ Cached fixture ${fixtureId} from real-time fetch`);
+      console.log(`   [OddsCache] ✓ Cached fixture ${fixtureId} with all bookmakers`);
 
-      // Return odds data
-      const { transformOdds } = require('../utils/transformers');
+      // Return transformed odds
       return transformOdds(oddsData);
 
     } catch (error) {

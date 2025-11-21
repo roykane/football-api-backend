@@ -5,8 +5,68 @@ const { POPULAR_LEAGUES, competitionsCache, isCompetitionsCacheValid, getFlagCod
 const { getWinner } = require('../data/winners');
 
 /**
+ * Get current round for a league dynamically
+ * Returns the round number of the first upcoming or live match
+ */
+async function getCurrentRound(footballApi, leagueId, season) {
+  try {
+    // Try to get current round from API-Sports fixtures
+    const fixturesResponse = await footballApi.get('/fixtures', {
+      params: {
+        league: leagueId,
+        season: season,
+        status: 'NS-LIVE-1H-HT-2H-ET-BT-P', // Not Started, Live, and in-progress statuses
+        timezone: 'Asia/Bangkok'
+      }
+    });
+
+    const fixtures = fixturesResponse.data.response || [];
+
+    if (fixtures.length > 0) {
+      // Extract round number from first fixture
+      const roundString = fixtures[0].league?.round || '';
+      const roundMatch = roundString.match(/(\d+)/);
+      if (roundMatch) {
+        const currentRound = parseInt(roundMatch[1]);
+        console.log(`   ✅ Detected current round: ${currentRound} for league ${leagueId}`);
+        return currentRound;
+      }
+    }
+
+    // Fallback: try to get finished fixtures and return next round
+    const finishedResponse = await footballApi.get('/fixtures', {
+      params: {
+        league: leagueId,
+        season: season,
+        status: 'FT', // Finished
+        timezone: 'Asia/Bangkok',
+        last: 10
+      }
+    });
+
+    const finishedFixtures = finishedResponse.data.response || [];
+    if (finishedFixtures.length > 0) {
+      const lastRoundString = finishedFixtures[0].league?.round || '';
+      const lastRoundMatch = lastRoundString.match(/(\d+)/);
+      if (lastRoundMatch) {
+        const nextRound = parseInt(lastRoundMatch[1]) + 1;
+        console.log(`   ✅ Last finished round: ${lastRoundMatch[1]}, next round: ${nextRound} for league ${leagueId}`);
+        return nextRound;
+      }
+    }
+
+    console.log(`   ⚠️ Could not determine current round for league ${leagueId}, defaulting to 1`);
+    return 1; // Default to round 1 if unable to determine
+
+  } catch (error) {
+    console.error(`   ❌ Error getting current round for league ${leagueId}:`, error.message);
+    return 1; // Default to round 1 on error
+  }
+}
+
+/**
  * GET /api/competitions
- * Get all competitions with filters
+ * Get all competitions with filters - NO LIMITS
  */
 router.get('/', async (req, res) => {
   try {
@@ -18,7 +78,7 @@ router.get('/', async (req, res) => {
       maxTier = parseInt(req.query['condition[tier][$lte]']);
     }
 
-    console.log('🏆 Fetching competitions:', { page, limit, maxTier, search });
+    console.log('🏆 Fetching ALL competitions (no limits):', { page, limit, maxTier, search });
 
     let competitions = [];
 
@@ -27,15 +87,37 @@ router.get('/', async (req, res) => {
       console.log('✅ Using cached competitions');
       competitions = competitionsCache.data;
     } else {
-      console.log('🔄 Loading competitions data...');
+      console.log('🔄 Loading ALL competitions from API-Sports...');
 
-      competitions = POPULAR_LEAGUES.map(league => {
-        const currentYear = new Date().getFullYear();
+      const footballApi = req.app.locals.footballApi;
+      const currentYear = new Date().getFullYear();
+
+      // Fetch all leagues from API-Sports for current season
+      const response = await footballApi.get('/leagues', {
+        params: {
+          season: currentYear
+        }
+      });
+
+      const apiLeagues = response.data.response || [];
+      console.log(`   Found ${apiLeagues.length} leagues from API-Sports`);
+
+      // Transform API response to match our format
+      competitions = apiLeagues.map((item, index) => {
+        const league = item.league; // API-Sports structure: { league: {...}, country: {...}, seasons: [...] }
+        const country = item.country;
+        const seasons = item.seasons || [];
+
         const slug = league.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-        const countrySlug = league.country.toLowerCase().replace(/\s+/g, '-');
+        const countrySlug = country.name.toLowerCase().replace(/\s+/g, '-');
+
+        // Determine tier based on league ID (popular leagues get better tier)
+        const popularLeague = POPULAR_LEAGUES.find(pl => pl.id === league.id);
+        const tier = popularLeague ? popularLeague.tier : 5; // Default tier 5 for unlisted leagues
+        const seq = popularLeague ? popularLeague.seq : index + 1000; // High seq for unlisted
 
         // Generate rounds based on competition type
-        const isLeague = league.name.includes('League') || league.name.includes('Liga') || league.name.includes('Serie');
+        const isLeague = league.type === 'League' || league.name.includes('League') || league.name.includes('Liga') || league.name.includes('Serie');
         const totalRounds = isLeague ? 38 : 13; // 38 for leagues, 13 for cups
         const rounds = [];
 
@@ -48,23 +130,27 @@ router.get('/', async (req, res) => {
           });
         }
 
+        // Get current season or use current year
+        const currentSeason = seasons.find(s => s.current) || { year: currentYear };
+        const seasonYear = currentSeason.year || currentYear;
+
         return {
           _id: `league-${league.id}`,
           categoryId: null,
           code: league.name.substring(0, 7).toUpperCase().replace(/\s/g, ''),
-          countryId: league.country === 'World' ? 'country-world' : `country-${league.country}`,
+          countryId: country.name === 'World' ? 'country-world' : `country-${country.name}`,
           createdAt: new Date().toISOString(),
           createdBy: null,
           description: null,
-          image: `https://media.api-sports.io/football/leagues/${league.id}.png`,
+          image: league.logo || `https://media.api-sports.io/football/leagues/${league.id}.png`,
           name: league.name,
           seasons: [{
-            year: currentYear,
-            start: `${currentYear}-08-01T00:00:00.000Z`,
-            end: `${currentYear + 1}-05-31T23:59:59.999Z`,
+            year: seasonYear,
+            start: currentSeason.start || `${seasonYear}-08-01T00:00:00.000Z`,
+            end: currentSeason.end || `${seasonYear + 1}-05-31T23:59:59.999Z`,
             current: true,
             rounds: rounds,
-            coverage: {
+            coverage: currentSeason.coverage || {
               events: true,
               lineups: true,
               statisticsFixtures: true,
@@ -78,46 +164,46 @@ router.get('/', async (req, res) => {
               predictions: true,
               odds: true
             },
-            currentRound: 10,
+            currentRound: 1, // Default for list view, detail endpoints will have accurate currentRound
             isCurrent: true,
             isFinished: false,
-            yearText: `${currentYear}/${currentYear + 1}`,
+            yearText: `${seasonYear}/${seasonYear + 1}`,
             standingLimitAll: [5, 10, 15, 20, 25],
             standingLimitHomeAway: [5, 10, 15]
           }],
-          seq: league.seq,
+          seq: seq,
           sportId: "football",
           status: "activated",
-          tier: league.tier,
-          type: league.name.includes('League') || league.name.includes('Liga') || league.name.includes('Serie') ? 'league' : 'cup',
+          tier: tier,
+          type: league.type ? league.type.toLowerCase() : (isLeague ? 'league' : 'cup'),
           updatedAt: new Date().toISOString(),
           updatedBy: null,
           slug: slug,
           seo: {
             description: `Follow ${league.name} standings, results, and fixtures`,
-            image: `https://media.api-sports.io/football/leagues/${league.id}.png`,
+            image: league.logo || `https://media.api-sports.io/football/leagues/${league.id}.png`,
             imageAlt: `${league.name} logo`,
             og: {
               title: league.name,
               description: `Follow ${league.name} standings, results, and fixtures`,
-              image: `https://media.api-sports.io/football/leagues/${league.id}.png`
+              image: league.logo || `https://media.api-sports.io/football/leagues/${league.id}.png`
             },
             slug: slug,
             title: league.name
           },
-          subhead: league.country,
+          subhead: country.name,
           coefficient: 0,
-          rating: league.tier === 1 ? 90.0 : league.tier === 2 ? 75.0 : league.tier === 3 ? 60.0 : 50.0,
-          class: league.tier,
-          rank: league.seq,
+          rating: tier === 1 ? 90.0 : tier === 2 ? 75.0 : tier === 3 ? 60.0 : tier === 4 ? 50.0 : 40.0,
+          class: tier,
+          rank: seq,
           country: {
-            _id: league.country === 'World' ? 'country-world' : `country-${league.country}`,
-            code: league.country === 'World' ? 'INT' : league.country.substring(0, 2).toUpperCase(),
+            _id: country.name === 'World' ? 'country-world' : `country-${country.name}`,
+            code: country.code || (country.name === 'World' ? 'INT' : country.name.substring(0, 2).toUpperCase()),
             createdAt: new Date().toISOString(),
             createdBy: null,
             currency: null,
-            image: `https://flagicons.lipis.dev/flags/4x3/${getFlagCode(league.country)}.svg`,
-            name: league.country,
+            image: country.flag || `https://flagicons.lipis.dev/flags/4x3/${getFlagCode(country.name)}.svg`,
+            name: country.name,
             parentIds: [],
             phoneCode: null,
             seq: 1,
@@ -127,14 +213,14 @@ router.get('/', async (req, res) => {
             updatedAt: new Date().toISOString(),
             updatedBy: null,
             seo: {
-              description: `${league.country} football competitions`,
-              image: `https://flagicons.lipis.dev/flags/4x3/${getFlagCode(league.country)}.svg`,
-              imageAlt: `${league.country} flag`,
+              description: `${country.name} football competitions`,
+              image: country.flag || `https://flagicons.lipis.dev/flags/4x3/${getFlagCode(country.name)}.svg`,
+              imageAlt: `${country.name} flag`,
               slug: countrySlug,
-              title: league.country
+              title: country.name
             },
             slug: countrySlug,
-            baseName: league.country,
+            baseName: country.name,
             tags: [],
             iso3: null,
             codeIso3: null
@@ -219,9 +305,18 @@ router.get('/:id/archives', async (req, res) => {
 
     // Extract league ID from "league-39" format
     const leagueId = parseInt(id.replace('league-', ''));
-    const league = POPULAR_LEAGUES.find(l => l.id === leagueId);
 
-    if (!league) {
+    const footballApi = req.app.locals.footballApi;
+
+    // Fetch league info from API-Sports
+    const leagueResponse = await footballApi.get('/leagues', {
+      params: {
+        id: leagueId
+      }
+    });
+
+    const apiData = leagueResponse.data.response;
+    if (!apiData || apiData.length === 0) {
       return res.status(404).json({
         timestamp: new Date().toISOString(),
         success: false,
@@ -231,29 +326,49 @@ router.get('/:id/archives', async (req, res) => {
       });
     }
 
+    const leagueInfo = apiData[0].league;
+    const countryInfo = apiData[0].country;
+    const apiSeasons = apiData[0].seasons || [];
+
     // Generate slug
-    const slug = league.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    const slug = leagueInfo.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
 
-    // Generate league code (first 3-4 letters of league name + country code)
-    const countryCode = league.country.substring(0, 3).toUpperCase();
-    const leagueCode = league.name.substring(0, 4).toUpperCase().replace(/\s/g, '');
-    const code = `${countryCode}${league.tier}`;
+    // Check if in popular leagues for tier
+    const popularLeague = POPULAR_LEAGUES.find(l => l.id === leagueId);
+    const tier = popularLeague ? popularLeague.tier : 5;
 
-    // Generate past seasons (last 15 years to match production)
+    // Generate league code
+    const countryCode = countryInfo.name.substring(0, 3).toUpperCase();
+    const code = `${countryCode}${tier}`;
+
+    // Generate past seasons based on API data or default to last 15 years
     const currentYear = new Date().getFullYear();
     const seasons = [];
 
-    for (let year = currentYear; year >= currentYear - 15; year--) {
-      // Get winner for finished seasons
-      const winner = year < currentYear ? getWinner(leagueId, year) : null;
-
-      seasons.push({
-        year: year,
-        yearText: `${year}/${year + 1}`,
-        current: year === currentYear,
-        finished: year < currentYear,
-        winner: winner
+    if (apiSeasons.length > 0) {
+      // Use API seasons
+      apiSeasons.forEach(season => {
+        const winner = !season.current && season.year < currentYear ? getWinner(leagueId, season.year) : null;
+        seasons.push({
+          year: season.year,
+          yearText: `${season.year}/${season.year + 1}`,
+          current: season.current,
+          finished: !season.current,
+          winner: winner
+        });
       });
+    } else {
+      // Fallback: generate last 15 years
+      for (let year = currentYear; year >= currentYear - 15; year--) {
+        const winner = year < currentYear ? getWinner(leagueId, year) : null;
+        seasons.push({
+          year: year,
+          yearText: `${year}/${year + 1}`,
+          current: year === currentYear,
+          finished: year < currentYear,
+          winner: winner
+        });
+      }
     }
 
     res.json({
@@ -264,9 +379,9 @@ router.get('/:id/archives', async (req, res) => {
       data: {
         _id: `league-${leagueId}`,
         code: code,
-        name: league.name,
+        name: leagueInfo.name,
         slug: slug,
-        image: `https://media.api-sports.io/football/leagues/${leagueId}.png`,
+        image: leagueInfo.logo || `https://media.api-sports.io/football/leagues/${leagueId}.png`,
         seasons: seasons
       }
     });
@@ -285,7 +400,7 @@ router.get('/:id/archives', async (req, res) => {
 
 /**
  * GET /api/competitions/:countrySlug/:leagueSlug
- * Get competition detail by country slug and league slug
+ * Get competition detail by country slug and league slug - NO LIMITS
  */
 router.get('/:countrySlug/:leagueSlug', async (req, res) => {
   try {
@@ -293,27 +408,51 @@ router.get('/:countrySlug/:leagueSlug', async (req, res) => {
 
     console.log(`🔍 GET /api/competitions/${countrySlug}/${leagueSlug}`);
 
+    const footballApi = req.app.locals.footballApi;
+    const currentYear = new Date().getFullYear();
+
+    let competitions = [];
+
+    // Check cache first
+    if (isCompetitionsCacheValid()) {
+      console.log('✅ Using cached competitions for slug search');
+      competitions = competitionsCache.data;
+    } else {
+      console.log('🔄 Loading competitions from API-Sports for slug search...');
+
+      // Fetch all leagues from API-Sports
+      const response = await footballApi.get('/leagues', {
+        params: {
+          season: currentYear
+        }
+      });
+
+      const apiLeagues = response.data.response || [];
+
+      // Quick transform to searchable format
+      competitions = apiLeagues.map(item => ({
+        _id: `league-${item.league.id}`,
+        id: item.league.id,
+        name: item.league.name,
+        slug: item.league.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
+        country: {
+          name: item.country.name,
+          slug: item.country.name.toLowerCase().replace(/\s+/g, '-'),
+          flag: item.country.flag
+        },
+        logo: item.league.logo,
+        type: item.league.type,
+        seasons: item.seasons
+      }));
+    }
+
     // Find league by slug
-    const league = POPULAR_LEAGUES.find(l => {
-      const slug = l.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-      const country = l.country.toLowerCase().replace(/\s+/g, '-');
+    const competition = competitions.find(c =>
+      c.slug === leagueSlug && c.country.slug === countrySlug
+    );
 
-      const match = slug === leagueSlug && country === countrySlug;
-
-      if (match) {
-        console.log(`✅ Found match: ${l.name} (${l.country})`);
-      }
-
-      return match;
-    });
-
-    if (!league) {
+    if (!competition) {
       console.log(`❌ No league found for: ${countrySlug}/${leagueSlug}`);
-      console.log(`   Available leagues:`, POPULAR_LEAGUES.map(l => {
-        const slug = l.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-        const country = l.country.toLowerCase().replace(/\s+/g, '-');
-        return `${country}/${slug}`;
-      }).join(', '));
 
       return res.status(404).json({
         timestamp: new Date().toISOString(),
@@ -324,12 +463,15 @@ router.get('/:countrySlug/:leagueSlug', async (req, res) => {
       });
     }
 
-    const currentYear = new Date().getFullYear();
-    const slug = league.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-    const countrySlugGenerated = league.country.toLowerCase().replace(/\s+/g, '-');
+    console.log(`✅ Found match: ${competition.name} (${competition.country.name})`);
+
+    // Determine tier
+    const popularLeague = POPULAR_LEAGUES.find(pl => pl.id === competition.id);
+    const tier = popularLeague ? popularLeague.tier : 5;
+    const seq = popularLeague ? popularLeague.seq : 999;
 
     // Generate rounds based on competition type
-    const isLeague = league.name.includes('League') || league.name.includes('Liga') || league.name.includes('Serie');
+    const isLeague = competition.type === 'League' || competition.name.includes('League') || competition.name.includes('Liga') || competition.name.includes('Serie');
     const totalRounds = isLeague ? 38 : 13;
     const rounds = [];
 
@@ -342,28 +484,35 @@ router.get('/:countrySlug/:leagueSlug', async (req, res) => {
       });
     }
 
+    // Get current season info
+    const currentSeason = competition.seasons?.find(s => s.current) || { year: currentYear };
+    const seasonYear = currentSeason.year || currentYear;
+
+    // Get current round dynamically
+    const currentRound = await getCurrentRound(footballApi, competition.id, seasonYear);
+
     res.json({
       timestamp: new Date().toISOString(),
       success: true,
       errorCode: 0,
       message: "Success",
       data: {
-        _id: `league-${league.id}`,
+        _id: competition._id,
         categoryId: null,
-        code: league.name.substring(0, 7).toUpperCase().replace(/\s/g, ''),
-        countryId: league.country === 'World' ? 'country-world' : `country-${league.country}`,
+        code: competition.name.substring(0, 7).toUpperCase().replace(/\s/g, ''),
+        countryId: competition.country.name === 'World' ? 'country-world' : `country-${competition.country.name}`,
         createdAt: new Date().toISOString(),
         createdBy: null,
         description: null,
-        image: `https://media.api-sports.io/football/leagues/${league.id}.png`,
-        name: league.name,
+        image: competition.logo || `https://media.api-sports.io/football/leagues/${competition.id}.png`,
+        name: competition.name,
         seasons: [{
-          year: currentYear,
-          start: `${currentYear}-08-01T00:00:00.000Z`,
-          end: `${currentYear + 1}-05-31T23:59:59.999Z`,
+          year: seasonYear,
+          start: currentSeason.start || `${seasonYear}-08-01T00:00:00.000Z`,
+          end: currentSeason.end || `${seasonYear + 1}-05-31T23:59:59.999Z`,
           current: true,
           rounds: rounds,
-          coverage: {
+          coverage: currentSeason.coverage || {
             events: true,
             lineups: true,
             statisticsFixtures: true,
@@ -377,46 +526,46 @@ router.get('/:countrySlug/:leagueSlug', async (req, res) => {
             predictions: true,
             odds: true
           },
-          currentRound: 10,
+          currentRound: currentRound,
           isCurrent: true,
           isFinished: false,
-          yearText: `${currentYear}/${currentYear + 1}`,
+          yearText: `${seasonYear}/${seasonYear + 1}`,
           standingLimitAll: [5, 10, 15, 20, 25],
           standingLimitHomeAway: [5, 10, 15]
         }],
-        seq: league.seq,
+        seq: seq,
         sportId: "football",
         status: "activated",
-        tier: league.tier,
-        type: league.name.includes('League') || league.name.includes('Liga') || league.name.includes('Serie') ? 'league' : 'cup',
+        tier: tier,
+        type: competition.type ? competition.type.toLowerCase() : (isLeague ? 'league' : 'cup'),
         updatedAt: new Date().toISOString(),
         updatedBy: null,
-        slug: slug,
+        slug: competition.slug,
         seo: {
-          description: `Follow ${league.name} standings, results, and fixtures`,
-          image: `https://media.api-sports.io/football/leagues/${league.id}.png`,
-          imageAlt: `${league.name} logo`,
+          description: `Follow ${competition.name} standings, results, and fixtures`,
+          image: competition.logo || `https://media.api-sports.io/football/leagues/${competition.id}.png`,
+          imageAlt: `${competition.name} logo`,
           og: {
-            title: league.name,
-            description: `Follow ${league.name} standings, results, and fixtures`,
-            image: `https://media.api-sports.io/football/leagues/${league.id}.png`
+            title: competition.name,
+            description: `Follow ${competition.name} standings, results, and fixtures`,
+            image: competition.logo || `https://media.api-sports.io/football/leagues/${competition.id}.png`
           },
-          slug: slug,
-          title: league.name
+          slug: competition.slug,
+          title: competition.name
         },
-        subhead: league.country,
+        subhead: competition.country.name,
         coefficient: 0,
-        rating: league.tier === 1 ? 90.0 : league.tier === 2 ? 75.0 : league.tier === 3 ? 60.0 : 50.0,
-        class: league.tier,
-        rank: league.seq,
+        rating: tier === 1 ? 90.0 : tier === 2 ? 75.0 : tier === 3 ? 60.0 : tier === 4 ? 50.0 : 40.0,
+        class: tier,
+        rank: seq,
         country: {
-          _id: league.country === 'World' ? 'country-world' : `country-${league.country}`,
-          code: league.country === 'World' ? 'INT' : league.country.substring(0, 2).toUpperCase(),
+          _id: competition.country.name === 'World' ? 'country-world' : `country-${competition.country.name}`,
+          code: competition.country.name === 'World' ? 'INT' : competition.country.name.substring(0, 2).toUpperCase(),
           createdAt: new Date().toISOString(),
           createdBy: null,
           currency: null,
-          image: `https://flagicons.lipis.dev/flags/4x3/${getFlagCode(league.country)}.svg`,
-          name: league.country,
+          image: competition.country.flag || `https://flagicons.lipis.dev/flags/4x3/${getFlagCode(competition.country.name)}.svg`,
+          name: competition.country.name,
           parentIds: [],
           phoneCode: null,
           seq: 1,
@@ -426,14 +575,14 @@ router.get('/:countrySlug/:leagueSlug', async (req, res) => {
           updatedAt: new Date().toISOString(),
           updatedBy: null,
           seo: {
-            description: `${league.country} football competitions`,
-            image: `https://flagicons.lipis.dev/flags/4x3/${getFlagCode(league.country)}.svg`,
-            imageAlt: `${league.country} flag`,
-            slug: countrySlugGenerated,
-            title: league.country
+            description: `${competition.country.name} football competitions`,
+            image: competition.country.flag || `https://flagicons.lipis.dev/flags/4x3/${getFlagCode(competition.country.name)}.svg`,
+            imageAlt: `${competition.country.name} flag`,
+            slug: competition.country.slug,
+            title: competition.country.name
           },
-          slug: countrySlugGenerated,
-          baseName: league.country,
+          slug: competition.country.slug,
+          baseName: competition.country.name,
           tags: [],
           iso3: null,
           codeIso3: null
@@ -548,14 +697,26 @@ router.get('/get-in-day', async (req, res) => {
 
 /**
  * GET /api/competitions/:id
- * Get single competition by ID
+ * Get single competition by ID - NO LIMITS
  */
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const league = POPULAR_LEAGUES.find(l => l.id === parseInt(id));
+    const leagueId = parseInt(id);
 
-    if (!league) {
+    const footballApi = req.app.locals.footballApi;
+    const currentYear = new Date().getFullYear();
+
+    // Fetch league info from API-Sports
+    const leagueResponse = await footballApi.get('/leagues', {
+      params: {
+        id: leagueId,
+        season: currentYear
+      }
+    });
+
+    const apiData = leagueResponse.data.response;
+    if (!apiData || apiData.length === 0) {
       return res.status(404).json({
         timestamp: new Date().toISOString(),
         success: false,
@@ -565,12 +726,20 @@ router.get('/:id', async (req, res) => {
       });
     }
 
-    const currentYear = new Date().getFullYear();
-    const slug = league.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-    const countrySlug = league.country.toLowerCase().replace(/\s+/g, '-');
+    const leagueInfo = apiData[0].league;
+    const countryInfo = apiData[0].country;
+    const apiSeasons = apiData[0].seasons || [];
+
+    const slug = leagueInfo.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    const countrySlug = countryInfo.name.toLowerCase().replace(/\s+/g, '-');
+
+    // Determine tier
+    const popularLeague = POPULAR_LEAGUES.find(pl => pl.id === leagueId);
+    const tier = popularLeague ? popularLeague.tier : 5;
+    const seq = popularLeague ? popularLeague.seq : 999;
 
     // Generate rounds based on competition type
-    const isLeague = league.name.includes('League') || league.name.includes('Liga') || league.name.includes('Serie');
+    const isLeague = leagueInfo.type === 'League' || leagueInfo.name.includes('League') || leagueInfo.name.includes('Liga') || leagueInfo.name.includes('Serie');
     const totalRounds = isLeague ? 38 : 13;
     const rounds = [];
 
@@ -583,28 +752,35 @@ router.get('/:id', async (req, res) => {
       });
     }
 
+    // Get current season info
+    const currentSeason = apiSeasons.find(s => s.current) || { year: currentYear };
+    const seasonYear = currentSeason.year || currentYear;
+
+    // Get current round dynamically
+    const currentRound = await getCurrentRound(footballApi, leagueId, seasonYear);
+
     res.json({
       timestamp: new Date().toISOString(),
       success: true,
       errorCode: 0,
       message: "Success",
       data: {
-        _id: `league-${league.id}`,
+        _id: `league-${leagueId}`,
         categoryId: null,
-        code: league.name.substring(0, 7).toUpperCase().replace(/\s/g, ''),
-        countryId: league.country === 'World' ? 'country-world' : `country-${league.country}`,
+        code: leagueInfo.name.substring(0, 7).toUpperCase().replace(/\s/g, ''),
+        countryId: countryInfo.name === 'World' ? 'country-world' : `country-${countryInfo.name}`,
         createdAt: new Date().toISOString(),
         createdBy: null,
         description: null,
-        image: `https://media.api-sports.io/football/leagues/${league.id}.png`,
-        name: league.name,
+        image: leagueInfo.logo || `https://media.api-sports.io/football/leagues/${leagueId}.png`,
+        name: leagueInfo.name,
         seasons: [{
-          year: currentYear,
-          start: `${currentYear}-08-01T00:00:00.000Z`,
-          end: `${currentYear + 1}-05-31T23:59:59.999Z`,
+          year: seasonYear,
+          start: currentSeason.start || `${seasonYear}-08-01T00:00:00.000Z`,
+          end: currentSeason.end || `${seasonYear + 1}-05-31T23:59:59.999Z`,
           current: true,
           rounds: rounds,
-          coverage: {
+          coverage: currentSeason.coverage || {
             events: true,
             lineups: true,
             statisticsFixtures: true,
@@ -618,46 +794,46 @@ router.get('/:id', async (req, res) => {
             predictions: true,
             odds: true
           },
-          currentRound: 10,
+          currentRound: currentRound,
           isCurrent: true,
           isFinished: false,
-          yearText: `${currentYear}/${currentYear + 1}`,
+          yearText: `${seasonYear}/${seasonYear + 1}`,
           standingLimitAll: [5, 10, 15, 20, 25],
           standingLimitHomeAway: [5, 10, 15]
         }],
-        seq: league.seq,
+        seq: seq,
         sportId: "football",
         status: "activated",
-        tier: league.tier,
-        type: league.name.includes('League') || league.name.includes('Liga') || league.name.includes('Serie') ? 'league' : 'cup',
+        tier: tier,
+        type: leagueInfo.type ? leagueInfo.type.toLowerCase() : (isLeague ? 'league' : 'cup'),
         updatedAt: new Date().toISOString(),
         updatedBy: null,
         slug: slug,
         seo: {
-          description: `Follow ${league.name} standings, results, and fixtures`,
-          image: `https://media.api-sports.io/football/leagues/${league.id}.png`,
-          imageAlt: `${league.name} logo`,
+          description: `Follow ${leagueInfo.name} standings, results, and fixtures`,
+          image: leagueInfo.logo || `https://media.api-sports.io/football/leagues/${leagueId}.png`,
+          imageAlt: `${leagueInfo.name} logo`,
           og: {
-            title: league.name,
-            description: `Follow ${league.name} standings, results, and fixtures`,
-            image: `https://media.api-sports.io/football/leagues/${league.id}.png`
+            title: leagueInfo.name,
+            description: `Follow ${leagueInfo.name} standings, results, and fixtures`,
+            image: leagueInfo.logo || `https://media.api-sports.io/football/leagues/${leagueId}.png`
           },
           slug: slug,
-          title: league.name
+          title: leagueInfo.name
         },
-        subhead: league.country,
+        subhead: countryInfo.name,
         coefficient: 0,
-        rating: league.tier === 1 ? 90.0 : league.tier === 2 ? 75.0 : league.tier === 3 ? 60.0 : 50.0,
-        class: league.tier,
-        rank: league.seq,
+        rating: tier === 1 ? 90.0 : tier === 2 ? 75.0 : tier === 3 ? 60.0 : tier === 4 ? 50.0 : 40.0,
+        class: tier,
+        rank: seq,
         country: {
-          _id: league.country === 'World' ? 'country-world' : `country-${league.country}`,
-          code: league.country === 'World' ? 'INT' : league.country.substring(0, 2).toUpperCase(),
+          _id: countryInfo.name === 'World' ? 'country-world' : `country-${countryInfo.name}`,
+          code: countryInfo.code || (countryInfo.name === 'World' ? 'INT' : countryInfo.name.substring(0, 2).toUpperCase()),
           createdAt: new Date().toISOString(),
           createdBy: null,
           currency: null,
-          image: `https://flagicons.lipis.dev/flags/4x3/${getFlagCode(league.country)}.svg`,
-          name: league.country,
+          image: countryInfo.flag || `https://flagicons.lipis.dev/flags/4x3/${getFlagCode(countryInfo.name)}.svg`,
+          name: countryInfo.name,
           parentIds: [],
           phoneCode: null,
           seq: 1,
@@ -667,14 +843,14 @@ router.get('/:id', async (req, res) => {
           updatedAt: new Date().toISOString(),
           updatedBy: null,
           seo: {
-            description: `${league.country} football competitions`,
-            image: `https://flagicons.lipis.dev/flags/4x3/${getFlagCode(league.country)}.svg`,
-            imageAlt: `${league.country} flag`,
+            description: `${countryInfo.name} football competitions`,
+            image: countryInfo.flag || `https://flagicons.lipis.dev/flags/4x3/${getFlagCode(countryInfo.name)}.svg`,
+            imageAlt: `${countryInfo.name} flag`,
             slug: countrySlug,
-            title: league.country
+            title: countryInfo.name
           },
           slug: countrySlug,
-          baseName: league.country,
+          baseName: countryInfo.name,
           tags: [],
           iso3: null,
           codeIso3: null

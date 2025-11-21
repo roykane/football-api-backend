@@ -50,10 +50,8 @@ router.get('/', async (req, res) => {
     // Apply filters
     let filtered = [...bookmakers];
 
-    // Filter to only show the 4 main bookmakers we support
-    const ALLOWED_BOOKMAKER_IDS = [8, 18, 1, 11]; // Bet365, 188Bet, SBO, 1xBet
-    filtered = filtered.filter(bookie => ALLOWED_BOOKMAKER_IDS.includes(bookie.id));
-    console.log(`✅ Filtered to ${ALLOWED_BOOKMAKER_IDS.length} allowed bookmakers: ${filtered.length} found`);
+    // Show all bookmakers (no limit)
+    console.log(`✅ Showing ALL ${filtered.length} bookmakers (no filter)`);
 
     if (tierFilter) {
       const tierValue = parseInt(tierFilter);

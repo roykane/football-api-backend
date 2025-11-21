@@ -14,6 +14,7 @@ const countriesRouter = require('./routes/countries');
 const postsRouter = require('./routes/posts');
 const categoriesRouter = require('./routes/categories');
 const oddsSyncJob = require('./services/oddsSyncJob');
+const matchCacheWorker = require('./workers/matchCacheWorker');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -297,6 +298,13 @@ function setupOddsSyncJob() {
 connectMongoDB().then(() => {
   // Setup cron job after MongoDB connects
   setupOddsSyncJob();
+
+  // Initialize match cache worker
+  if (mongoose.connection.readyState === 1) {
+    console.log('\n🚀 Starting Match Cache Worker...');
+    matchCacheWorker.init(API_KEY, 'v3.football.api-sports.io');
+    matchCacheWorker.start();
+  }
 }).catch(err => {
   console.error('Failed to setup MongoDB:', err);
 });

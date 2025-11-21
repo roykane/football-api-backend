@@ -71,16 +71,27 @@ function mapBetType(betName) {
  * @param {Boolean} useMockOdds - Use mock odds instead of real data (for testing)
  */
 function transformToMatchFormat(fixture, oddsData = [], statsData = [], useMockOdds = false) {
+  // Assign fetched statistics to fixture if provided
+  if (statsData && statsData.length > 0) {
+    fixture.statistics = statsData;
+  }
+
   const homeTeam = fixture.teams?.home || {};
   const awayTeam = fixture.teams?.away || {};
   const score = fixture.score || {};
   const goals = fixture.goals || {};
-  
+
   // Transform match object
   const match = {
     _id: `match-${fixture.fixture.id}`,
     id: fixture.fixture.id,
     attendance: fixture.fixture.venue?.attendance || null,
+    venue: fixture.fixture.venue ? {
+      id: fixture.fixture.venue.id || null,
+      name: fixture.fixture.venue.name || null,
+      city: fixture.fixture.venue.city || null
+    } : null,
+    referee: fixture.fixture.referee || null,
     dateTime: fixture.fixture.date,
     elapsed: fixture.fixture.status?.elapsed || null,
     events: transformEvents(fixture.events, homeTeam.id, awayTeam.id),
@@ -122,9 +133,9 @@ function transformToMatchFormat(fixture, oddsData = [], statsData = [], useMockO
         penalty: score.penalty?.home ?? null,
         winner: homeTeam.winner ?? null,
         form: getTeamForm(fixture.teams?.home),
-        yellowCards: fixture.statistics?.find(s => s.team.id === homeTeam.id)?.statistics?.find(st => st.type === 'Yellow Cards')?.value || 0,
-        redCards: fixture.statistics?.find(s => s.team.id === homeTeam.id)?.statistics?.find(st => st.type === 'Red Cards')?.value || 0,
-        corners: fixture.statistics?.find(s => s.team.id === homeTeam.id)?.statistics?.find(st => st.type === 'Corner Kicks')?.value || 0
+        yellowCards: fixture.statistics?.find(s => s.team.id === homeTeam.id)?.statistics?.find(st => st.type?.toLowerCase()?.includes('yellow'))?.value || 0,
+        redCards: fixture.statistics?.find(s => s.team.id === homeTeam.id)?.statistics?.find(st => st.type?.toLowerCase()?.includes('red'))?.value || 0,
+        corners: fixture.statistics?.find(s => s.team.id === homeTeam.id)?.statistics?.find(st => st.type?.toLowerCase()?.includes('corner'))?.value || 0
       },
       away: {
         teamId: `team-${awayTeam.id}`,
@@ -137,9 +148,9 @@ function transformToMatchFormat(fixture, oddsData = [], statsData = [], useMockO
         penalty: score.penalty?.away ?? null,
         winner: awayTeam.winner ?? null,
         form: getTeamForm(fixture.teams?.away),
-        yellowCards: fixture.statistics?.find(s => s.team.id === awayTeam.id)?.statistics?.find(st => st.type === 'Yellow Cards')?.value || 0,
-        redCards: fixture.statistics?.find(s => s.team.id === awayTeam.id)?.statistics?.find(st => st.type === 'Red Cards')?.value || 0,
-        corners: fixture.statistics?.find(s => s.team.id === awayTeam.id)?.statistics?.find(st => st.type === 'Corner Kicks')?.value || 0
+        yellowCards: fixture.statistics?.find(s => s.team.id === awayTeam.id)?.statistics?.find(st => st.type?.toLowerCase()?.includes('yellow'))?.value || 0,
+        redCards: fixture.statistics?.find(s => s.team.id === awayTeam.id)?.statistics?.find(st => st.type?.toLowerCase()?.includes('red'))?.value || 0,
+        corners: fixture.statistics?.find(s => s.team.id === awayTeam.id)?.statistics?.find(st => st.type?.toLowerCase()?.includes('corner'))?.value || 0
       }
     },
     competition: {
@@ -164,9 +175,12 @@ function transformToMatchFormat(fixture, oddsData = [], statsData = [], useMockO
         penalty: score.penalty?.home ?? null,
         winner: homeTeam.winner ?? null,
         form: getTeamForm(fixture.teams?.home),
-        yellowCards: countCards(fixture.events, homeTeam.id, 'yellow'),
-        redCards: countCards(fixture.events, homeTeam.id, 'red'),
-        corners: fixture.statistics?.find(s => s.team.id === homeTeam.id)?.statistics?.find(st => st.type === 'Corner Kicks')?.value || 0
+        // Try statistics first, fallback to events
+        yellowCards: fixture.statistics?.find(s => s.team.id === homeTeam.id)?.statistics?.find(st => st.type?.toLowerCase()?.includes('yellow'))?.value
+          || countCards(fixture.events, homeTeam.id, 'yellow'),
+        redCards: fixture.statistics?.find(s => s.team.id === homeTeam.id)?.statistics?.find(st => st.type?.toLowerCase()?.includes('red'))?.value
+          || countCards(fixture.events, homeTeam.id, 'red'),
+        corners: fixture.statistics?.find(s => s.team.id === homeTeam.id)?.statistics?.find(st => st.type?.toLowerCase()?.includes('corner'))?.value || 0
       },
       away: {
         teamId: `team-${awayTeam.id}`,
@@ -179,9 +193,12 @@ function transformToMatchFormat(fixture, oddsData = [], statsData = [], useMockO
         penalty: score.penalty?.away ?? null,
         winner: awayTeam.winner ?? null,
         form: getTeamForm(fixture.teams?.away),
-        yellowCards: countCards(fixture.events, awayTeam.id, 'yellow'),
-        redCards: countCards(fixture.events, awayTeam.id, 'red'),
-        corners: fixture.statistics?.find(s => s.team.id === awayTeam.id)?.statistics?.find(st => st.type === 'Corner Kicks')?.value || 0
+        // Try statistics first, fallback to events
+        yellowCards: fixture.statistics?.find(s => s.team.id === awayTeam.id)?.statistics?.find(st => st.type?.toLowerCase()?.includes('yellow'))?.value
+          || countCards(fixture.events, awayTeam.id, 'yellow'),
+        redCards: fixture.statistics?.find(s => s.team.id === awayTeam.id)?.statistics?.find(st => st.type?.toLowerCase()?.includes('red'))?.value
+          || countCards(fixture.events, awayTeam.id, 'red'),
+        corners: fixture.statistics?.find(s => s.team.id === awayTeam.id)?.statistics?.find(st => st.type?.toLowerCase()?.includes('corner'))?.value || 0
       }
     }
   };
@@ -195,11 +212,11 @@ function transformToMatchFormat(fixture, oddsData = [], statsData = [], useMockO
     match.bookmakers = []; // No odds available
   }
 
-  // Add statistics if available
+  // Add statistics if available (using new TStatisticsItem format)
   if (statsData && statsData.length > 0) {
-    match.stats = transformStats(statsData);
+    match.statistics = transformStatisticsToTStatisticsItem(statsData, fixture);
   } else {
-    match.stats = [];
+    match.statistics = [];
   }
 
   return match;
@@ -247,9 +264,12 @@ function getTeamForm(team) {
  * Count yellow/red cards for a team
  */
 function countCards(events, teamId, cardType) {
-  if (!events || !Array.isArray(events)) return 0;
+  if (!events || !Array.isArray(events)) {
+    // No events provided, return 0 (normal fallback when using statistics)
+    return 0;
+  }
 
-  return events.filter(event => {
+  const cards = events.filter(event => {
     const isCorrectTeam = event.team?.id === teamId;
     const isCard = event.type === 'Card';
     const isCorrectCardType = cardType === 'yellow'
@@ -257,7 +277,14 @@ function countCards(events, teamId, cardType) {
       : event.detail === 'Red Card';
 
     return isCorrectTeam && isCard && isCorrectCardType;
-  }).length;
+  });
+
+  // Only log when cards are found from events (rare case)
+  if (cards.length > 0) {
+    console.log(`🟨🟥 Found ${cards.length} ${cardType} cards from events for team ${teamId}`);
+  }
+
+  return cards.length;
 }
 
 /**
@@ -408,7 +435,7 @@ function transformOdds(oddsData) {
 }
 
 /**
- * Transform statistics data
+ * Transform statistics data (legacy format)
  */
 function transformStats(statsData) {
   if (!statsData || !Array.isArray(statsData) || statsData.length === 0) {
@@ -425,12 +452,79 @@ function transformStats(statsData) {
   }));
 }
 
+/**
+ * Transform statistics data to TStatisticsItem format
+ * API-Football only provides full match statistics, not per-half
+ */
+function transformStatisticsToTStatisticsItem(statsData, fixture) {
+  if (!statsData || !Array.isArray(statsData) || statsData.length === 0) {
+    return [];
+  }
+
+  // Mapping for Vietnamese display text
+  const statDisplayText = {
+    'Shots on Goal': 'Sút trúng đích',
+    'Shots off Goal': 'Sút trượt',
+    'Total Shots': 'Tổng số cú sút',
+    'Blocked Shots': 'Sút bị chặn',
+    'Shots insidebox': 'Sút trong vòng cấm',
+    'Shots outsidebox': 'Sút ngoài vòng cấm',
+    'Fouls': 'Phạm lỗi',
+    'Corner Kicks': 'Phạt góc',
+    'Offsides': 'Việt vị',
+    'Ball Possession': 'Kiểm soát bóng',
+    'Yellow Cards': 'Thẻ vàng',
+    'Red Cards': 'Thẻ đỏ',
+    'Goalkeeper Saves': 'Cứu thua',
+    'Total passes': 'Tổng số đường chuyền',
+    'Passes accurate': 'Chuyền chính xác',
+    'Passes %': 'Tỷ lệ chuyền bóng',
+    'expected_goals': 'Expected Goals (xG)'
+  };
+
+  return statsData.map((teamStat, index) => {
+    const team = teamStat.team;
+    const statistics = teamStat.statistics || [];
+
+    // Transform statistics to TStatisticsDetail format
+    const fullStats = statistics.map((stat, seq) => {
+      const type = stat.type.toLowerCase().replace(/\s+/g, '_');
+      const value = parseFloat(stat.value) || 0;
+
+      return {
+        displayText: statDisplayText[stat.type] || stat.type,
+        type: type,
+        value: value,
+        seq: seq,
+        displayValue: String(stat.value || '0')
+      };
+    });
+
+    return {
+      full: fullStats,
+      half1: [], // API-Football doesn't provide per-half statistics
+      half2: [], // API-Football doesn't provide per-half statistics
+      isHomeTeam: index === 0, // First team in array is home team
+      teamId: String(team.id),
+      team: {
+        code: team.name.substring(0, 3).toUpperCase(),
+        image: team.logo,
+        name: team.name,
+        slug: team.name.toLowerCase().replace(/\s+/g, '-'),
+        thumbnail: team.logo,
+        _id: String(team.id)
+      }
+    };
+  });
+}
+
 module.exports = {
   transformToMatchFormat,
   mapFixtureStatus,
   transformOdds,
   transformStats,
   transformEvents,
+  transformStatisticsToTStatisticsItem,
   // Export để có thể config từ bên ngoài
   ALLOWED_BET_TYPES,
   MAX_BETS_PER_BOOKMAKER

@@ -25,6 +25,13 @@ async function findFixturesWithOdds() {
       { id: 61, name: 'Ligue 1' }
     ];
 
+    // ✅ Determine current season (if month >= August, use current year, else previous year)
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const currentSeason = today.getMonth() >= 7 ? currentYear : currentYear - 1;
+
+    console.log(`📅 Using season: ${currentSeason}\n`);
+
     for (const league of topLeagues) {
       console.log(`\n${'='.repeat(60)}`);
       console.log(`Checking ${league.name}...`);
@@ -34,7 +41,7 @@ async function findFixturesWithOdds() {
       const fixturesRes = await footballApi.get('/fixtures', {
         params: {
           league: league.id,
-          season: 2024,
+          season: currentSeason,
           next: 5
         }
       });
