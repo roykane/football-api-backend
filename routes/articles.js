@@ -22,7 +22,7 @@ router.get('/', async (req, res) => {
 
     const [articles, total] = await Promise.all([
       Article.find(query)
-        .sort({ pubDate: -1 })
+        .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
         .lean(),
