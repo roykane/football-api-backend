@@ -4,22 +4,27 @@
     "description": "Backend API for Football data",
     "main": "server.js",
     "scripts": {
-      "start": "node server.js",
-      "predev": "lsof -ti:5000 | xargs kill -9 2>/dev/null || true",
-    "dev": "nodemon server.js"
+        "start": "node server.js",
+        "predev": "lsof -ti:5000 | xargs kill -9 2>/dev/null || true",
+        "dev": "nodemon server.js"
     },
-    "keywords": ["football", "api", "backend"],
+    "keywords": [
+        "football",
+        "api",
+        "backend"
+    ],
     "author": "",
     "license": "ISC",
     "dependencies": {
-      "express": "^4.18.2",
-      "cors": "^2.8.5",
-      "axios": "^1.6.0",
-      "dotenv": "^16.3.1",
-      "mongoose": "^8.0.0",
-      "node-cron": "^3.0.3"
+        "axios": "^1.6.0",
+        "cors": "^2.8.5",
+        "dotenv": "^16.3.1",
+        "express": "^4.18.2",
+        "mongoose": "^8.0.0",
+        "node-cron": "^3.0.3",
+        "rss-parser": "^3.13.0"
     },
     "devDependencies": {
-      "nodemon": "^3.0.1"
+        "nodemon": "^3.0.1"
     }
-  }
+}

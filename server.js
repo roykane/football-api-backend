@@ -13,8 +13,13 @@ const standingsRouter = require('./routes/standings');
 const countriesRouter = require('./routes/countries');
 const postsRouter = require('./routes/posts');
 const categoriesRouter = require('./routes/categories');
+const aiRouter = require('./routes/ai');
+const articlesRouter = require('./routes/articles');
+const schedulerRouter = require('./routes/scheduler');
 const oddsSyncJob = require('./services/oddsSyncJob');
 const matchCacheWorker = require('./workers/matchCacheWorker');
+const connectArticlesDB = require('./config/database');
+const { startNewsScheduler } = require('./services/news-scheduler');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -118,6 +123,9 @@ app.use('/api/matches', matchesRouter);
 app.use('/api/standings', standingsRouter);
 app.use('/api/posts', postsRouter);
 app.use('/api/categories', categoriesRouter);
+app.use('/api', aiRouter);
+app.use('/api/articles', articlesRouter);
+app.use('/api/scheduler', schedulerRouter);
 
 // Legacy endpoints (chỉ giữ lại leagues và fixtures)
 app.get('/api/leagues', async (req, res) => {
@@ -184,7 +192,13 @@ app.use((req, res) => {
       'GET /api/standings/top-leagues',
       'GET /api/standings/allowed-leagues',
       'DELETE /api/standings/cache',
-      'DELETE /api/matches/cache/odds'
+      'DELETE /api/matches/cache/odds',
+      'POST /api/ai-predict',
+      'GET /api/articles',
+      'GET /api/articles/search',
+      'GET /api/articles/:id',
+      'GET /api/scheduler/status',
+      'POST /api/scheduler/trigger'
     ]
   });
 });
@@ -295,7 +309,7 @@ function setupOddsSyncJob() {
 // ============================================
 
 // Connect to MongoDB first, then start server
-connectMongoDB().then(() => {
+connectMongoDB().then(async () => {
   // Setup cron job after MongoDB connects
   setupOddsSyncJob();
 
@@ -304,6 +318,14 @@ connectMongoDB().then(() => {
     console.log('\n🚀 Starting Match Cache Worker...');
     matchCacheWorker.init(API_KEY, 'v3.football.api-sports.io');
     matchCacheWorker.start();
+  }
+
+  // Connect to Articles database and start news scheduler
+  try {
+    await connectArticlesDB();
+    startNewsScheduler();
+  } catch (err) {
+    console.error('Failed to setup Articles DB and scheduler:', err);
   }
 }).catch(err => {
   console.error('Failed to setup MongoDB:', err);
