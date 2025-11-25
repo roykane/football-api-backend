@@ -463,6 +463,11 @@ router.get('/:countrySlug/:leagueSlug', async (req, res) => {
       });
     }
 
+    // ✅ FIX: Ensure competition.id exists (fallback to extract from _id)
+    if (!competition.id && competition._id) {
+      competition.id = parseInt(competition._id.replace('league-', ''));
+    }
+
     console.log(`✅ Found match: ${competition.name} (${competition.country.name})`);
 
     // Determine tier
