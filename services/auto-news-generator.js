@@ -11,8 +11,12 @@ const parser = new Parser({
   },
 });
 
-// RSS Sources
+// RSS Sources - DISABLED because feeds return old articles from 2019
+// Using AI-generated topics instead for fresh, relevant content
 const RSS_SOURCES = [
+  // Temporarily disabled - feeds return outdated content
+  // Uncomment when RSS feeds are updated with fresh content
+  /*
   {
     name: 'VnExpress',
     url: 'https://vnexpress.net/rss/bong-da.rss',
@@ -38,6 +42,7 @@ const RSS_SOURCES = [
     url: 'https://bongdaplus.vn/rss/tin-tuc.rss',
     category: 'analysis',
   },
+  */
 ];
 
 /**
@@ -243,23 +248,55 @@ async function processAndSaveArticle(rssItem) {
   }
 }
 
-// Fallback topics when RSS feeds fail
+// HOT Topics - AI will generate fresh content about current football events
 const FALLBACK_TOPICS = [
-  { title: 'Phân tích chiến thuật Premier League mùa giải mới', category: 'analysis' },
-  { title: 'Top 10 cầu thủ xuất sắc nhất Champions League', category: 'general' },
-  { title: 'Chuyển nhượng: Những thương vụ đình đám nhất hè này', category: 'transfer' },
-  { title: 'Real Madrid vs Barcelona: El Clasico kinh điển sắp tới', category: 'analysis' },
-  { title: 'Erling Haaland: Cỗ máy ghi bàn của Manchester City', category: 'general' },
-  { title: 'Kylian Mbappe và tương lai tại PSG', category: 'transfer' },
-  { title: 'Liverpool xây dựng lại đội hình với HLV Klopp', category: 'analysis' },
-  { title: 'Serie A: AC Milan và Inter tranh ngôi vương', category: 'general' },
-  { title: 'Bundesliga: Bayern Munich có tiếp tục thống trị?', category: 'analysis' },
-  { title: 'La Liga: Cuộc đua tam mã giữa Real, Barca và Atletico', category: 'general' },
-  { title: 'Lịch sử các trận chung kết Champions League kinh điển', category: 'general' },
-  { title: 'Thế hệ tài năng trẻ đang lên của bóng đá Anh', category: 'general' },
-  { title: 'Chiến thuật pressing hiện đại trong bóng đá', category: 'analysis' },
-  { title: 'Son Heung-min: Niềm tự hào của bóng đá châu Á', category: 'general' },
-  { title: 'Manchester United tìm lại ánh hào quang', category: 'analysis' },
+  // Premier League Hot Topics
+  { title: 'Liverpool vs Man City: Cuộc đua vô địch Premier League nóng bỏng', category: 'analysis' },
+  { title: 'Arsenal và tham vọng vô địch sau 20 năm', category: 'general' },
+  { title: 'Erling Haaland phá vỡ kỷ lục ghi bàn Premier League', category: 'general' },
+  { title: 'Man United dưới thời HLV mới: Kỳ vọng và thách thức', category: 'analysis' },
+  { title: 'Mohamed Salah: Huyền thoại đang được viết tiếp tại Liverpool', category: 'general' },
+
+  // Champions League
+  { title: 'Real Madrid bảo vệ ngôi vương Champions League: Liệu có lặp lại kỳ tích?', category: 'analysis' },
+  { title: 'PSG và giấc mơ Champions League với dàn sao trị giá hàng tỷ đô', category: 'general' },
+  { title: 'Bayern Munich: Cỗ máy hủy diệt trở lại Champions League', category: 'analysis' },
+  { title: 'Những ứng viên sáng giá cho chức vô địch Champions League', category: 'general' },
+
+  // La Liga
+  { title: 'Real Madrid vs Barcelona: El Clasico vĩ đại nhất thế giới', category: 'analysis' },
+  { title: 'Jude Bellingham tỏa sáng: Ngôi sao mới của Real Madrid', category: 'general' },
+  { title: 'Xavi xây dựng Barcelona trở lại với triết lý Cruyff', category: 'analysis' },
+  { title: 'Atletico Madrid: Lối chơi phòng ngự phản công của Simeone', category: 'analysis' },
+
+  // Serie A
+  { title: 'Inter Milan thống trị Serie A: Bí quyết của HLV Inzaghi', category: 'analysis' },
+  { title: 'AC Milan và hành trình tìm lại hào quang', category: 'general' },
+  { title: 'Juventus tái thiết: Kế hoạch dài hạn cho tương lai', category: 'analysis' },
+
+  // Bundesliga
+  { title: 'Harry Kane tại Bayern Munich: Siêu sao nước Anh chinh phục Đức', category: 'general' },
+  { title: 'Bayer Leverkusen: Hiện tượng mới của Bundesliga', category: 'general' },
+
+  // World Football
+  { title: 'Lionel Messi tại Inter Miami: Huyền thoại viết nên lịch sử MLS', category: 'general' },
+  { title: 'Cristiano Ronaldo ở Saudi Arabia: Tầm ảnh hưởng toàn cầu', category: 'general' },
+  { title: 'Kylian Mbappe: Ngôi sao sáng nhất bóng đá thế giới hiện tại', category: 'general' },
+
+  // Tactical Analysis
+  { title: 'Phân tích chiến thuật: Lối chơi tiki-taka có còn hiệu quả?', category: 'analysis' },
+  { title: 'Pressing cao: Vũ khí bí mật của các đội bóng hàng đầu', category: 'analysis' },
+  { title: 'False 9: Vị trí tiền đạo ảo cách mạng hóa bóng đá hiện đại', category: 'analysis' },
+
+  // Vietnamese Football
+  { title: 'Đội tuyển Việt Nam: Hành trình chinh phục AFF Cup', category: 'general' },
+  { title: 'Quang Hải, Công Phượng và thế hệ vàng bóng đá Việt', category: 'general' },
+  { title: 'V.League: Cạnh tranh ngày càng khốc liệt', category: 'general' },
+
+  // Transfer News
+  { title: 'Thị trường chuyển nhượng mùa Đông: Những bom tấn đáng chờ đợi', category: 'transfer' },
+  { title: 'Chelsea và chiến lược chuyển nhượng táo bạo', category: 'transfer' },
+  { title: 'Saudi Pro League: Cuộc cách mạng chuyển nhượng từ Trung Đông', category: 'transfer' },
 ];
 
 // Real football images from Unsplash
