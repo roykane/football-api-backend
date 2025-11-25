@@ -220,6 +220,11 @@ async function processAndSaveArticle(rssItem) {
       rssItem.source
     );
 
+    // If no image from RSS, use random fallback image
+    if (!rssItem.image) {
+      rssItem.image = FOOTBALL_IMAGES[Math.floor(Math.random() * FOOTBALL_IMAGES.length)];
+    }
+
     // Save to database
     const article = new Article({
       ...rssItem,
