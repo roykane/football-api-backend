@@ -230,6 +230,12 @@ async function processAndSaveArticle(rssItem) {
       rssItem.image = FOOTBALL_IMAGES[Math.floor(Math.random() * FOOTBALL_IMAGES.length)];
     }
 
+    // Validation: Skip article if still no valid image
+    if (!rssItem.image || rssItem.image === 'NO IMAGE' || rssItem.image.trim() === '') {
+      console.log(`[Skip] No valid image for: "${rssItem.originalTitle.substring(0, 50)}..."`);
+      return null;
+    }
+
     // Save to database
     const article = new Article({
       ...rssItem,
@@ -333,6 +339,12 @@ async function generateFromFallbackTopic(topic) {
 
     // Pick a random image from the real football images
     const randomImage = FOOTBALL_IMAGES[Math.floor(Math.random() * FOOTBALL_IMAGES.length)];
+
+    // Validation: Skip if no valid image
+    if (!randomImage || randomImage === 'NO IMAGE' || randomImage.trim() === '') {
+      console.log(`[Fallback] ❌ No valid image for: "${topic.title}"`);
+      return null;
+    }
 
     const article = new Article({
       originalTitle: topic.title,
@@ -474,7 +486,63 @@ async function generateSingleArticle(title, description, source, category = 'gen
   }
 }
 
+/**
+ * Clean up articles without valid images
+ */
+async function cleanupArticlesWithoutImages() {
+  try {
+    console.log('\n🧹 ========== CLEANUP: ARTICLES WITHOUT IMAGES ==========');
+
+    // Find articles with no image, 'NO IMAGE', or empty string
+    const articlesToDelete = await Article.find({
+      $or: [
+        { image: { $exists: false } },
+        { image: null },
+        { image: '' },
+        { image: 'NO IMAGE' }
+      ]
+    });
+
+    const count = articlesToDelete.length;
+    console.log(`📊 Found ${count} articles without valid images`);
+
+    if (count > 0) {
+      const result = await Article.deleteMany({
+        $or: [
+          { image: { $exists: false } },
+          { image: null },
+          { image: '' },
+          { image: 'NO IMAGE' }
+        ]
+      });
+
+      console.log(`✅ Deleted ${result.deletedCount} articles without images`);
+
+      return {
+        success: true,
+        deletedCount: result.deletedCount,
+        message: `Deleted ${result.deletedCount} articles without valid images`
+      };
+    } else {
+      console.log('✅ No articles to delete - all articles have valid images');
+      return {
+        success: true,
+        deletedCount: 0,
+        message: 'No articles without images found'
+      };
+    }
+  } catch (error) {
+    console.error('❌ Cleanup failed:', error);
+    return {
+      success: false,
+      error: error.message,
+      deletedCount: 0
+    };
+  }
+}
+
 module.exports = {
   runAutoNewsGeneration,
   generateSingleArticle,
+  cleanupArticlesWithoutImages,
 };

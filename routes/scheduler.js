@@ -1,5 +1,6 @@
 const express = require('express');
 const { getSchedulerStatus, triggerManualRun } = require('../services/news-scheduler');
+const { cleanupArticlesWithoutImages } = require('../services/auto-news-generator');
 const router = express.Router();
 
 /**
@@ -49,6 +50,30 @@ router.post('/trigger', async (req, res) => {
     });
   } catch (error) {
     console.error('[Scheduler API] Error triggering generation:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/scheduler/cleanup-images
+ * Clean up articles without valid images
+ */
+router.post('/cleanup-images', async (req, res) => {
+  try {
+    console.log('[Scheduler API] Cleanup images requested');
+
+    const result = await cleanupArticlesWithoutImages();
+
+    res.json({
+      success: result.success,
+      message: result.message,
+      deletedCount: result.deletedCount
+    });
+  } catch (error) {
+    console.error('[Scheduler API] Error during cleanup:', error);
     res.status(500).json({
       success: false,
       error: error.message
