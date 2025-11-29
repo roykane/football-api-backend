@@ -4,6 +4,7 @@ const cors = require('cors');
 const axios = require('axios');
 const mongoose = require('mongoose');
 const cron = require('node-cron');
+const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
 const matchesRouter = require('./routes/matches');
@@ -29,20 +30,68 @@ const PORT = process.env.PORT || 5000;
 // ============================================
 
 // CORS configuration
+const allowedOrigins = [
+  'https://martech.sbs',
+  'https://www.martech.sbs',
+  'https://martech.bet',
+  'https://www.martech.bet',
+  'http://localhost:3000',     // Local development
+  'http://localhost:5173'      // Vite dev server
+];
+
 const corsOptions = {
-  origin: process.env.NODE_ENV === 'production'
-    ? [
-        'https://yourdomain.com',  // Thay bằng domain WordPress của bạn
-        'https://www.yourdomain.com',
-        'http://localhost:3000'     // Cho local development
-      ]
-    : '*', // Allow all in development
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true);
+
+    // Check if origin is allowed
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.warn(`⚠️  CORS blocked: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   optionsSuccessStatus: 200
 };
 
 app.use(cors(corsOptions));
 app.use(express.json());
+
+// Rate limiting configuration
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: {
+    success: false,
+    error: 'Too many requests from this IP, please try again after 15 minutes.'
+  },
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  // Skip rate limiting for specific IPs (optional)
+  skip: (req) => {
+    const trustedIPs = ['127.0.0.1', '::1']; // Localhost
+    return trustedIPs.includes(req.ip);
+  }
+});
+
+// Stricter rate limit for admin/sensitive endpoints
+const strictLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20, // Only 20 requests per 15 minutes
+  message: {
+    success: false,
+    error: 'Too many requests to this endpoint, please try again later.'
+  }
+});
+
+// Apply general rate limiting to all API routes
+app.use('/api/', apiLimiter);
+
+// Apply strict limiting to admin/sensitive endpoints
+app.use('/api/scheduler/trigger', strictLimiter);
+app.use('/api/ai/', strictLimiter);
 
 // Clean query parameters middleware
 app.use((req, res, next) => {

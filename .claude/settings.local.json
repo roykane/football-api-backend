@@ -8,7 +8,10 @@
       "Bash(git commit -m \"$(cat <<''EOF''\nAdd AI prediction, articles, and scheduler APIs\n\n- Add AI prediction endpoint (POST /api/ai-predict) using Claude API\n- Add articles CRUD endpoints (GET /api/articles, GET /api/articles/:id, GET /api/articles/search)  \n- Add scheduler endpoints (GET /api/scheduler/status, POST /api/scheduler/trigger)\n- Add Article model with MongoDB schema\n- Add auto news generator service with RSS feed integration\n- Add news scheduler service with cron jobs\n- Install rss-parser dependency\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
       "Bash(git push origin main)",
       "Bash(git commit:*)",
-      "Bash(cd:*)"
+      "Bash(cd:*)",
+      "Bash(dig:*)",
+      "Bash(curl -I https://martech.bet)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": []
