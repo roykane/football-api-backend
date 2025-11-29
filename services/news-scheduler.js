@@ -11,7 +11,7 @@ const Article = require('../models/Article');
 // 0 3 * * * - Every day at 3AM
 // 0 8,14,20 * * * - At 8AM, 2PM, and 8PM every day
 
-const SCHEDULE_PATTERN = '0 */2 * * *'; // Every 2 hours
+const SCHEDULE_PATTERN = '0 */6 * * *'; // Every 6 hours
 const CLEANUP_PATTERN = '0 3 * * *'; // Every day at 3AM
 const MAX_ARTICLES_PER_RUN = 5; // Generate 5 articles per run
 const ARTICLE_RETENTION_DAYS = 10; // Keep articles for 10 days
@@ -64,7 +64,7 @@ function startNewsScheduler() {
   }
 
   console.log('\n🤖 ========== NEWS SCHEDULER STARTING ==========');
-  console.log(`📅 News Generation: ${SCHEDULE_PATTERN} (Every 2 hours)`);
+  console.log(`📅 News Generation: ${SCHEDULE_PATTERN} (Every 6 hours)`);
   console.log(`🧹 Cleanup Schedule: ${CLEANUP_PATTERN} (Every day at 3AM)`);
   console.log(`🎯 Articles per run: ${MAX_ARTICLES_PER_RUN}`);
   console.log(`📦 Retention: ${ARTICLE_RETENTION_DAYS} days`);
