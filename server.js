@@ -35,6 +35,8 @@ const allowedOrigins = [
   'https://www.martech.sbs',
   'https://martech.bet',
   'https://www.martech.bet',
+  'https://scoreline.io',
+  'https://www.scoreline.io',
   'http://localhost:3000',     // Local development
   'http://localhost:5173'      // Vite dev server
 ];
