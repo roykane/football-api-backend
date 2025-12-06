@@ -78,7 +78,17 @@ router.get('/', async (req, res) => {
       maxTier = parseInt(req.query['condition[tier][$lte]']);
     }
 
-    console.log('🏆 Fetching ALL competitions (no limits):', { page, limit, maxTier, search });
+    // Parse condition[slug] for filtering by slug
+    let slugFilter = null;
+    if (req.query['condition[slug]']) {
+      slugFilter = req.query['condition[slug]'];
+    }
+    // Also try nested object format if query parser is set to 'extended'
+    if (!slugFilter && req.query.condition && req.query.condition.slug) {
+      slugFilter = req.query.condition.slug;
+    }
+
+    console.log('🏆 Fetching ALL competitions (no limits):', { page, limit, maxTier, search, slugFilter });
 
     let competitions = [];
 
@@ -247,6 +257,12 @@ router.get('/', async (req, res) => {
         comp.name.toLowerCase().includes(searchLower) ||
         comp.country.name.toLowerCase().includes(searchLower)
       );
+    }
+
+    // Filter by slug (exact match)
+    if (slugFilter) {
+      filtered = filtered.filter(comp => comp.slug === slugFilter);
+      console.log(`🔍 Filtering by slug: ${slugFilter}, found ${filtered.length} matches`);
     }
 
     // Sort
