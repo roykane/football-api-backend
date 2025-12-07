@@ -42,54 +42,52 @@ ${matchData.homeTeam?.form || 'Không có dữ liệu'}
 ${matchData.awayTeam?.form || 'Không có dữ liệu'}
 
 **YÊU CẦU PHÂN TÍCH:**
+Hãy PHÂN TÍCH KỸ LƯỠNG dữ liệu phong độ và đưa ra dự đoán THỰC TẾ, KHÁCH QUAN.
+
 Trả về JSON với format chính xác sau (KHÔNG thêm markdown, chỉ trả JSON thuần):
 
 {
   "winProbability": {
-    "home": 45,
-    "draw": 30,
-    "away": 25
+    "home": <số từ 0-100, phân tích dựa vào phong độ thực tế>,
+    "draw": <số từ 0-100>,
+    "away": <số từ 0-100>
   },
   "predictedScore": {
-    "home": 2,
-    "away": 1
+    "home": <dự đoán số bàn thắng dựa vào phong độ ghi bàn>,
+    "away": <dự đoán số bàn thắng dựa vào phong độ ghi bàn>
   },
   "keyAnalysis": [
-    "Đội nhà có phong độ tốt hơn với 3/5 trận gần nhất thắng",
-    "Đội khách gặp khó khăn khi làm khách (1 thắng trong 5 trận)",
-    "Lịch sử đối đầu nghiêng về đội nhà",
-    "Đội nhà có lợi thế sân nhà"
+    "<phân tích chi tiết về phong độ gần đây>",
+    "<phân tích về khả năng ghi bàn/thủ môn>",
+    "<phân tích về lợi thế sân nhà/khách>",
+    "<phân tích về động lực, mục tiêu của từng đội>"
   ],
   "keyPlayers": [
     {
-      "name": "Tên cầu thủ nổi bật đội nhà",
-      "team": "home",
-      "position": "FW",
-      "reason": "Ghi 5 bàn trong 3 trận gần nhất"
-    },
-    {
-      "name": "Tên cầu thủ nổi bật đội khách",
-      "team": "away",
-      "position": "MF",
-      "reason": "Kiến tạo xuất sắc, 4 assists gần đây"
+      "name": "<tên cầu thủ nổi bật nếu có thông tin>",
+      "team": "home hoặc away",
+      "position": "FW/MF/DF/GK",
+      "reason": "<lý do dựa trên phong độ hoặc vị trí quan trọng>"
     }
   ],
   "teamComparison": {
-    "attack": { "home": 75, "away": 60 },
-    "defense": { "home": 70, "away": 65 },
-    "form": { "home": 80, "away": 55 },
-    "motivation": { "home": 70, "away": 60 }
+    "attack": { "home": <0-100>, "away": <0-100> },
+    "defense": { "home": <0-100>, "away": <0-100> },
+    "form": { "home": <0-100>, "away": <0-100> },
+    "motivation": { "home": <0-100>, "away": <0-100> }
   },
-  "summary": "Đội nhà có cơ hội chiến thắng cao hơn nhờ phong độ ổn định và lợi thế sân nhà."
+  "summary": "<tóm tắt dự đoán 1-2 câu>"
 }
 
-**LƯU Ý:**
+**LƯU Ý QUAN TRỌNG:**
+- PHẢI phân tích PHONG ĐỘ thực tế (W=thắng, D=hòa, L=thua) để đưa ra dự đoán
+- Tỷ số dự đoán PHẢI DỰA VÀO khả năng ghi bàn thực tế, KHÔNG copy example
 - Tất cả % trong winProbability phải cộng lại = 100
-- Chỉ trả JSON, KHÔNG có markdown code blocks
-- keyAnalysis: 4-5 điểm quan trọng
-- keyPlayers: 2-4 cầu thủ (dựa trên phong độ và vị trí quan trọng)
-- teamComparison: điểm từ 0-100 cho mỗi chỉ số
-- summary: 1 câu ngắn gọn, súc tích
+- Chỉ trả JSON thuần, KHÔNG có markdown code blocks
+- keyAnalysis: 4-5 điểm phân tích cụ thể
+- keyPlayers: 2-4 cầu thủ nếu có thể suy luận từ phong độ (hoặc để trống nếu không đủ dữ liệu)
+- teamComparison: điểm từ 0-100 cho mỗi chỉ số dựa vào phong độ
+- summary: 1-2 câu ngắn gọn, súc tích
 `;
 
     console.log(`[AI Prediction] ${matchData.homeTeam?.name} vs ${matchData.awayTeam?.name}`);
