@@ -62,14 +62,6 @@ Trả về JSON với format chính xác sau (KHÔNG thêm markdown, chỉ trả
     "<phân tích về lợi thế sân nhà/khách>",
     "<phân tích về động lực, mục tiêu của từng đội>"
   ],
-  "keyPlayers": [
-    {
-      "name": "<tên cầu thủ nổi bật nếu có thông tin>",
-      "team": "home hoặc away",
-      "position": "FW/MF/DF/GK",
-      "reason": "<lý do dựa trên phong độ hoặc vị trí quan trọng>"
-    }
-  ],
   "teamComparison": {
     "attack": { "home": <0-100>, "away": <0-100> },
     "defense": { "home": <0-100>, "away": <0-100> },
@@ -84,9 +76,8 @@ Trả về JSON với format chính xác sau (KHÔNG thêm markdown, chỉ trả
 - Tỷ số dự đoán PHẢI DỰA VÀO khả năng ghi bàn thực tế, KHÔNG copy example
 - Tất cả % trong winProbability phải cộng lại = 100
 - Chỉ trả JSON thuần, KHÔNG có markdown code blocks
-- keyAnalysis: 4-5 điểm phân tích cụ thể
-- keyPlayers: 2-4 cầu thủ nếu có thể suy luận từ phong độ (hoặc để trống nếu không đủ dữ liệu)
-- teamComparison: điểm từ 0-100 cho mỗi chỉ số dựa vào phong độ
+- keyAnalysis: 4-5 điểm phân tích cụ thể dựa vào phong độ
+- teamComparison: điểm từ 0-100 cho mỗi chỉ số dựa vào phong độ thực tế
 - summary: 1-2 câu ngắn gọn, súc tích
 `;
 
