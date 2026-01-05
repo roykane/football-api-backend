@@ -101,13 +101,36 @@ router.get('/', async (req, res) => {
 
       const footballApi = req.app.locals.footballApi;
       const currentYear = new Date().getFullYear();
+      // ✅ Lấy cả season hiện tại và năm trước để có đủ các giải châu Âu
+      // European leagues 2025-2026 season = 2025, not 2026
+      const seasons = [currentYear, currentYear - 1];
 
-      // Fetch all leagues from API-Sports for current season
-      const response = await footballApi.get('/leagues', {
-        params: {
-          season: currentYear
+      // Fetch leagues for both seasons
+      const allLeagues = [];
+      for (const season of seasons) {
+        console.log(`   Fetching leagues for season ${season}...`);
+        const response = await footballApi.get('/leagues', {
+          params: { season }
+        });
+        const leagues = response.data.response || [];
+        console.log(`   Found ${leagues.length} leagues for season ${season}`);
+        allLeagues.push(...leagues);
+      }
+
+      // Deduplicate by league id (keep the one with current=true or latest)
+      const leagueMap = new Map();
+      allLeagues.forEach(item => {
+        const existingItem = leagueMap.get(item.league.id);
+        const hasCurrent = item.seasons?.some(s => s.current);
+        const existingHasCurrent = existingItem?.seasons?.some(s => s.current);
+
+        // Keep if: no existing, or this one has current season, or existing doesn't have current
+        if (!existingItem || (hasCurrent && !existingHasCurrent)) {
+          leagueMap.set(item.league.id, item);
         }
       });
+
+      const response = { data: { response: Array.from(leagueMap.values()) } };
 
       const apiLeagues = response.data.response || [];
       console.log(`   Found ${apiLeagues.length} leagues from API-Sports`);
