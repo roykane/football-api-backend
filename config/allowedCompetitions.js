@@ -643,15 +643,39 @@ const ALLOWED_COMPETITIONS = [
   { name: 'FIFA U-20 World Cup', country: 'World', leagueId: 21, slug: 'u20-world-cup' },
   { name: 'FIFA U-17 World Cup', country: 'World', leagueId: 22, slug: 'u17-world-cup' },
   { name: 'FIFA Women\'s World Cup', country: 'World', leagueId: 14, slug: 'womens-world-cup' },
-  { name: 'Friendlies', country: 'World', leagueId: 10, slug: 'friendlies' },
 ];
 
 /**
- * Get all allowed league IDs as an array
+ * Excluded competitions - these will be filtered out from all displays
+ * These are typically friendlies, exhibition matches, or low-priority competitions
+ */
+const EXCLUDED_COMPETITIONS = [
+  { name: 'Friendlies', country: 'World', leagueId: 10, slug: 'friendlies' },
+  { name: 'Friendlies Clubs', country: 'World', leagueId: 667, slug: 'friendlies-clubs' },
+];
+
+/**
+ * Get all excluded league IDs as an array
+ */
+function getExcludedLeagueIds() {
+  return EXCLUDED_COMPETITIONS.map(comp => comp.leagueId);
+}
+
+/**
+ * Check if a league ID is excluded
+ */
+function isLeagueExcluded(leagueId) {
+  return EXCLUDED_COMPETITIONS.some(comp => comp.leagueId === leagueId);
+}
+
+/**
+ * Get all allowed league IDs as an array (excluding excluded leagues)
  */
 function getAllowedLeagueIds() {
   // Use Set to deduplicate (some leagues appear twice)
-  return [...new Set(ALLOWED_COMPETITIONS.map(comp => comp.leagueId))];
+  const excludedIds = getExcludedLeagueIds();
+  return [...new Set(ALLOWED_COMPETITIONS.map(comp => comp.leagueId))]
+    .filter(id => !excludedIds.includes(id));
 }
 
 /**
@@ -718,9 +742,12 @@ function getStats() {
 
 module.exports = {
   ALLOWED_COMPETITIONS,
+  EXCLUDED_COMPETITIONS,
   getAllowedLeagueIds,
   getAllowedLeagueIdsString,
   isLeagueAllowed,
+  isLeagueExcluded,
+  getExcludedLeagueIds,
   getCompetitionByLeagueId,
   getCompetitionBySlug,
   getHotLeagueIds,

@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const { POPULAR_LEAGUES, competitionsCache, isCompetitionsCacheValid, getFlagCode } = require('../data/leagues');
 const { getWinner } = require('../data/winners');
+const { isLeagueExcluded } = require('../config/allowedCompetitions');
 
 /**
  * Get current round for a league dynamically
@@ -97,43 +98,71 @@ router.get('/', async (req, res) => {
       console.log('✅ Using cached competitions');
       competitions = competitionsCache.data;
     } else {
-      console.log('🔄 Loading ALL competitions from API-Sports...');
+      console.log('🔄 Loading competitions...');
 
       const footballApi = req.app.locals.footballApi;
       const currentYear = new Date().getFullYear();
-      // ✅ Lấy cả season hiện tại và năm trước để có đủ các giải châu Âu
-      // European leagues 2025-2026 season = 2025, not 2026
-      const seasons = [currentYear, currentYear - 1];
+      let apiLeagues = [];
 
-      // Fetch leagues for both seasons
-      const allLeagues = [];
-      for (const season of seasons) {
-        console.log(`   Fetching leagues for season ${season}...`);
-        const response = await footballApi.get('/leagues', {
-          params: { season }
+      // Try to fetch from API-Sports, fallback to POPULAR_LEAGUES if it fails
+      try {
+        // European leagues 2025-2026 season = 2025, not 2026
+        const seasons = [currentYear, currentYear - 1];
+
+        // Fetch leagues for both seasons
+        const allLeagues = [];
+        for (const season of seasons) {
+          console.log(`   Fetching leagues for season ${season}...`);
+          const response = await footballApi.get('/leagues', {
+            params: { season }
+          });
+          const leagues = response.data.response || [];
+          console.log(`   Found ${leagues.length} leagues for season ${season}`);
+          allLeagues.push(...leagues);
+        }
+
+        // Deduplicate by league id (keep the one with current=true or latest)
+        const leagueMap = new Map();
+        allLeagues.forEach(item => {
+          const existingItem = leagueMap.get(item.league.id);
+          const hasCurrent = item.seasons?.some(s => s.current);
+          const existingHasCurrent = existingItem?.seasons?.some(s => s.current);
+
+          if (!existingItem || (hasCurrent && !existingHasCurrent)) {
+            leagueMap.set(item.league.id, item);
+          }
         });
-        const leagues = response.data.response || [];
-        console.log(`   Found ${leagues.length} leagues for season ${season}`);
-        allLeagues.push(...leagues);
+
+        apiLeagues = Array.from(leagueMap.values());
+        console.log(`   ✅ Found ${apiLeagues.length} leagues from API-Sports`);
+
+      } catch (apiError) {
+        console.log(`   ⚠️ API-Sports failed: ${apiError.message}`);
+        console.log(`   🔄 Using POPULAR_LEAGUES fallback (${POPULAR_LEAGUES.length} leagues)`);
+
+        // Create fallback data from POPULAR_LEAGUES
+        apiLeagues = POPULAR_LEAGUES.map(pl => ({
+          league: {
+            id: pl.id,
+            name: pl.name,
+            type: 'League',
+            logo: `https://media.api-sports.io/football/leagues/${pl.id}.png`
+          },
+          country: {
+            name: pl.country,
+            code: pl.country.substring(0, 2).toUpperCase(),
+            flag: `https://flagicons.lipis.dev/flags/4x3/${getFlagCode(pl.country)}.svg`
+          },
+          seasons: [{
+            year: currentYear,
+            start: `${currentYear}-08-01`,
+            end: `${currentYear + 1}-05-31`,
+            current: true
+          }]
+        }));
       }
 
-      // Deduplicate by league id (keep the one with current=true or latest)
-      const leagueMap = new Map();
-      allLeagues.forEach(item => {
-        const existingItem = leagueMap.get(item.league.id);
-        const hasCurrent = item.seasons?.some(s => s.current);
-        const existingHasCurrent = existingItem?.seasons?.some(s => s.current);
-
-        // Keep if: no existing, or this one has current season, or existing doesn't have current
-        if (!existingItem || (hasCurrent && !existingHasCurrent)) {
-          leagueMap.set(item.league.id, item);
-        }
-      });
-
-      const response = { data: { response: Array.from(leagueMap.values()) } };
-
-      const apiLeagues = response.data.response || [];
-      console.log(`   Found ${apiLeagues.length} leagues from API-Sports`);
+      console.log(`   Processing ${apiLeagues.length} leagues...`);
 
       // Transform API response to match our format
       competitions = apiLeagues.map((item, index) => {
@@ -269,6 +298,12 @@ router.get('/', async (req, res) => {
 
     // Apply filters
     let filtered = [...competitions];
+
+    // ✅ Filter out excluded competitions (e.g., Friendlies)
+    filtered = filtered.filter(comp => {
+      const compLeagueId = parseInt(comp._id.replace('league-', ''));
+      return !isLeagueExcluded(compLeagueId);
+    });
 
     if (maxTier !== null && !isNaN(maxTier)) {
       filtered = filtered.filter(comp => comp.tier <= maxTier);
@@ -685,6 +720,9 @@ router.get('/get-in-day', async (req, res) => {
     fixtures.forEach(fixture => {
       const leagueId = fixture.league?.id;
       if (!leagueId) return;
+
+      // ✅ Skip excluded leagues (e.g., Friendlies)
+      if (isLeagueExcluded(leagueId)) return;
 
       if (!leagueMap.has(leagueId)) {
         const countryName = fixture.league.country || 'Unknown';

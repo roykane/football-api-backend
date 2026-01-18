@@ -58,35 +58,42 @@ class MatchCacheWorker {
     // Initial fetch for all cache types
     await this.refreshLiveMatches();
     await this.refreshHotMatches();
-    await this.refreshHotScheduledOdds();  // NEW: Fetch scheduled matches from top 5 leagues
+    // ❌ DISABLED: refreshHotScheduledOdds - uses too many API calls (~25 calls per run)
+    // await this.refreshHotScheduledOdds();
     await this.refreshLiveScheduledMatches();
 
-    // Schedule periodic refreshes
-    // LIVE matches: Every 30 seconds (most dynamic)
+    // ============================================
+    // 🔧 OPTIMIZED INTERVALS - Save ~90% API quota
+    // Old: ~18,000 calls/day → New: ~1,500 calls/day
+    // ============================================
+
+    // LIVE matches: Every 2 minutes (was 30s)
     this.intervals.live = setInterval(async () => {
       await this.refreshLiveMatches();
-    }, 30000);
+    }, 120000); // 2 minutes
 
-    // HOT matches: Every 1 minute
-    this.intervals.hot = setInterval(async () => {
-      await this.refreshHotMatches();
-    }, 60000);
+    // ❌ DISABLED: HOT matches - only fetched on server start, no periodic refresh needed
+    // User will see cached data, frontend handles refresh on page load
+    // this.intervals.hot = setInterval(async () => {
+    //   await this.refreshHotMatches();
+    // }, 300000);
 
-    // HOT Scheduled Odds: Every 10 minutes (fetches from API-Sports with odds)
-    this.intervals.hotScheduledOdds = setInterval(async () => {
-      await this.refreshHotScheduledOdds();
-    }, 600000);
+    // ❌ DISABLED: HOT Scheduled Odds - uses ~25 API calls per run (odds for each fixture)
+    // this.intervals.hotScheduledOdds = setInterval(async () => {
+    //   await this.refreshHotScheduledOdds();
+    // }, 600000);
 
-    // LIVE + SCHEDULED matches: Every 5 minutes
+    // LIVE + SCHEDULED matches: Every 10 minutes (was 5 min)
     this.intervals.liveScheduled = setInterval(async () => {
       await this.refreshLiveScheduledMatches();
-    }, 300000);
+    }, 600000); // 10 minutes
 
-    console.log('✅ MatchCacheWorker started successfully');
-    console.log('   🔴 LIVE matches: refreshing every 30s');
-    console.log('   🔥 HOT matches: refreshing every 1min');
-    console.log('   🔥📅 HOT Scheduled Odds: refreshing every 10min');
-    console.log('   📅 LIVE+SCHEDULED: refreshing every 5min');
+    console.log('✅ MatchCacheWorker started successfully (OPTIMIZED MODE)');
+    console.log('   🔴 LIVE matches: refreshing every 2min (was 30s)');
+    console.log('   ❌ HOT matches: DISABLED periodic refresh (only on server start)');
+    console.log('   ❌ HOT Scheduled Odds: DISABLED (saved ~3,600 calls/day)');
+    console.log('   📅 LIVE+SCHEDULED: refreshing every 10min (was 5min)');
+    console.log('   💰 Estimated savings: ~90% API quota (~16,000 calls/day)');
   }
 
   /**

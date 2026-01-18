@@ -7,7 +7,7 @@ const express = require('express');
 const router = express.Router();
 const { transformToMatchFormat, transformOdds } = require('../utils/transformers');
 const { POPULAR_LEAGUES, getFlagCode } = require('../data/leagues');
-const { getAllowedLeagueIdsString, getAllowedLeagueIds, getHotLeagueIds } = require('../config/allowedCompetitions'); // OPTIMIZATION: League filtering
+const { getAllowedLeagueIdsString, getAllowedLeagueIds, getHotLeagueIds, isLeagueExcluded, getExcludedLeagueIds } = require('../config/allowedCompetitions'); // OPTIMIZATION: League filtering
 const oddsCache = require('../services/oddsCache'); // MongoDB cache service
 const matchCache = require('../services/matchCache'); // MongoDB match cache service
 const matchCacheService = require('../services/matchCacheService'); // MongoDB match cache service with cache-first strategy
@@ -358,6 +358,9 @@ async function fetchFixtures(footballApi, params, includeOdds = false, bookmaker
       const leagueId = fixture.league?.id;
       if (!leagueId) continue;
 
+      // ✅ Skip excluded leagues (e.g., Friendlies)
+      if (isLeagueExcluded(leagueId)) continue;
+
       // Create league group if not exists
       if (!groupedByLeague[leagueId]) {
         const leagueData = POPULAR_LEAGUES.find(l => l.id === leagueId) || {};
@@ -479,8 +482,11 @@ async function fetchFixtures(footballApi, params, includeOdds = false, bookmaker
 router.get('/all', async (req, res) => {
   try {
     const footballApi = req.app.locals.footballApi;
-    let { dateTime, status, offset = 0, limit = 30, league, competitionId, teamId, teamKeyword, seasonYear, groupByRound, sortByRound, hideFinished = 'false', round, roundRange } = req.query;
+    let { dateTime, status, offset = 0, limit = 30, league, competitionId, teamId, teamKeyword, seasonYear, groupByRound, sortByRound, hideFinished = 'false', round, roundRange, sortBy } = req.query;
     const { shouldIncludeOdds, bookmakerIds } = parseQueryParams(req.query);
+
+    // Parse sortBy array (e.g., sortBy[]=topTier&sortBy[]=oddFirst&sortBy[]=latest)
+    const sortByArray = Array.isArray(sortBy) ? sortBy : (sortBy ? [sortBy] : []);
 
     console.log(`   🎰 Odds config: shouldIncludeOdds=${shouldIncludeOdds}, bookmakerIds=[${bookmakerIds.join(',')}]`);
 
@@ -611,6 +617,20 @@ router.get('/all', async (req, res) => {
     // Previously filtered to only allowedLeagueIds, now showing all competitions
     console.log(`   ✅ Showing ALL leagues: ${competitions.length} competitions (no filter)`);
 
+    // ✅ Filter out excluded competitions (e.g., Friendlies)
+    const excludedLeagueIds = getExcludedLeagueIds();
+    if (excludedLeagueIds.length > 0) {
+      const beforeCount = competitions.length;
+      competitions = competitions.filter(comp => {
+        const compLeagueId = parseInt(comp._id.replace('league-', ''));
+        return !isLeagueExcluded(compLeagueId);
+      });
+      const hiddenCount = beforeCount - competitions.length;
+      if (hiddenCount > 0) {
+        console.log(`   ✂️  Excluded ${hiddenCount} friendlies/exhibition competitions, ${competitions.length} remaining`);
+      }
+    }
+
     // Apply filters
     if (leagueIdToFilter) {
       competitions = competitions.filter(comp => {
@@ -720,6 +740,52 @@ router.get('/all', async (req, res) => {
       console.log(`   ✂️  Filtered to rounds ${roundsToInclude.join(', ')}: ${totalMatchesAfter} matches (from ${totalMatchesBefore}), ${competitions.length} competitions remaining`);
     }
 
+    // ✅ SORTING: Apply sortBy parameter
+    // sortBy options: topTier (giải lớn), oddFirst (có kèo), latest (mới nhất)
+    if (sortByArray.length > 0) {
+      console.log(`   🔀 Sorting by: ${sortByArray.join(' → ')}`);
+
+      competitions.sort((a, b) => {
+        for (const sortKey of sortByArray) {
+          let comparison = 0;
+
+          switch (sortKey) {
+            case 'topTier':
+              // Tier thấp hơn = giải lớn hơn (tier 1 > tier 2 > tier 3...)
+              const tierA = a.tier || 999;
+              const tierB = b.tier || 999;
+              comparison = tierA - tierB;
+              break;
+
+            case 'oddFirst':
+              // Đếm số trận có odds trong mỗi competition
+              const oddsCountA = a.matches.filter(m => m.bookmakers && m.bookmakers.length > 0).length;
+              const oddsCountB = b.matches.filter(m => m.bookmakers && m.bookmakers.length > 0).length;
+              // Có nhiều odds hơn lên trước
+              comparison = oddsCountB - oddsCountA;
+              break;
+
+            case 'latest':
+              // Lấy thời gian trận sớm nhất trong competition
+              const getEarliestTime = (comp) => {
+                if (!comp.matches || comp.matches.length === 0) return Infinity;
+                const times = comp.matches.map(m => new Date(m.startTime || m.date || 0).getTime());
+                return Math.min(...times);
+              };
+              const timeA = getEarliestTime(a);
+              const timeB = getEarliestTime(b);
+              comparison = timeA - timeB; // Sớm hơn lên trước
+              break;
+          }
+
+          if (comparison !== 0) return comparison;
+        }
+        return 0;
+      });
+
+      console.log(`   ✅ Sorted ${competitions.length} competitions`);
+    }
+
     const { items, pagination } = paginateResults(competitions, offset, limit);
 
     // Group by rounds if requested
@@ -812,13 +878,15 @@ router.get('/live', async (req, res) => {
   try {
     const footballApi = req.app.locals.footballApi;
     const startTime = Date.now();
-    let { offset = 0, limit = 30, competitionId, teamKeyword } = req.query;
+    let { offset = 0, limit = 30, competitionId, teamKeyword, sortBy } = req.query;
     const { shouldIncludeOdds, bookmakerIds } = parseQueryParams(req.query);
 
+    // Parse sortBy array
+    const sortByArray = Array.isArray(sortBy) ? sortBy : (sortBy ? [sortBy] : []);
     limit = parseInt(limit) || 30;
 
     console.log('\n🔴 GET /api/matches/live (MongoDB cached)');
-    console.log(`   Params: competitionId=${competitionId}, teamKeyword=${teamKeyword}, includeOdds=${shouldIncludeOdds}, limit=${limit}`);
+    console.log(`   Params: competitionId=${competitionId}, teamKeyword=${teamKeyword}, includeOdds=${shouldIncludeOdds}, sortBy=${sortByArray.join('→')}, limit=${limit}`);
 
     // Define the fetch function that will be called on cache miss
     const fetchFn = async () => {
@@ -846,6 +914,20 @@ router.get('/live', async (req, res) => {
       // ❌ REMOVED LEAGUE FILTERING - Show ALL leagues
       // Previously filtered to only allowedLeagueIds, now showing all competitions
       console.log(`   ✅ Showing ALL leagues: ${competitions.length} competitions (no filter)`);
+
+      // ✅ Filter out excluded competitions (e.g., Friendlies)
+      const excludedIds = getExcludedLeagueIds();
+      if (excludedIds.length > 0) {
+        const beforeCount = competitions.length;
+        competitions = competitions.filter(comp => {
+          const compLeagueId = parseInt(comp._id.replace('league-', ''));
+          return !isLeagueExcluded(compLeagueId);
+        });
+        const hiddenCount = beforeCount - competitions.length;
+        if (hiddenCount > 0) {
+          console.log(`   ✂️  Excluded ${hiddenCount} friendlies/exhibition competitions, ${competitions.length} remaining`);
+        }
+      }
 
       if (leagueIdToFilter) {
         competitions = competitions.filter(comp => {
@@ -880,6 +962,12 @@ router.get('/live', async (req, res) => {
     // Apply filters to cached data if provided
     let competitions = cachedData.items || [];
 
+    // ✅ Filter out excluded competitions (e.g., Friendlies) from cached data
+    competitions = competitions.filter(comp => {
+      const compLeagueId = parseInt(comp._id.replace('league-', ''));
+      return !isLeagueExcluded(compLeagueId);
+    });
+
     if (competitionId) {
       const leagueIdToFilter = parseInt(competitionId.replace('league-', ''));
       competitions = competitions.filter(comp => {
@@ -898,6 +986,36 @@ router.get('/live', async (req, res) => {
         });
         return { ...comp, matches: filteredMatches };
       }).filter(comp => comp.matches.length > 0);
+    }
+
+    // ✅ SORTING: Apply sortBy parameter for live matches
+    if (sortByArray.length > 0) {
+      console.log(`   🔀 Sorting live by: ${sortByArray.join(' → ')}`);
+      competitions.sort((a, b) => {
+        for (const sortKey of sortByArray) {
+          let comparison = 0;
+          switch (sortKey) {
+            case 'topTier':
+              comparison = (a.tier || 999) - (b.tier || 999);
+              break;
+            case 'oddFirst':
+              const oddsCountA = a.matches.filter(m => m.bookmakers && m.bookmakers.length > 0).length;
+              const oddsCountB = b.matches.filter(m => m.bookmakers && m.bookmakers.length > 0).length;
+              comparison = oddsCountB - oddsCountA;
+              break;
+            case 'latest':
+              const getEarliestTime = (comp) => {
+                if (!comp.matches || comp.matches.length === 0) return Infinity;
+                const times = comp.matches.map(m => new Date(m.startTime || m.date || 0).getTime());
+                return Math.min(...times);
+              };
+              comparison = getEarliestTime(a) - getEarliestTime(b);
+              break;
+          }
+          if (comparison !== 0) return comparison;
+        }
+        return 0;
+      });
     }
 
     // Apply pagination
@@ -929,12 +1047,15 @@ router.get('/live', async (req, res) => {
 router.get('/hot', async (req, res) => {
   try {
     const footballApi = req.app.locals.footballApi;
-    const { offset = 0, limit = 10, hideWithoutOdds = 'false' } = req.query;
+    const { offset = 0, limit = 10, hideWithoutOdds = 'false', sortBy } = req.query;
     const { shouldIncludeOdds, bookmakerIds } = parseQueryParams(req.query);
     const shouldHideWithoutOdds = hideWithoutOdds === 'true';
 
+    // Parse sortBy array
+    const sortByArray = Array.isArray(sortBy) ? sortBy : (sortBy ? [sortBy] : []);
+
     console.log('\n🔥 GET /api/matches/hot (MongoDB optimized)');
-    console.log(`   🎰 Odds config: shouldIncludeOdds=${shouldIncludeOdds}, hideWithoutOdds=${shouldHideWithoutOdds}, bookmakerIds=[${bookmakerIds.join(',')}]`);
+    console.log(`   🎰 Odds config: shouldIncludeOdds=${shouldIncludeOdds}, hideWithoutOdds=${shouldHideWithoutOdds}, sortBy=${sortByArray.join('→')}, bookmakerIds=[${bookmakerIds.join(',')}]`);
     const startTime = Date.now();
 
     // OPTIMIZATION: Get TOP leagues (major European + international competitions)
@@ -1134,6 +1255,9 @@ router.get('/hot', async (req, res) => {
           const leagueId = fixture.league?.id;
           if (!leagueId) continue;
 
+          // ✅ Skip excluded leagues (e.g., Friendlies)
+          if (isLeagueExcluded(leagueId)) continue;
+
           if (!groupedByLeague[leagueId]) {
             const leagueData = POPULAR_LEAGUES.find(l => l.id === leagueId) || {};
             groupedByLeague[leagueId] = buildCompetitionObject(fixture, leagueData);
@@ -1278,6 +1402,36 @@ router.get('/hot', async (req, res) => {
           }
         }
 
+        // ✅ SORTING for fallback case
+        if (sortByArray.length > 0) {
+          console.log(`   🔀 Sorting hot (fallback) by: ${sortByArray.join(' → ')}`);
+          competitions.sort((a, b) => {
+            for (const sortKey of sortByArray) {
+              let comparison = 0;
+              switch (sortKey) {
+                case 'topTier':
+                  comparison = (a.tier || 999) - (b.tier || 999);
+                  break;
+                case 'oddFirst':
+                  const oddsCountA = a.matches.filter(m => m.bookmakers && m.bookmakers.length > 0).length;
+                  const oddsCountB = b.matches.filter(m => m.bookmakers && m.bookmakers.length > 0).length;
+                  comparison = oddsCountB - oddsCountA;
+                  break;
+                case 'latest':
+                  const getEarliestTime = (comp) => {
+                    if (!comp.matches || comp.matches.length === 0) return Infinity;
+                    const times = comp.matches.map(m => new Date(m.startTime || m.date || 0).getTime());
+                    return Math.min(...times);
+                  };
+                  comparison = getEarliestTime(a) - getEarliestTime(b);
+                  break;
+              }
+              if (comparison !== 0) return comparison;
+            }
+            return 0;
+          });
+        }
+
         const { items, pagination } = paginateResults(competitions, offset, limit);
 
         const duration = Date.now() - startTime;
@@ -1333,6 +1487,9 @@ router.get('/hot', async (req, res) => {
 
     for (const oddsDoc of cachedMatches) {
       const leagueId = oddsDoc.leagueId;
+
+      // ✅ Skip excluded leagues (e.g., Friendlies)
+      if (isLeagueExcluded(leagueId)) continue;
 
       if (!groupedByLeague[leagueId]) {
         const leagueData = POPULAR_LEAGUES.find(l => l.id === leagueId) || {};
@@ -1410,7 +1567,10 @@ router.get('/hot', async (req, res) => {
           }
         },
         events: [],
-        bookmakers: oddsDoc.bookmakers || []
+        // Transform bookmakers to ensure 'type' field exists for frontend compatibility
+        bookmakers: oddsDoc.bookmakers && oddsDoc.bookmakers.length > 0
+          ? transformOdds([{ bookmakers: oddsDoc.bookmakers }])
+          : []
       };
 
       groupedByLeague[leagueId].matches.push(match);
@@ -1482,6 +1642,36 @@ router.get('/hot', async (req, res) => {
       } else {
         console.log(`   ✅ All ${totalMatchesAfter} matches have odds from cache`);
       }
+    }
+
+    // ✅ SORTING for cached case
+    if (sortByArray.length > 0) {
+      console.log(`   🔀 Sorting hot (cache) by: ${sortByArray.join(' → ')}`);
+      competitions.sort((a, b) => {
+        for (const sortKey of sortByArray) {
+          let comparison = 0;
+          switch (sortKey) {
+            case 'topTier':
+              comparison = (a.tier || 999) - (b.tier || 999);
+              break;
+            case 'oddFirst':
+              const oddsCountA = a.matches.filter(m => m.bookmakers && m.bookmakers.length > 0).length;
+              const oddsCountB = b.matches.filter(m => m.bookmakers && m.bookmakers.length > 0).length;
+              comparison = oddsCountB - oddsCountA;
+              break;
+            case 'latest':
+              const getEarliestTime = (comp) => {
+                if (!comp.matches || comp.matches.length === 0) return Infinity;
+                const times = comp.matches.map(m => new Date(m.startTime || m.date || 0).getTime());
+                return Math.min(...times);
+              };
+              comparison = getEarliestTime(a) - getEarliestTime(b);
+              break;
+          }
+          if (comparison !== 0) return comparison;
+        }
+        return 0;
+      });
     }
 
     const { items, pagination } = paginateResults(competitions, offset, limit);
@@ -1846,12 +2036,14 @@ router.get('/:id/odds', async (req, res) => {
 
     if (cachedOdds && cachedOdds.bookmakers && cachedOdds.bookmakers.length > 0) {
       console.log(`   ✅ Found ${cachedOdds.bookmakers.length} bookmakers in MongoDB cache`);
+      // Transform cached data to add 'type' field for frontend compatibility
+      const transformedBookmakers = transformOdds([{ bookmakers: cachedOdds.bookmakers }]);
       return res.json({
         success: true,
         source: 'cache',
         data: {
           fixtureId,
-          bookmakers: cachedOdds.bookmakers,
+          bookmakers: transformedBookmakers,
           updatedAt: cachedOdds.updatedAt
         }
       });
@@ -1883,7 +2075,11 @@ router.get('/:id/odds', async (req, res) => {
 
     console.log(`   ✅ Found ${allBookmakers.length} bookmaker(s) from API-Sports`);
 
-    // Save/Update cache with all bookmakers
+    // Transform odds data to add 'type' field for frontend compatibility
+    const transformedBookmakers = transformOdds([{ bookmakers: allBookmakers }]);
+    console.log(`   🔄 Transformed ${transformedBookmakers.length} bookmakers with type field`);
+
+    // Save/Update cache with raw bookmakers (transform on read for consistency)
     try {
       if (cachedOdds) {
         await Odds.findOneAndUpdate(
@@ -1913,7 +2109,7 @@ router.get('/:id/odds', async (req, res) => {
       source: 'api',
       data: {
         fixtureId,
-        bookmakers: allBookmakers,
+        bookmakers: transformedBookmakers,
         updatedAt: new Date()
       }
     });

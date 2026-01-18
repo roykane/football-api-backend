@@ -14,10 +14,14 @@ const ALLOWED_BET_TYPES = [
   'Match Winner',                    // match_winner - Kèo 1X2
   'Asian Handicap',                  // asian_handicap - Kèo châu Á
   'Goals Over/Under',                // goals_over_under - Kèo tài xỉu
+  'Goals Over/Under First Half',     // goals_over_under_first_half - Kèo tài xỉu hiệp 1
   'Exact Score',                     // exact_score - Tỷ số chính xác
   'First Half Winner',               // first_half_winner - Thắng hiệp 1
   'Asian Handicap First Half',       // asian_handicap_first_half - Kèo châu Á hiệp 1
   'Odd/Even',                        // odd_even - Chẵn/Lẻ
+  'Corners Over Under',              // corners_over_under - Kèo tài xỉu phạt góc
+  'Corners Over Under First Half',   // corners_over_under_first_half - Kèo tài xỉu phạt góc hiệp 1
+  'Exact Score - First Half',        // exact_score_first_half - Tỷ số chính xác hiệp 1
 ];
 
 // Số lượng tối đa (không sử dụng nữa vì đã filter theo tên)
@@ -57,9 +61,12 @@ function mapBetType(betName) {
     'Asian Handicap First Half': 'asian_handicap_first_half',
     'Odd/Even': 'odd_even',
     'Exact Score': 'exact_score',
-    'Home/Away': 'home_away'
+    'Exact Score - First Half': 'exact_score_first_half',
+    'Home/Away': 'home_away',
+    'Corners Over Under': 'corners_over_under',
+    'Corners Over Under First Half': 'corners_over_under_first_half'
   };
-  
+
   return mapping[betName] || betName.toLowerCase().replace(/\s+/g, '_');
 }
 

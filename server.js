@@ -18,7 +18,8 @@ const aiRouter = require('./routes/ai');
 const articlesRouter = require('./routes/articles');
 const schedulerRouter = require('./routes/scheduler');
 const oddsSyncJob = require('./services/oddsSyncJob');
-const matchCacheWorker = require('./workers/matchCacheWorker');
+// ❌ DISABLED: Background worker consuming too much API quota (~18,000 calls/day)
+// const matchCacheWorker = require('./workers/matchCacheWorker');
 const connectArticlesDB = require('./config/database');
 const { startNewsScheduler } = require('./services/news-scheduler');
 
