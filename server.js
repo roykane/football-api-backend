@@ -17,7 +17,9 @@ const categoriesRouter = require('./routes/categories');
 const aiRouter = require('./routes/ai');
 const articlesRouter = require('./routes/articles');
 const schedulerRouter = require('./routes/scheduler');
+const soiKeoRouter = require('./routes/soiKeo');
 const oddsSyncJob = require('./services/oddsSyncJob');
+const { startSoiKeoScheduler } = require('./services/soi-keo-scheduler');
 // ❌ DISABLED: Background worker consuming too much API quota (~18,000 calls/day)
 // const matchCacheWorker = require('./workers/matchCacheWorker');
 const connectArticlesDB = require('./config/database');
@@ -178,6 +180,7 @@ app.use('/api/categories', categoriesRouter);
 app.use('/api', aiRouter);
 app.use('/api/articles', articlesRouter);
 app.use('/api/scheduler', schedulerRouter);
+app.use('/api/soi-keo', soiKeoRouter);
 
 // Legacy endpoints (chỉ giữ lại leagues và fixtures)
 app.get('/api/leagues', async (req, res) => {
@@ -250,7 +253,14 @@ app.use((req, res) => {
       'GET /api/articles/search',
       'GET /api/articles/:id',
       'GET /api/scheduler/status',
-      'POST /api/scheduler/trigger'
+      'POST /api/scheduler/trigger',
+      'GET /api/soi-keo',
+      'GET /api/soi-keo/upcoming',
+      'GET /api/soi-keo/hot',
+      'GET /api/soi-keo/fixture/:fixtureId',
+      'GET /api/soi-keo/:slug',
+      'POST /api/soi-keo/generate',
+      'GET /api/soi-keo/stats/overview'
     ]
   });
 });
@@ -376,6 +386,8 @@ connectMongoDB().then(async () => {
   try {
     await connectArticlesDB();
     startNewsScheduler();
+    // Start Soi Keo scheduler (5 articles/day)
+    startSoiKeoScheduler();
   } catch (err) {
     console.error('Failed to setup Articles DB and scheduler:', err);
   }
