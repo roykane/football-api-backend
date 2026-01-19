@@ -371,13 +371,15 @@ class SoiKeoGenerator {
     const matchTime = new Date(fixture.date).toLocaleString('vi-VN', {
       hour: '2-digit',
       minute: '2-digit',
-      hour12: false
+      hour12: false,
+      timeZone: 'Asia/Ho_Chi_Minh'
     });
 
     const matchDateStr = new Date(fixture.date).toLocaleDateString('vi-VN', {
       day: '2-digit',
       month: '2-digit',
-      year: 'numeric'
+      year: 'numeric',
+      timeZone: 'Asia/Ho_Chi_Minh'
     });
 
     let oddsInfo = 'Chưa có tỷ lệ kèo.';
