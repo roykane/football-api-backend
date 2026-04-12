@@ -28,6 +28,9 @@ const { startNewsScheduler } = require('./services/news-scheduler');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Trust Nginx reverse proxy (needed for rate limiting to get real client IP)
+app.set('trust proxy', 1);
+
 // ============================================
 // MIDDLEWARE
 // ============================================
