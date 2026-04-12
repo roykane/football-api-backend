@@ -20,8 +20,8 @@ const schedulerRouter = require('./routes/scheduler');
 const soiKeoRouter = require('./routes/soiKeo');
 const oddsSyncJob = require('./services/oddsSyncJob');
 const { startSoiKeoScheduler } = require('./services/soi-keo-scheduler');
-// ❌ DISABLED: Background worker consuming too much API quota (~18,000 calls/day)
-// const matchCacheWorker = require('./workers/matchCacheWorker');
+// ✅ RE-ENABLED: $29 Ultra plan = 75,000 calls/day, worker uses ~3,000-5,000
+const matchCacheWorker = require('./workers/matchCacheWorker');
 const connectArticlesDB = require('./config/database');
 const { startNewsScheduler } = require('./services/news-scheduler');
 
@@ -67,16 +67,15 @@ app.use(express.json());
 // Rate limiting configuration
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
+  max: 500, // 500 requests per 15 min per IP (enough for normal browsing)
   message: {
     success: false,
     error: 'Too many requests from this IP, please try again after 15 minutes.'
   },
-  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-  // Skip rate limiting for specific IPs (optional)
+  standardHeaders: true,
+  legacyHeaders: false,
   skip: (req) => {
-    const trustedIPs = ['127.0.0.1', '::1']; // Localhost
+    const trustedIPs = ['127.0.0.1', '::1'];
     return trustedIPs.includes(req.ip);
   }
 });
@@ -382,11 +381,12 @@ connectMongoDB().then(async () => {
     matchCacheWorker.start();
   }
 
-  // Connect to Articles database and start news scheduler
+  // Connect to Articles database and start schedulers
   try {
     await connectArticlesDB();
-    startNewsScheduler();
-    // Start Soi Keo scheduler (5 articles/day)
+    // DISABLED: News scheduler - nội dung AI không có data thật, tập trung cho soi kèo
+    // startNewsScheduler();
+    // Start Soi Keo scheduler (20 articles/day)
     startSoiKeoScheduler();
   } catch (err) {
     console.error('Failed to setup Articles DB and scheduler:', err);

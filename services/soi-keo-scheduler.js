@@ -1,7 +1,7 @@
 const cron = require('node-cron');
 const soiKeoGenerator = require('./soi-keo-generator');
 
-const MAX_ARTICLES_PER_DAY = 5;
+const MAX_ARTICLES_PER_DAY = 20;
 
 /**
  * Soi Kèo Article Generation Scheduler
@@ -63,11 +63,13 @@ function startSoiKeoScheduler() {
   console.log('\n🗓️  ========== SOI KÈO SCHEDULER ==========');
   console.log('📋 Schedule:');
   console.log('   - 06:00 AM: Morning generation');
+  console.log('   - 12:00 PM: Midday generation');
   console.log('   - 06:00 PM: Evening generation');
+  console.log('   - 10:00 PM: Night generation');
   console.log(`   - Daily limit: ${MAX_ARTICLES_PER_DAY} articles`);
   console.log('==========================================\n');
 
-  // Morning job: 6:00 AM every day
+  // Morning job: 6:00 AM
   cron.schedule('0 6 * * *', () => {
     console.log('\n🌅 [SoiKeoScheduler] Morning job triggered');
     runGenerationJob();
@@ -75,7 +77,15 @@ function startSoiKeoScheduler() {
     timezone: 'Asia/Ho_Chi_Minh'
   });
 
-  // Evening job: 6:00 PM every day
+  // Midday job: 12:00 PM
+  cron.schedule('0 12 * * *', () => {
+    console.log('\n☀️ [SoiKeoScheduler] Midday job triggered');
+    runGenerationJob();
+  }, {
+    timezone: 'Asia/Ho_Chi_Minh'
+  });
+
+  // Evening job: 6:00 PM
   cron.schedule('0 18 * * *', () => {
     console.log('\n🌆 [SoiKeoScheduler] Evening job triggered');
     runGenerationJob();
@@ -83,16 +93,21 @@ function startSoiKeoScheduler() {
     timezone: 'Asia/Ho_Chi_Minh'
   });
 
+  // Night job: 10:00 PM
+  cron.schedule('0 22 * * *', () => {
+    console.log('\n🌙 [SoiKeoScheduler] Night job triggered');
+    runGenerationJob();
+  }, {
+    timezone: 'Asia/Ho_Chi_Minh'
+  });
+
   console.log('✅ Soi Kèo scheduler started');
 
-  // Run initial generation after 1 minute of server start (optional)
-  // Uncomment if you want auto-generation on server start
-  /*
+  // Run initial generation 2 minutes after server start
   setTimeout(() => {
     console.log('\n🚀 [SoiKeoScheduler] Running initial generation...');
     runGenerationJob();
-  }, 60000);
-  */
+  }, 120000);
 }
 
 /**
@@ -105,7 +120,7 @@ function getSchedulerStatus() {
     stats: { ...stats },
     config: {
       maxArticlesPerDay: MAX_ARTICLES_PER_DAY,
-      schedules: ['06:00 AM', '06:00 PM'],
+      schedules: ['06:00 AM', '12:00 PM', '06:00 PM', '10:00 PM'],
       timezone: 'Asia/Ho_Chi_Minh'
     }
   };
