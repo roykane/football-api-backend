@@ -163,13 +163,16 @@ app.locals.footballApi = footballApi;
 
 // Health check
 app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
+  res.json({
+    status: 'OK',
     message: 'Server is running',
     timestamp: new Date().toISOString(),
     port: PORT
   });
 });
+
+// Public SEO endpoints (sitemap.xml, robots.txt) - no API key required
+app.use('/', require('./routes/sitemap'));
 
 // Mount routers - ✅ Thứ tự quan trọng!
 app.use('/api/competitions', competitionsRouter);
