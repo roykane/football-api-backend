@@ -630,10 +630,10 @@ LƯU Ý QUAN TRỌNG:
    * Main generation process - generates up to maxArticles per run
    * @param {number} maxArticles - Maximum articles to generate (default: 5)
    */
-  async run(maxArticles = 5) {
+  async run(maxPerRun = 5, dailyLimit = 20) {
     console.log('\n🤖 ========== SOI KÈO GENERATION START ==========');
     console.log(`📅 Time: ${new Date().toLocaleString('vi-VN')}`);
-    console.log(`🎯 Target: ${maxArticles} articles`);
+    console.log(`🎯 Target: ${maxPerRun} articles this run (daily limit: ${dailyLimit})`);
 
     const startTime = Date.now();
     let generated = 0;
@@ -647,14 +647,14 @@ LƯU Ý QUAN TRỌNG:
 
       // Check how many articles generated today
       const todayCount = await SoiKeoArticle.countToday();
-      console.log(`📊 Articles generated today: ${todayCount}`);
+      console.log(`📊 Articles generated today: ${todayCount}/${dailyLimit}`);
 
-      if (todayCount >= maxArticles) {
-        console.log(`⏭️  Daily limit reached (${maxArticles}), skipping generation`);
+      if (todayCount >= dailyLimit) {
+        console.log(`⏭️  Daily limit reached (${dailyLimit}), skipping generation`);
         return { success: true, generated: 0, message: 'Daily limit reached' };
       }
 
-      const remainingSlots = maxArticles - todayCount;
+      const remainingSlots = Math.min(maxPerRun, dailyLimit - todayCount);
       console.log(`🎯 Remaining slots for today: ${remainingSlots}`);
 
       // Get hot matches

@@ -2,6 +2,7 @@ const cron = require('node-cron');
 const soiKeoGenerator = require('./soi-keo-generator');
 
 const MAX_ARTICLES_PER_DAY = 20;
+const MAX_ARTICLES_PER_RUN = 5;
 
 /**
  * Soi Kèo Article Generation Scheduler
@@ -37,7 +38,7 @@ async function runGenerationJob() {
   console.log(`📅 Time: ${new Date().toLocaleString('vi-VN')}`);
 
   try {
-    const result = await soiKeoGenerator.run(MAX_ARTICLES_PER_DAY);
+    const result = await soiKeoGenerator.run(MAX_ARTICLES_PER_RUN, MAX_ARTICLES_PER_DAY);
 
     stats.totalRuns++;
     stats.totalGenerated += result.generated || 0;
@@ -129,7 +130,7 @@ function getSchedulerStatus() {
 /**
  * Manual trigger (for API endpoint)
  */
-async function triggerManualRun(maxArticles = MAX_ARTICLES_PER_DAY) {
+async function triggerManualRun(maxArticles = MAX_ARTICLES_PER_RUN) {
   if (isRunning) {
     return { success: false, message: 'Job already running' };
   }
@@ -137,7 +138,7 @@ async function triggerManualRun(maxArticles = MAX_ARTICLES_PER_DAY) {
   console.log('\n🔧 [SoiKeoScheduler] Manual trigger...');
 
   try {
-    const result = await soiKeoGenerator.run(maxArticles);
+    const result = await soiKeoGenerator.run(maxArticles, MAX_ARTICLES_PER_DAY);
     stats.totalRuns++;
     stats.totalGenerated += result.generated || 0;
     lastRun = new Date();
