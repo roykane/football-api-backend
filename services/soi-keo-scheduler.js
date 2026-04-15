@@ -1,8 +1,8 @@
 const cron = require('node-cron');
 const soiKeoGenerator = require('./soi-keo-generator');
 
-const MAX_ARTICLES_PER_DAY = 20;
-const MAX_ARTICLES_PER_RUN = 5;
+const MAX_ARTICLES_PER_DAY = 50;
+const MAX_ARTICLES_PER_RUN = 12;
 
 /**
  * Soi Kèo Article Generation Scheduler
@@ -62,41 +62,15 @@ async function runGenerationJob() {
  */
 function startSoiKeoScheduler() {
   console.log('\n🗓️  ========== SOI KÈO SCHEDULER ==========');
-  console.log('📋 Schedule:');
-  console.log('   - 06:00 AM: Morning generation');
-  console.log('   - 12:00 PM: Midday generation');
-  console.log('   - 06:00 PM: Evening generation');
-  console.log('   - 10:00 PM: Night generation');
+  console.log('📋 Schedule: every 4 hours (6 runs/day)');
   console.log(`   - Daily limit: ${MAX_ARTICLES_PER_DAY} articles`);
+  console.log(`   - Per run: ${MAX_ARTICLES_PER_RUN} articles`);
   console.log('==========================================\n');
 
-  // Morning job: 6:00 AM
-  cron.schedule('0 6 * * *', () => {
-    console.log('\n🌅 [SoiKeoScheduler] Morning job triggered');
-    runGenerationJob();
-  }, {
-    timezone: 'Asia/Ho_Chi_Minh'
-  });
-
-  // Midday job: 12:00 PM
-  cron.schedule('0 12 * * *', () => {
-    console.log('\n☀️ [SoiKeoScheduler] Midday job triggered');
-    runGenerationJob();
-  }, {
-    timezone: 'Asia/Ho_Chi_Minh'
-  });
-
-  // Evening job: 6:00 PM
-  cron.schedule('0 18 * * *', () => {
-    console.log('\n🌆 [SoiKeoScheduler] Evening job triggered');
-    runGenerationJob();
-  }, {
-    timezone: 'Asia/Ho_Chi_Minh'
-  });
-
-  // Night job: 10:00 PM
-  cron.schedule('0 22 * * *', () => {
-    console.log('\n🌙 [SoiKeoScheduler] Night job triggered');
+  // Run every 4 hours: 0, 4, 8, 12, 16, 20 (6 times/day)
+  cron.schedule('0 */4 * * *', () => {
+    const hour = new Date().getHours();
+    console.log(`\n⏰ [SoiKeoScheduler] Job triggered at ${hour}:00`);
     runGenerationJob();
   }, {
     timezone: 'Asia/Ho_Chi_Minh'
@@ -121,7 +95,7 @@ function getSchedulerStatus() {
     stats: { ...stats },
     config: {
       maxArticlesPerDay: MAX_ARTICLES_PER_DAY,
-      schedules: ['06:00 AM', '12:00 PM', '06:00 PM', '10:00 PM'],
+      schedules: ['Every 4 hours: 00, 04, 08, 12, 16, 20'],
       timezone: 'Asia/Ho_Chi_Minh'
     }
   };
