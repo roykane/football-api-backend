@@ -275,7 +275,7 @@ class SoiKeoGenerator {
       const response = await this.footballApi.get('/fixtures/headtohead', {
         params: {
           h2h: `${homeTeamId}-${awayTeamId}`,
-          last: 5
+          last: 10
         }
       });
 
@@ -285,15 +285,16 @@ class SoiKeoGenerator {
         return 'Không có dữ liệu đối đầu.';
       }
 
-      let homeWins = 0;
-      let draws = 0;
-      let awayWins = 0;
+      let homeWins = 0, draws = 0, awayWins = 0;
+      let totalGoals = 0, over25 = 0, bttsCount = 0;
       const results = [];
+      const dateResults = [];
 
       for (const f of fixtures) {
-        const homeGoals = f.goals.home;
-        const awayGoals = f.goals.away;
+        const homeGoals = f.goals.home || 0;
+        const awayGoals = f.goals.away || 0;
         const isHomeTeamFirst = f.teams.home.id === homeTeamId;
+        const year = new Date(f.fixture.date).getFullYear();
 
         const score = isHomeTeamFirst
           ? `${homeGoals}-${awayGoals}`
@@ -308,10 +309,18 @@ class SoiKeoGenerator {
           awayWins++;
         }
 
+        totalGoals += homeGoals + awayGoals;
+        if (homeGoals + awayGoals > 2.5) over25++;
+        if (homeGoals > 0 && awayGoals > 0) bttsCount++;
+
         results.push(score);
+        dateResults.push(`${year}: ${score}`);
       }
 
-      return `5 trận gần nhất: ${homeWins} thắng - ${draws} hòa - ${awayWins} thua. Các tỷ số: ${results.join(', ')}`;
+      const total = fixtures.length;
+      const avgGoals = (totalGoals / total).toFixed(2);
+
+      return `${total} lần đối đầu gần nhất: ${homeWins} thắng - ${draws} hòa - ${awayWins} thua | Trung bình ${avgGoals} bàn/trận | Tài 2.5: ${over25}/${total} | Cả 2 đội ghi bàn: ${bttsCount}/${total}\nChi tiết: ${dateResults.join(' | ')}`;
 
     } catch (error) {
       console.error(`   [H2H] Error:`, error.message);
@@ -320,16 +329,14 @@ class SoiKeoGenerator {
   }
 
   /**
-   * Get recent form for a team
-   * @param {number} teamId - Team ID
-   * @returns {Promise<string>} - Form summary (W/D/L)
+   * Get recent form for a team (last 10 matches with details)
    */
   async getTeamForm(teamId) {
     try {
       const response = await this.footballApi.get('/fixtures', {
         params: {
           team: teamId,
-          last: 5,
+          last: 10,
           status: 'FT'
         }
       });
@@ -340,21 +347,37 @@ class SoiKeoGenerator {
         return 'Không có dữ liệu.';
       }
 
-      const form = fixtures.map(f => {
+      let wins = 0, draws = 0, losses = 0;
+      let goalsFor = 0, goalsAgainst = 0;
+      let cleanSheets = 0, over25 = 0;
+      const matchDetails = [];
+      const form = [];
+
+      for (const f of fixtures) {
         const isHome = f.teams.home.id === teamId;
         const teamGoals = isHome ? f.goals.home : f.goals.away;
         const oppGoals = isHome ? f.goals.away : f.goals.home;
+        const oppName = isHome ? f.teams.away.name : f.teams.home.name;
 
-        if (teamGoals > oppGoals) return 'W';
-        if (teamGoals < oppGoals) return 'L';
-        return 'D';
-      });
+        goalsFor += teamGoals || 0;
+        goalsAgainst += oppGoals || 0;
+        if (oppGoals === 0) cleanSheets++;
+        if ((teamGoals || 0) + (oppGoals || 0) > 2.5) over25++;
 
-      const wins = form.filter(f => f === 'W').length;
-      const draws = form.filter(f => f === 'D').length;
-      const losses = form.filter(f => f === 'L').length;
+        let result;
+        if (teamGoals > oppGoals) { result = 'W'; wins++; }
+        else if (teamGoals < oppGoals) { result = 'L'; losses++; }
+        else { result = 'D'; draws++; }
 
-      return `${form.join('')} (${wins}W ${draws}D ${losses}L)`;
+        form.push(result);
+        matchDetails.push(`${isHome ? 'vs' : '@'} ${oppName}: ${teamGoals}-${oppGoals} (${result})`);
+      }
+
+      const total = fixtures.length;
+      const avgFor = (goalsFor / total).toFixed(2);
+      const avgAgainst = (goalsAgainst / total).toFixed(2);
+
+      return `${form.join('')} (${wins}W ${draws}D ${losses}L) | Bàn thắng: ${goalsFor} (${avgFor}/trận) | Thủng lưới: ${goalsAgainst} (${avgAgainst}/trận) | Giữ sạch lưới: ${cleanSheets}/${total} | Tài 2.5: ${over25}/${total}\nChi tiết 10 trận: ${matchDetails.slice(0, 10).join(' | ')}`;
 
     } catch (error) {
       console.error(`   [Form] Error:`, error.message);
@@ -390,7 +413,7 @@ class SoiKeoGenerator {
 - Tài/Xỉu: Mốc 2.5 - Tài ${oddsData.overUnder.over || '-'} | Xỉu ${oddsData.overUnder.under || '-'}`;
     }
 
-    return `Bạn là chuyên gia phân tích bóng đá chuyên nghiệp tại Việt Nam, viết bài soi kèo theo phong cách trang giovang.org.
+    return `Bạn là chuyên gia phân tích bóng đá hàng đầu Việt Nam, viết bài soi kèo SEO chất lượng cao cho website thể thao.
 
 **THÔNG TIN TRẬN ĐẤU:**
 - Trận: ${teams.home.name} vs ${teams.away.name}
@@ -401,69 +424,76 @@ class SoiKeoGenerator {
 **TỶ LỆ KÈO HIỆN TẠI:**
 ${oddsInfo}
 
-**LỊCH SỬ ĐỐI ĐẦU (H2H):**
+**LỊCH SỬ ĐỐI ĐẦU (H2H 10 trận):**
 ${h2hData}
 
-**PHONG ĐỘ 5 TRẬN GẦN NHẤT:**
+**PHONG ĐỘ 10 TRẬN GẦN NHẤT:**
 - ${teams.home.name}: ${homeForm}
 - ${teams.away.name}: ${awayForm}
 
-Viết bài soi kèo CHUYÊN SÂU theo cấu trúc sau (tiếng Việt, giọng văn chuyên nghiệp như nhà phân tích):
+Viết bài soi kèo DÀI 2500-3000 TỪ, SEO-friendly, giọng văn chuyên gia, chia thành các phần:
 
-1. **introduction**: Giới thiệu trận đấu, vòng đấu, tầm quan trọng, bối cảnh hai đội (3-4 câu chi tiết)
+1. **introduction** (200-300 từ): Giới thiệu trận đấu, vòng đấu, tầm quan trọng với mùa giải, bối cảnh lịch sử đối đầu, lý do trận đấu này đáng chú ý. Keyword chính: "soi kèo ${teams.home.name} vs ${teams.away.name}", "nhận định ${teams.home.name}", "dự đoán tỷ số".
 
-2. **teamAnalysis**: Phân tích CHI TIẾT từng đội:
-   - Đội nhà: Vị trí BXH hiện tại, điểm số, phong độ sân nhà, điểm mạnh/yếu, cầu thủ quan trọng
-   - Đội khách: Vị trí BXH, thành tích sân khách, phong độ gần đây, điểm mạnh/yếu
-   (Mỗi đội 4-5 câu, dùng **bold** cho tên đội)
+2. **teamAnalysis** (600-800 từ): Phân tích CỰC CHI TIẾT từng đội:
+   - Đội nhà **${teams.home.name}**: Vị trí BXH hiện tại (ước lượng), điểm số, phong độ sân nhà (dựa trên form 10 trận), điểm mạnh (tấn công/phòng ngự), điểm yếu, lối chơi, cầu thủ chủ chốt (nếu bạn biết), xu hướng gần đây
+   - Đội khách **${teams.away.name}**: Tương tự, nhấn mạnh thành tích sân khách, khả năng thích nghi
+   (Mỗi đội 300-400 từ, chia nhiều đoạn, dùng **bold** cho tên đội/cầu thủ)
 
-3. **h2hHistory**: Phân tích lịch sử đối đầu: số trận thắng/hòa/thua, xu hướng ghi bàn, kết quả gần nhất (3-4 câu)
+3. **h2hHistory** (300-400 từ): Phân tích DÀI về lịch sử đối đầu:
+   - Tổng quan 10 trận gần nhất (thắng/hòa/thua)
+   - Xu hướng ghi bàn (trung bình, Tài/Xỉu, cả 2 ghi bàn)
+   - Phân tích các trận gần nhất cụ thể
+   - So sánh với phong độ hiện tại
 
-4. **formAnalysis**: Đánh giá phong độ: chuỗi trận gần đây, khả năng ghi bàn, thủng lưới, xu hướng Tài/Xỉu (3-4 câu)
+4. **formAnalysis** (400-500 từ): Đánh giá phong độ SÂU:
+   - Phân tích 10 trận gần nhất từng đội với số liệu cụ thể
+   - Khả năng tấn công (bàn thắng/trận), khả năng phòng ngự (thủng lưới/trận)
+   - Chuỗi thắng/thua/bất bại
+   - Xu hướng Tài/Xỉu của từng đội
+   - So sánh trực tiếp phong độ 2 đội
 
-5. **oddsAnalysis**: Phân tích TỶ LỆ KÈO chi tiết:
-   - Nhận định Kèo Châu Á (handicap): đội nào được chấp, có hợp lý không
-   - Nhận định Kèo Châu Âu (1X2): đội nào được đánh giá cao hơn
-   - Nhận định Tài/Xỉu: mốc 2.5 có hợp lý không, xu hướng bàn thắng
-   (5-6 câu chi tiết)
+5. **oddsAnalysis** (400-500 từ): Phân tích TỶ LỆ KÈO chi tiết:
+   - Kèo Châu Á (handicap): Ý nghĩa của line, bên nào đang được đánh giá cao, có hợp lý không
+   - Kèo Châu Âu (1X2): So sánh odds 3 cửa, xác suất ngầm
+   - Tài/Xỉu 2.5: Dựa vào xu hướng H2H và form để phán đoán
+   - Cảnh báo bẫy kèo, các yếu tố ảnh hưởng
 
-6. **prediction**: Dự đoán kết quả:
-   - Tỷ số dự đoán cụ thể DỰA TRÊN phân tích ở trên (có thể là 1-0, 2-0, 1-1, 0-0, 2-2, 3-1, 0-1, 1-2, v.v. - KHÔNG luôn chọn 2-1)
-   - Tỷ số phải PHÙ HỢP với dự đoán Tài/Xỉu (nếu chọn Xỉu thì không nên dự đoán nhiều bàn)
-   - Lý do ngắn gọn cho dự đoán dựa trên phong độ, H2H, tỷ lệ kèo
-   (2-3 câu)
+6. **prediction** (200-300 từ): Dự đoán DÀI:
+   - Tỷ số dự đoán cụ thể DỰA TRÊN phân tích (ĐA DẠNG: 1-0, 2-0, 1-1, 0-0, 2-2, 3-1, 0-1, 1-2, 2-1 tùy case)
+   - Lý do dự đoán, các kịch bản có thể xảy ra
+   - Tỷ số phải PHÙ HỢP với Tài/Xỉu đã nhận định
 
-7. **bettingTips**: Lời khuyên cược RÕ RÀNG (dạng bullet points):
-   - Kèo Châu Á: [lựa chọn cụ thể]
-   - Kèo 1X2: [lựa chọn cụ thể]
-   - Tài/Xỉu: [Tài hoặc Xỉu + mốc]
-   - Tỷ số dự đoán: [tỷ số phù hợp với phân tích, KHÔNG mặc định 2-1]
+7. **bettingTips** (150-200 từ): Lời khuyên cược RÕ RÀNG:
+   - Kèo Châu Á: [lựa chọn + lý do ngắn]
+   - Kèo 1X2: [lựa chọn + lý do]
+   - Tài/Xỉu 2.5: [Tài/Xỉu + lý do]
+   - Tỷ số dự đoán: [X-X]
+   - Thẻ vàng/phạt góc (nếu có thể dự đoán)
 
 Format JSON trả về:
 {
-  "title": "Soi kèo ${teams.home.name} vs ${teams.away.name} ${matchTime} ngày ${matchDateStr}",
-  "excerpt": "[Mô tả hấp dẫn 2 câu về trận đấu và dự đoán chính]",
-  "introduction": "[nội dung]",
-  "teamAnalysis": "[nội dung với **bold** cho tên đội]",
-  "h2hHistory": "[nội dung]",
-  "formAnalysis": "[nội dung]",
-  "oddsAnalysis": "[nội dung chi tiết về từng loại kèo]",
-  "prediction": "[nội dung với tỷ số cụ thể]",
+  "title": "Soi kèo ${teams.home.name} vs ${teams.away.name} ${matchTime} ngày ${matchDateStr} - ${league.name}",
+  "excerpt": "[150-160 ký tự - SEO meta description - hấp dẫn, chứa keyword chính]",
+  "introduction": "[200-300 từ]",
+  "teamAnalysis": "[600-800 từ với **bold** tên đội]",
+  "h2hHistory": "[300-400 từ]",
+  "formAnalysis": "[400-500 từ]",
+  "oddsAnalysis": "[400-500 từ]",
+  "prediction": "[200-300 từ]",
   "bettingTips": "- Kèo Châu Á: [tip]\\n- Kèo 1X2: [tip]\\n- Tài/Xỉu: [tip]\\n- Tỷ số: [X-X]",
-  "tags": ["${teams.home.name}", "${teams.away.name}", "${league.name}", "soi kèo", "nhận định", "tỷ lệ kèo"]
+  "tags": ["${teams.home.name}", "${teams.away.name}", "${league.name}", "soi kèo ${teams.home.name}", "nhận định ${teams.away.name}", "tỷ lệ kèo", "dự đoán bóng đá"]
 }
 
-LƯU Ý QUAN TRỌNG:
-- Viết tiếng Việt chuẩn, văn phong chuyên nghiệp như chuyên gia
-- KHÔNG bịa đặt thông tin chấn thương cầu thủ
-- Dựa vào tỷ lệ kèo thực tế để phân tích
-- Betting tips phải CỤ THỂ, RÕ RÀNG (không mơ hồ)
-- Mỗi phần phải ĐỦ DÀI và CHI TIẾT
-- TỶ SỐ DỰ ĐOÁN phải ĐA DẠNG dựa trên phân tích - KHÔNG lặp lại 2-1 cho mọi trận
-- Nếu phong độ hai đội tương đương → cân nhắc hòa (1-1, 0-0, 2-2)
-- Nếu đội nhà mạnh hơn nhiều → 2-0, 3-0, 3-1
-- Nếu đội khách mạnh hơn → 0-1, 1-2, 0-2
-- Trả về ĐÚNG format JSON, không có ký tự đặc biệt`;
+LƯU Ý SEO:
+- Nhắc lại keyword chính "soi kèo ${teams.home.name} vs ${teams.away.name}" 3-5 lần tự nhiên trong bài
+- Dùng sub-heading **bold** để break content thành nhiều đoạn ngắn (dễ đọc, SEO tốt)
+- Tên đội ở dạng **bold** khi lần đầu xuất hiện trong mỗi phần
+- Excerpt phải chứa keyword + số (vd: "Dự đoán tỷ số 2-1...")
+- TỔNG BÀI VIẾT 2500-3000 TỪ
+- Tỷ số dự đoán ĐA DẠNG - không mặc định 2-1
+- KHÔNG bịa chấn thương cầu thủ, chỉ dùng kiến thức chung
+- Trả về ĐÚNG JSON format, không ký tự đặc biệt`;
   }
 
   /**
@@ -484,7 +514,7 @@ LƯU Ý QUAN TRỌNG:
         },
         body: JSON.stringify({
           model: 'claude-haiku-4-5-20251001',
-          max_tokens: 3000,
+          max_tokens: 8000,
           messages: [{ role: 'user', content: prompt }]
         }),
       });
