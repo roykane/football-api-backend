@@ -834,12 +834,17 @@ router.get('/ket-qua/:dateSlug', async (req, res) => {
     let fixtures = getCached(cacheKey, 30 * 60 * 1000); // 30 minutes
 
     if (!fixtures) {
-      const data = await apiSportsGet('/fixtures', {
-        date: apiDate,
-        status: 'FT',
-      });
-      fixtures = data.response || [];
-      setCache(cacheKey, fixtures);
+      try {
+        const data = await apiSportsGet('/fixtures', {
+          date: apiDate,
+          status: 'FT',
+        });
+        fixtures = data.response || [];
+        setCache(cacheKey, fixtures);
+      } catch (apiErr) {
+        console.error('[SEO Content] API-Sports error for results:', apiErr.message);
+        fixtures = [];
+      }
     }
 
     const url = `${SITE_URL}/ket-qua/${req.params.dateSlug}`;
