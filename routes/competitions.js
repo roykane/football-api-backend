@@ -369,7 +369,7 @@ router.get('/', async (req, res) => {
 /**
  * GET /api/competitions/:id/archives
  * Get past seasons/archives for a competition
- * Matches format: https://api.1gom.kim/competitions/{id}/archives
+ * Matches format: https://api.martech.sbs/competitions/{id}/archives
  */
 router.get('/:id/archives', async (req, res) => {
   try {

@@ -174,6 +174,9 @@ app.get('/health', (req, res) => {
 // Public SEO endpoints (sitemap.xml, robots.txt) - no API key required
 app.use('/', require('./routes/sitemap'));
 
+// SEO: Server-rendered HTML pages for search engine crawlers
+app.use('/', require('./routes/seoPages'));
+
 // Mount routers - ✅ Thứ tự quan trọng!
 app.use('/api/competitions', competitionsRouter);
 app.use('/api/countries', countriesRouter);
