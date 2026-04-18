@@ -433,7 +433,7 @@ ${h2hData}
 
 Viết bài soi kèo DÀI 2500-3000 TỪ, SEO-friendly, giọng văn chuyên gia, chia thành các phần:
 
-1. **introduction** (200-300 từ): Giới thiệu trận đấu, vòng đấu, tầm quan trọng với mùa giải, bối cảnh lịch sử đối đầu, lý do trận đấu này đáng chú ý. Keyword chính: "soi kèo ${teams.home.name} vs ${teams.away.name}", "nhận định ${teams.home.name}", "dự đoán tỷ số".
+1. **introduction** (200-300 từ): Giới thiệu trận đấu, vòng đấu, tầm quan trọng với mùa giải, bối cảnh lịch sử đối đầu, lý do trận đấu này đáng chú ý. Keyword chính: "nhận định ${teams.home.name} vs ${teams.away.name}", "phân tích ${teams.home.name}", "dự đoán tỷ số".
 
 2. **teamAnalysis** (600-800 từ): Phân tích CỰC CHI TIẾT từng đội:
    - Đội nhà **${teams.home.name}**: Vị trí BXH hiện tại (ước lượng), điểm số, phong độ sân nhà (dựa trên form 10 trận), điểm mạnh (tấn công/phòng ngự), điểm yếu, lối chơi, cầu thủ chủ chốt (nếu bạn biết), xu hướng gần đây
@@ -473,8 +473,8 @@ Viết bài soi kèo DÀI 2500-3000 TỪ, SEO-friendly, giọng văn chuyên gia
 
 Format JSON trả về:
 {
-  "title": "Soi kèo ${teams.home.name} vs ${teams.away.name} ${matchTime} ngày ${matchDateStr} - ${league.name}",
-  "excerpt": "[150-160 ký tự - SEO meta description - hấp dẫn, chứa keyword chính]",
+  "title": "Nhận định ${teams.home.name} vs ${teams.away.name} ${matchTime} ngày ${matchDateStr} - ${league.name}",
+  "excerpt": "[150-160 ký tự - SEO meta description - dùng 'nhận định', 'phân tích', 'dự đoán' thay vì 'soi kèo']",
   "introduction": "[200-300 từ]",
   "teamAnalysis": "[600-800 từ với **bold** tên đội]",
   "h2hHistory": "[300-400 từ]",
@@ -482,11 +482,12 @@ Format JSON trả về:
   "oddsAnalysis": "[400-500 từ]",
   "prediction": "[200-300 từ]",
   "bettingTips": "- Kèo Châu Á: [tip]\\n- Kèo 1X2: [tip]\\n- Tài/Xỉu: [tip]\\n- Tỷ số: [X-X]",
-  "tags": ["${teams.home.name}", "${teams.away.name}", "${league.name}", "soi kèo ${teams.home.name}", "nhận định ${teams.away.name}", "tỷ lệ kèo", "dự đoán bóng đá"]
+  "tags": ["${teams.home.name}", "${teams.away.name}", "${league.name}", "nhận định ${teams.home.name}", "phân tích ${teams.away.name}", "dự đoán bóng đá", "phân tích trận đấu"]
 }
 
 LƯU Ý SEO:
-- Nhắc lại keyword chính "soi kèo ${teams.home.name} vs ${teams.away.name}" 3-5 lần tự nhiên trong bài
+- QUAN TRỌNG: Trong title và excerpt, dùng "nhận định", "phân tích", "dự đoán" thay vì "soi kèo", "cược", "nhà cái" (tránh bị Google đánh dấu gambling)
+- Trong body content (introduction, teamAnalysis...) có thể dùng "soi kèo" tự nhiên 2-3 lần
 - Dùng sub-heading **bold** để break content thành nhiều đoạn ngắn (dễ đọc, SEO tốt)
 - Tên đội ở dạng **bold** khi lần đầu xuất hiện trong mỗi phần
 - Excerpt phải chứa keyword + số (vd: "Dự đoán tỷ số 2-1...")
