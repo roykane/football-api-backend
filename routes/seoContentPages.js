@@ -851,15 +851,6 @@ router.get('/ket-qua/:dateSlug', async (req, res) => {
     const title = `Kết Quả Bóng Đá ${label} - Tỷ Số Đầy Đủ`;
     const description = `Kết quả bóng đá ngày ${label}. Xem tỷ số đầy đủ tất cả các trận đấu, cập nhật nhanh nhất.`;
 
-    const breadcrumbHtml = `
-      <a href="/">Trang chủ</a> &rsaquo;
-      <a href="/ket-qua">Kết quả</a> &rsaquo;
-      <span>${escapeHtml(label)}</span>`;
-
-    const headerHtml = `
-      <h1>${escapeHtml(title)}</h1>
-      <div class="subtitle">Cập nhật tỷ số đầy đủ</div>`;
-
     // Group fixtures by league
     const leagueGroups = {};
     fixtures.forEach(f => {
@@ -875,43 +866,100 @@ router.get('/ket-qua/:dateSlug', async (req, res) => {
       leagueGroups[leagueId].matches.push(f);
     });
 
-    let bodyHtml = `<h2>Kết quả ngày ${escapeHtml(label)}</h2>`;
+    const leagueCount = Object.keys(leagueGroups).length;
+    const matchCount = fixtures.length;
 
+    // Build match results HTML
+    let matchesHtml = '';
     if (fixtures.length === 0) {
-      bodyHtml += '<p>Không có kết quả nào cho ngày này.</p>';
+      matchesHtml = '<div class="empty-state"><div class="empty-icon">⚽</div><p>Chưa có kết quả cho ngày này.</p><p class="empty-sub">Kết quả sẽ được cập nhật sau khi các trận đấu kết thúc.</p></div>';
     } else {
       Object.values(leagueGroups).forEach(group => {
-        bodyHtml += `
-          <div class="league-group-header">
+        matchesHtml += `<div class="league-section">
+          <div class="league-header">
             ${group.logo ? `<img src="${escapeHtml(group.logo)}" alt="" loading="lazy">` : ''}
-            ${escapeHtml(group.name)}${group.country ? ` - ${escapeHtml(group.country)}` : ''}
-          </div>
-          <div style="overflow-x:auto;">
-            <table style="margin-top:0; border-radius:0 0 8px 8px;">
-              <tbody>`;
+            <span class="league-name">${escapeHtml(group.name)}</span>
+            ${group.country ? `<span class="league-country">${escapeHtml(group.country)}</span>` : ''}
+            <span class="match-count">${group.matches.length} trận</span>
+          </div>`;
 
         group.matches.forEach(f => {
           const home = f.teams?.home;
           const away = f.teams?.away;
           const homeGoals = f.goals?.home ?? '-';
           const awayGoals = f.goals?.away ?? '-';
-          const homeBold = home?.winner ? ' font-bold' : '';
-          const awayBold = away?.winner ? ' font-bold' : '';
+          const homeWin = home?.winner ? ' winner' : '';
+          const awayWin = away?.winner ? ' winner' : '';
+          const isDraw = !home?.winner && !away?.winner;
 
-          bodyHtml += `
-                <tr>
-                  <td class="text-right${homeBold}">${home?.logo ? `<img src="${escapeHtml(home.logo)}" alt="" loading="lazy">` : ''}${escapeHtml(home?.name || '')}</td>
-                  <td class="text-center score">${homeGoals} - ${awayGoals}</td>
-                  <td class="${awayBold}">${away?.logo ? `<img src="${escapeHtml(away.logo)}" alt="" loading="lazy">` : ''}${escapeHtml(away?.name || '')}</td>
-                </tr>`;
+          matchesHtml += `
+            <div class="match-row">
+              <div class="match-team home${homeWin}">
+                <span class="team-name">${escapeHtml(home?.name || '')}</span>
+                ${home?.logo ? `<img src="${escapeHtml(home.logo)}" alt="" loading="lazy">` : ''}
+              </div>
+              <div class="match-score${isDraw ? ' draw' : ''}">
+                <span class="goal">${homeGoals}</span>
+                <span class="sep">-</span>
+                <span class="goal">${awayGoals}</span>
+              </div>
+              <div class="match-team away${awayWin}">
+                ${away?.logo ? `<img src="${escapeHtml(away.logo)}" alt="" loading="lazy">` : ''}
+                <span class="team-name">${escapeHtml(away?.name || '')}</span>
+              </div>
+            </div>`;
         });
 
-        bodyHtml += `
-              </tbody>
-            </table>
-          </div>`;
+        matchesHtml += '</div>';
       });
     }
+
+    // Build sidebar
+    const dateNav = [];
+    const today = new Date();
+    for (let i = -3; i <= 1; i++) {
+      const d = new Date(today);
+      d.setDate(d.getDate() + i);
+      const dd = String(d.getDate()).padStart(2, '0');
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const yyyy = d.getFullYear();
+      const slug = i === 0 ? 'hom-nay' : i === -1 ? 'hom-qua' : `${dd}-${mm}-${yyyy}`;
+      const dayLabel = i === 0 ? 'Hôm nay' : i === -1 ? 'Hôm qua' : i === 1 ? 'Ngày mai' : `${dd}/${mm}`;
+      const isActive = req.params.dateSlug === slug || (req.params.dateSlug === 'hom-nay' && i === 0) || (req.params.dateSlug === 'hom-qua' && i === -1);
+      dateNav.push(`<a href="/ket-qua/${slug}" class="date-link${isActive ? ' active' : ''}">${dayLabel}</a>`);
+    }
+
+    const topLeagues = [
+      { name: 'Premier League', slug: 'premier-league' },
+      { name: 'La Liga', slug: 'la-liga' },
+      { name: 'Serie A', slug: 'serie-a' },
+      { name: 'Bundesliga', slug: 'bundesliga' },
+      { name: 'Ligue 1', slug: 'ligue-1' },
+      { name: 'Champions League', slug: 'champions-league' },
+      { name: 'V.League 1', slug: 'v-league-1' },
+    ];
+
+    const sidebarHtml = `
+      <div class="sidebar-card">
+        <div class="sidebar-title">Chọn ngày</div>
+        <div class="date-nav">${dateNav.join('')}</div>
+      </div>
+      <div class="sidebar-card">
+        <div class="sidebar-title">Thống kê</div>
+        <div class="stat-row"><span>Tổng trận</span><strong>${matchCount}</strong></div>
+        <div class="stat-row"><span>Giải đấu</span><strong>${leagueCount}</strong></div>
+      </div>
+      <div class="sidebar-card">
+        <div class="sidebar-title">Giải đấu hàng đầu</div>
+        ${topLeagues.map(l => `<a href="/bang-xep-hang/${l.slug}" class="league-link">${l.name}</a>`).join('')}
+      </div>
+      <div class="sidebar-card">
+        <div class="sidebar-title">Truy cập nhanh</div>
+        <a href="/lich-thi-dau" class="quick-link">📅 Lịch thi đấu</a>
+        <a href="/bang-xep-hang" class="quick-link">🏆 Bảng xếp hạng</a>
+        <a href="/soi-keo" class="quick-link">📊 Nhận định</a>
+        <a href="/top-ghi-ban" class="quick-link">⚽ Top ghi bàn</a>
+      </div>`;
 
     const sportsEvents = fixtures.slice(0, 10).map(f => ({
       '@context': 'https://schema.org',
@@ -923,15 +971,134 @@ router.get('/ket-qua/:dateSlug', async (req, res) => {
       awayTeam: { '@type': 'SportsTeam', name: f.teams?.away?.name },
     }));
 
-    const html = renderPage({
-      title,
-      description,
-      url,
-      breadcrumbHtml,
-      headerHtml,
-      bodyHtml,
-      structuredData: sportsEvents,
-    });
+    const ldScripts = sportsEvents.map(sd => `<script type="application/ld+json">${JSON.stringify(sd)}</script>`).join('\n  ');
+
+    const html = `<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>${escapeHtml(title)} | ScoreLine</title>
+  <meta name="description" content="${escapeHtml(description)}">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="${escapeHtml(url)}">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="${escapeHtml(url)}">
+  <meta property="og:title" content="${escapeHtml(title)}">
+  <meta property="og:description" content="${escapeHtml(description)}">
+  <meta property="og:image" content="${SITE_URL}/og-image.jpg">
+  <meta property="og:locale" content="vi_VN">
+  <meta property="og:site_name" content="ScoreLine">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="${escapeHtml(title)}">
+  <meta name="twitter:description" content="${escapeHtml(description)}">
+  <meta name="twitter:image" content="${SITE_URL}/og-image.jpg">
+  ${ldScripts}
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f1923; color: #e2e8f0; min-height: 100vh; }
+    a { color: #00D4FF; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .page-wrapper { max-width: 1280px; margin: 0 auto; padding: 16px; }
+    .breadcrumb { font-size: 13px; color: #64748b; margin-bottom: 16px; }
+    .breadcrumb a { color: #94a3b8; }
+    .page-header { background: linear-gradient(135deg, #1a2744, #0d1f3c); padding: 28px 32px; border-radius: 6px; margin-bottom: 16px; }
+    .page-header h1 { font-size: 26px; font-weight: 800; color: #fff; margin-bottom: 6px; }
+    .page-header .sub { font-size: 14px; color: #94a3b8; }
+    .page-header .stats { display: flex; gap: 20px; margin-top: 12px; }
+    .page-header .stats span { font-size: 13px; color: #64748b; }
+    .page-header .stats strong { color: #00D4FF; }
+    .layout { display: grid; grid-template-columns: 1fr 280px; gap: 16px; align-items: start; }
+    .main { min-width: 0; }
+    .sidebar { display: flex; flex-direction: column; gap: 12px; }
+    .sidebar-card { background: #1a2744; border-radius: 6px; padding: 16px; }
+    .sidebar-title { font-size: 13px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+    .date-nav { display: flex; flex-wrap: wrap; gap: 6px; }
+    .date-link { display: inline-block; padding: 6px 12px; background: #0f1923; border-radius: 4px; font-size: 13px; color: #94a3b8; transition: all 0.15s; }
+    .date-link:hover { background: #00D4FF22; color: #00D4FF; text-decoration: none; }
+    .date-link.active { background: #00D4FF; color: #0f1923; font-weight: 700; }
+    .stat-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #ffffff0a; font-size: 14px; color: #94a3b8; }
+    .stat-row:last-child { border-bottom: none; }
+    .league-link { display: block; padding: 7px 0; font-size: 14px; color: #cbd5e1; border-bottom: 1px solid #ffffff08; }
+    .league-link:last-child { border-bottom: none; }
+    .league-link:hover { color: #00D4FF; text-decoration: none; }
+    .quick-link { display: block; padding: 7px 0; font-size: 14px; color: #cbd5e1; }
+    .quick-link:hover { color: #00D4FF; text-decoration: none; }
+    .league-section { background: #1a2744; border-radius: 4px; margin-bottom: 12px; overflow: hidden; }
+    .league-header { display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: #0d1f3c; font-weight: 700; font-size: 14px; color: #e2e8f0; }
+    .league-header img { width: 20px; height: 20px; object-fit: contain; }
+    .league-name { flex: 1; }
+    .league-country { font-size: 12px; color: #64748b; font-weight: 400; }
+    .match-count { font-size: 12px; color: #64748b; font-weight: 400; }
+    .match-row { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 10px 16px; border-bottom: 1px solid #ffffff08; transition: background 0.15s; }
+    .match-row:last-child { border-bottom: none; }
+    .match-row:hover { background: #ffffff06; }
+    .match-team { display: flex; align-items: center; gap: 8px; font-size: 14px; color: #cbd5e1; }
+    .match-team.home { justify-content: flex-end; text-align: right; }
+    .match-team.away { justify-content: flex-start; }
+    .match-team.winner { color: #fff; font-weight: 700; }
+    .match-team img { width: 22px; height: 22px; object-fit: contain; flex-shrink: 0; }
+    .match-score { display: flex; align-items: center; gap: 6px; padding: 4px 14px; min-width: 70px; justify-content: center; }
+    .match-score .goal { font-size: 18px; font-weight: 800; color: #fff; min-width: 20px; text-align: center; }
+    .match-score .sep { color: #64748b; font-size: 14px; }
+    .match-score.draw .goal { color: #94a3b8; }
+    .empty-state { text-align: center; padding: 60px 20px; background: #1a2744; border-radius: 4px; }
+    .empty-icon { font-size: 48px; margin-bottom: 16px; }
+    .empty-state p { color: #94a3b8; font-size: 16px; }
+    .empty-sub { font-size: 13px; color: #64748b; margin-top: 8px; }
+    .footer { text-align: center; margin-top: 24px; padding: 16px; color: #475569; font-size: 13px; }
+    .seo-content { background: #1a2744; border-radius: 4px; padding: 24px; margin-top: 16px; }
+    .seo-content h2 { font-size: 18px; font-weight: 700; color: #e2e8f0; margin-bottom: 12px; }
+    .seo-content p { font-size: 14px; color: #94a3b8; line-height: 1.7; margin-bottom: 10px; }
+    @media (max-width: 768px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { order: -1; }
+      .page-header { padding: 20px 16px; }
+      .page-header h1 { font-size: 20px; }
+      .match-team .team-name { font-size: 13px; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .match-score .goal { font-size: 16px; }
+      .match-score { padding: 4px 8px; min-width: 60px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-wrapper">
+    <nav class="breadcrumb">
+      <a href="/">Trang chủ</a> &rsaquo;
+      <a href="/ket-qua-bong-da">Kết quả</a> &rsaquo;
+      <span>${escapeHtml(label)}</span>
+    </nav>
+
+    <div class="page-header">
+      <h1>${escapeHtml(title)}</h1>
+      <div class="sub">Cập nhật tỷ số đầy đủ tất cả các trận đấu</div>
+      <div class="stats">
+        <span><strong>${matchCount}</strong> trận đấu</span>
+        <span><strong>${leagueCount}</strong> giải đấu</span>
+      </div>
+    </div>
+
+    <div class="layout">
+      <div class="main">
+        ${matchesHtml}
+        <div class="seo-content">
+          <h2>Kết quả bóng đá ${escapeHtml(label)}</h2>
+          <p>Cập nhật kết quả bóng đá ${escapeHtml(label)} với tỷ số đầy đủ từ tất cả các giải đấu lớn: Ngoại Hạng Anh, La Liga, Serie A, Bundesliga, Champions League, V-League và nhiều giải đấu khác.</p>
+          <p>ScoreLine cung cấp tỷ số trực tuyến nhanh nhất, thống kê chi tiết từng trận đấu, hỗ trợ người hâm mộ bóng đá theo dõi kết quả mọi lúc mọi nơi.</p>
+        </div>
+      </div>
+      <aside class="sidebar">
+        ${sidebarHtml}
+      </aside>
+    </div>
+
+    <div class="footer">
+      <a href="${SITE_URL}">ScoreLine.io</a> - Cập nhật tỷ số trực tiếp, lịch thi đấu và phân tích bóng đá
+    </div>
+  </div>
+</body>
+</html>`;
 
     res.set('Content-Type', 'text/html; charset=utf-8');
     res.set('Cache-Control', 'public, max-age=1800');
