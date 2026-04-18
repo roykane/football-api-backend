@@ -12,8 +12,58 @@
 const express = require('express');
 const router = express.Router();
 const SoiKeoArticle = require('../models/SoiKeoArticle');
+const AutoArticle = require('../models/AutoArticle');
 
 const SITE_URL = process.env.SITE_URL || 'https://scoreline.io';
+
+function generateFaqSchema(matchInfo, content, oddsData) {
+  const home = matchInfo?.homeTeam?.name || '';
+  const away = matchInfo?.awayTeam?.name || '';
+  const league = matchInfo?.league?.name || '';
+  const date = matchInfo?.matchDate ? new Date(matchInfo.matchDate).toLocaleDateString('vi-VN') : '';
+
+  const faqs = [
+    {
+      question: `${home} vs ${away} đá khi nào?`,
+      answer: `Trận ${home} vs ${away} thuộc ${league} diễn ra vào ngày ${date}.`,
+    },
+    {
+      question: `Phân tích phong độ ${home} vs ${away}?`,
+      answer: content?.formAnalysis ? content.formAnalysis.substring(0, 300) + '...' : `Xem phân tích chi tiết phong độ ${home} vs ${away} trong bài viết.`,
+    },
+    {
+      question: `Dự đoán kết quả ${home} vs ${away}?`,
+      answer: content?.prediction ? content.prediction.substring(0, 300) + '...' : `Xem dự đoán chi tiết trận ${home} vs ${away} trong bài viết.`,
+    },
+  ];
+
+  if (oddsData?.homeWin) {
+    faqs.push({
+      question: `Tỷ lệ odds ${home} vs ${away}?`,
+      answer: `Tỷ lệ 1X2: ${home} (${oddsData.homeWin}) - Hòa (${oddsData.draw || '-'}) - ${away} (${oddsData.awayWin || '-'}).${oddsData.overUnder?.line ? ` Tài/Xỉu: ${oddsData.overUnder.line} bàn.` : ''}`,
+    });
+  }
+
+  if (content?.h2hHistory) {
+    faqs.push({
+      question: `Lịch sử đối đầu ${home} vs ${away}?`,
+      answer: content.h2hHistory.substring(0, 300) + '...',
+    });
+  }
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": faqs.map(f => ({
+      "@type": "Question",
+      "name": f.question,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": f.answer,
+      },
+    })),
+  };
+}
 
 function escapeHtml(str) {
   if (!str) return '';
@@ -128,6 +178,7 @@ function renderSoiKeoHtml(article) {
 
   <script type="application/ld+json">${JSON.stringify(structuredData)}</script>
   <script type="application/ld+json">${JSON.stringify(sportsEventData)}</script>
+  <script type="application/ld+json">${JSON.stringify(generateFaqSchema(matchInfo, content, oddsData))}</script>
 
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -214,6 +265,13 @@ function renderSoiKeoHtml(article) {
       </div>` : ''}
     </article>
 
+    <div class="related-links" style="margin-top:30px;padding:20px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;">
+      <h3 style="font-size:16px;font-weight:700;color:#0f172a;margin-bottom:12px;">Xem thêm</h3>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">
+        RELATED_LINKS_PLACEHOLDER
+      </div>
+    </div>
+
     <div class="footer">
       <p>Bài viết được tạo bởi AI - <a href="${SITE_URL}">ScoreLine.io</a></p>
       <p>Cập nhật tỷ số trực tiếp, lịch thi đấu và phân tích bóng đá</p>
@@ -247,7 +305,38 @@ router.get('/soi-keo/:slug', async (req, res) => {
     // Increment views
     await SoiKeoArticle.updateOne({ slug }, { $inc: { views: 1 } });
 
-    const html = renderSoiKeoHtml(article);
+    // Find related articles for internal linking
+    let relatedLinks = '';
+    try {
+      const [h2hArticle, recentSoiKeo, recentPreview] = await Promise.all([
+        AutoArticle.findOne({
+          type: 'h2h-analysis',
+          'matchInfo.homeTeam.name': article.matchInfo?.homeTeam?.name,
+          'matchInfo.awayTeam.name': article.matchInfo?.awayTeam?.name,
+          status: 'published',
+        }).select('slug title').lean(),
+        SoiKeoArticle.find({ status: 'published', slug: { $ne: slug } })
+          .sort({ createdAt: -1 }).limit(3).select('slug title').lean(),
+        AutoArticle.find({ type: 'round-preview', status: 'published' })
+          .sort({ createdAt: -1 }).limit(2).select('slug title').lean(),
+      ]);
+
+      const links = [];
+      if (h2hArticle) {
+        links.push(`<a href="/doi-dau/${h2hArticle.slug}" style="display:inline-block;padding:6px 12px;background:#eff6ff;color:#2563eb;border-radius:4px;font-size:13px;text-decoration:none;">⚔️ ${escapeHtml(h2hArticle.title)}</a>`);
+      }
+      recentSoiKeo.forEach(a => {
+        links.push(`<a href="/soi-keo/${a.slug}" style="display:inline-block;padding:6px 12px;background:#f0fdf4;color:#16a34a;border-radius:4px;font-size:13px;text-decoration:none;">📊 ${escapeHtml(a.title?.substring(0, 50))}...</a>`);
+      });
+      recentPreview.forEach(a => {
+        links.push(`<a href="/preview/${a.slug}" style="display:inline-block;padding:6px 12px;background:#fef3c7;color:#d97706;border-radius:4px;font-size:13px;text-decoration:none;">🏆 ${escapeHtml(a.title?.substring(0, 50))}...</a>`);
+      });
+      links.push(`<a href="/nhan-dinh" style="display:inline-block;padding:6px 12px;background:#f1f5f9;color:#475569;border-radius:4px;font-size:13px;text-decoration:none;">→ Xem tất cả nhận định</a>`);
+      relatedLinks = links.join('\n        ');
+    } catch (e) { /* ignore */ }
+
+    let html = renderSoiKeoHtml(article);
+    html = html.replace('RELATED_LINKS_PLACEHOLDER', relatedLinks);
 
     res.set('Content-Type', 'text/html; charset=utf-8');
     res.set('Cache-Control', 'public, max-age=3600');

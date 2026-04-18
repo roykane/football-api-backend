@@ -721,7 +721,18 @@ router.get('/doi-dau/:slug', async (req, res) => {
         { name: `${homeName} vs ${awayName}`, url },
       ],
       bannerHtml, headerHtml, bodyHtml, sidebarHtml,
-      structuredData: [articleSchema, sportsEventSchema],
+      structuredData: [articleSchema, sportsEventSchema, {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          { "@type": "Question", "name": `${homeName} vs ${awayName} - Lịch sử đối đầu?`,
+            "acceptedAnswer": { "@type": "Answer", "text": `Trong ${total} trận gần nhất: ${homeName} thắng ${homeW}, hòa ${draws}, ${awayName} thắng ${awayW}.${h2hStats?.avgGoals ? ` Trung bình ${h2hStats.avgGoals.toFixed(1)} bàn/trận.` : ''}` } },
+          { "@type": "Question", "name": `${homeName} vs ${awayName} đá khi nào?`,
+            "acceptedAnswer": { "@type": "Answer", "text": `Trận ${homeName} vs ${awayName} thuộc ${matchInfo?.league?.name || ''} diễn ra vào ${formatDate(matchInfo?.matchDate)}.` } },
+          { "@type": "Question", "name": `Ai có lợi thế trong ${homeName} vs ${awayName}?`,
+            "acceptedAnswer": { "@type": "Answer", "text": homeW > awayW ? `${homeName} có lợi thế với ${homeW} chiến thắng trong ${total} trận gần nhất (${homePct}%).` : awayW > homeW ? `${awayName} có lợi thế với ${awayW} chiến thắng trong ${total} trận gần nhất (${awayPct}%).` : `Hai đội khá cân bằng với ${homeW} thắng mỗi bên trong ${total} trận gần nhất.` } },
+        ],
+      }],
     });
 
     res.set('Content-Type', 'text/html; charset=utf-8');
