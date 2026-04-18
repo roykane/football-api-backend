@@ -109,48 +109,48 @@ async function generatePreviewContent(league, roundNumber, matches) {
   const season = league.season;
   const seasonDisplay = `${season}/${season + 1}`;
 
-  const prompt = `Ban la chuyen gia phan tich bong da hang dau Viet Nam. Viet bai preview vong dau SEO chat luong cao.
+  const prompt = `Bạn là chuyên gia phân tích bóng đá hàng đầu Việt Nam. Viết bài preview vòng đấu SEO chất lượng cao bằng tiếng Việt CÓ DẤU đầy đủ.
 
-**THONG TIN VONG DAU:**
-- Giai dau: ${league.name} (${league.country})
-- Vong: ${roundNumber}
-- Mua giai: ${seasonDisplay}
-- So tran: ${matches.length}
+**THÔNG TIN VÒNG ĐẤU:**
+- Giải đấu: ${league.name} (${league.country})
+- Vòng: ${roundNumber}
+- Mùa giải: ${seasonDisplay}
+- Số trận: ${matches.length}
 
-**DANH SACH TRAN DAU:**
+**DANH SÁCH TRẬN ĐẤU:**
 ${matchList}
 
-Viet bai preview DAI 1000-1500 tu, SEO-friendly, giong van chuyen gia, bao gom:
+Viết bài preview DÀI 1000-1500 từ, SEO-friendly, giọng văn chuyên gia, bao gồm:
 
-1. **Tong quan vong dau** (200-300 tu): Day la vong may, nhung gi dang bi dang xay ra trong mua giai, boi canh BXH hien tai (ai dang dan dau, ai dang cham, cuoc dua vo dich/xuong hang/cup chau Au)
+1. **Tổng quan vòng đấu** (200-300 từ): Đây là vòng mấy, những gì đang xảy ra trong mùa giải, bối cảnh BXH hiện tại (ai đang dẫn đầu, ai đang chậm, cuộc đua vô địch/xuống hạng/cúp châu Âu)
 
-2. **Cac tran dau dang xem** (400-600 tu): Chon 2-3 tran noi bat nhat, phan tich ngan gon:
-   - Vi sao tran nay dang xem
-   - Phong do 2 doi gan day (uoc luong hop ly)
-   - Du doan ket qua
+2. **Các trận đấu đáng xem** (400-600 từ): Chọn 2-3 trận nổi bật nhất, phân tích ngắn gọn:
+   - Vì sao trận này đáng xem
+   - Phong độ 2 đội gần đây (ước lượng hợp lý)
+   - Dự đoán kết quả
 
-3. **Boi canh BXH & cuoc dua** (200-300 tu): Phan tich cuoc dua vo dich, top 4, xuong hang, nhung doi can diem
+3. **Bối cảnh BXH & cuộc đua** (200-300 từ): Phân tích cuộc đua vô địch, top 4, xuống hạng, những đội cần điểm
 
-4. **Cau thu dang xem** (100-200 tu): 3-5 cau thu noi bat co the tao khac biet trong vong nay
+4. **Cầu thủ đáng xem** (100-200 từ): 3-5 cầu thủ nổi bật có thể tạo khác biệt trong vòng này
 
-5. **Du doan ket qua chinh** (100-150 tu): Du doan ngan gon cho 2-3 tran chinh
+5. **Dự đoán kết quả chính** (100-150 từ): Dự đoán ngắn gọn cho 2-3 trận chính
 
-Format tra ve JSON:
+Format trả về JSON:
 {
-  "title": "Preview ${league.name} Vong ${roundNumber} mua giai ${seasonDisplay} - Nhung tran dau dang xem",
-  "excerpt": "[150-200 ky tu - mo ta ngan gon vong dau, dung 'nhan dinh', 'phan tich', 'du doan']",
-  "content": "[Toan bo noi dung bai viet 1000-1500 tu, dung markdown format voi ## heading, **bold**, bullet points]",
-  "metaTitle": "Preview ${league.name} Vong ${roundNumber} ${seasonDisplay} | Nhan dinh & Phan tich",
-  "metaDescription": "[150-160 ky tu - SEO meta description]",
-  "tags": ["${league.name}", "Vong ${roundNumber}", "preview", "nhan dinh", "phan tich bong da"]
+  "title": "Preview ${league.name} Vòng ${roundNumber} mùa giải ${seasonDisplay} - Những trận đấu đáng xem",
+  "excerpt": "[150-200 ký tự - mô tả ngắn gọn vòng đấu, dùng 'nhận định', 'phân tích', 'dự đoán']",
+  "content": "[Toàn bộ nội dung bài viết 1000-1500 từ, dùng markdown format với ## heading, **bold**, bullet points]",
+  "metaTitle": "Preview ${league.name} Vòng ${roundNumber} ${seasonDisplay} | Nhận định & Phân tích",
+  "metaDescription": "[150-160 ký tự - SEO meta description]",
+  "tags": ["${league.name}", "Vòng ${roundNumber}", "preview", "nhận định", "phân tích bóng đá"]
 }
 
-LUU Y SEO QUAN TRONG:
-- KHONG dung "soi keo", "keo nha cai", "ca cuoc", "cuoc" trong title/excerpt/metaTitle/metaDescription
-- Dung "nhan dinh", "phan tich", "du doan", "odds", "ty le" thay the
-- Trong body content co the dung tu nhien hon nhung van han che tu gambling
-- Tra ve DUNG JSON format, content la mot string markdown duy nhat
-- KHONG bia chieu thuong cau thu, chi dung kien thuc chung`;
+LƯU Ý QUAN TRỌNG:
+- PHẢI viết tiếng Việt CÓ DẤU đầy đủ (ví dụ: "phân tích", KHÔNG viết "phan tich")
+- KHÔNG dùng "soi kèo", "kèo nhà cái", "cá cược" trong title/excerpt/meta
+- Dùng "nhận định", "phân tích", "dự đoán" thay thế
+- Trả về ĐÚNG JSON format, content là một string markdown duy nhất
+- KHÔNG bịa chấn thương cầu thủ, chỉ dùng kiến thức chung`;
 
   try {
     const response = await axios.post('https://api.anthropic.com/v1/messages', {

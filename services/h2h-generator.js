@@ -202,51 +202,52 @@ TB ban/tran: ${h2hData.stats.avgGoals} | Ca 2 ghi ban: ${h2hData.summary.bttsPer
 Chi tiet: ${h2hData.details.map(d => `${d.date}: ${d.home} ${d.score} ${d.away} (${d.league})`).join(' | ')}`
     : 'Khong co du lieu doi dau.';
 
-  const prompt = `Ban la chuyen gia phan tich bong da hang dau Viet Nam. Viet bai phan tich doi dau chi tiet.
+  const prompt = `Bạn là chuyên gia phân tích bóng đá hàng đầu Việt Nam. Viết bài phân tích đối đầu chi tiết bằng tiếng Việt CÓ DẤU đầy đủ.
 
-**THONG TIN TRAN DAU:**
-- Tran: ${homeTeam.name} vs ${awayTeam.name}
-- Giai dau: ${league.name} (${league.country})
-- Ngay: ${dateStr}
+**THÔNG TIN TRẬN ĐẤU:**
+- Trận: ${homeTeam.name} vs ${awayTeam.name}
+- Giải đấu: ${league.name} (${league.country})
+- Ngày: ${dateStr}
 
-**LICH SU DOI DAU (10 tran gan nhat):**
+**LỊCH SỬ ĐỐI ĐẦU (10 trận gần nhất):**
 ${h2hSummary}
 
-**PHONG DO GAN DAY:**
+**PHONG ĐỘ GẦN ĐÂY:**
 - ${homeTeam.name}: ${homeForm}
 - ${awayTeam.name}: ${awayForm}
 
-Viet bai phan tich doi dau DAI 800-1200 tu, SEO-friendly, bao gom:
+Viết bài phân tích đối đầu DÀI 800-1200 từ, SEO-friendly, bao gồm:
 
-1. **Tong quan lich su doi dau** (200-300 tu): Tom tat lich su, ai thong tri, xu huong chung
+1. **Tổng quan lịch sử đối đầu** (200-300 từ): Tóm tắt lịch sử, ai thống trị, xu hướng chung
 
-2. **Phan tich xu huong gan day** (200-300 tu): Xu huong 5-10 tran gan nhat, ai dang co loi the, thay doi dong luc
+2. **Phân tích xu hướng gần đây** (200-300 từ): Xu hướng 5-10 trận gần nhất, ai đang có lợi thế, thay đổi động lực
 
-3. **Phan tich ban thang & xu huong ghi ban** (150-200 tu):
-   - Trung binh ban thang/tran
-   - Ty le ca 2 doi ghi ban (BTTS)
-   - Xu huong Tai/Xiu
-   - San nha vs san khach
+3. **Phân tích bàn thắng & xu hướng ghi bàn** (150-200 từ):
+   - Trung bình bàn thắng/trận
+   - Tỷ lệ cả 2 đội ghi bàn (BTTS)
+   - Xu hướng Tài/Xỉu
+   - Sân nhà vs sân khách
 
-4. **So sanh phong do hien tai** (150-200 tu): Phong do 5 tran gan nhat cua moi doi, ai dang manh hon
+4. **So sánh phong độ hiện tại** (150-200 từ): Phong độ 5 trận gần nhất của mỗi đội, ai đang mạnh hơn
 
-5. **Thong ke va dieu thu vi** (100-150 tu): Cac thong ke noi bat, ky luc, dieu thu vi ve cap doi dau nay
+5. **Thống kê và điều thú vị** (100-150 từ): Các thống kê nổi bật, kỷ lục, điều thú vị về cặp đối đầu này
 
-Format tra ve JSON:
+Format trả về JSON:
 {
-  "title": "${homeTeam.name} vs ${awayTeam.name} - Lich su doi dau va phan tich chi tiet",
-  "excerpt": "[150-200 ky tu - tom tat doi dau, dung 'phan tich', 'lich su doi dau', 'thong ke']",
-  "content": "[Toan bo noi dung 800-1200 tu, markdown format voi ## heading, **bold**, bullet points]",
-  "metaTitle": "${homeTeam.name} vs ${awayTeam.name} | Lich su doi dau & Thong ke chi tiet",
-  "metaDescription": "[150-160 ky tu - SEO meta]",
-  "tags": ["${homeTeam.name}", "${awayTeam.name}", "${league.name}", "doi dau", "phan tich", "thong ke"]
+  "title": "${homeTeam.name} vs ${awayTeam.name} - Lịch sử đối đầu và phân tích chi tiết",
+  "excerpt": "[150-200 ký tự - tóm tắt đối đầu, dùng 'phân tích', 'lịch sử đối đầu', 'thống kê']",
+  "content": "[Toàn bộ nội dung 800-1200 từ, markdown format với ## heading, **bold**, bullet points]",
+  "metaTitle": "${homeTeam.name} vs ${awayTeam.name} | Lịch sử đối đầu & Thống kê chi tiết",
+  "metaDescription": "[150-160 ký tự - SEO meta]",
+  "tags": ["${homeTeam.name}", "${awayTeam.name}", "${league.name}", "đối đầu", "phân tích", "thống kê"]
 }
 
-LUU Y SEO:
-- KHONG dung "soi keo", "keo nha cai", "ca cuoc", "cuoc" trong title/excerpt/meta
-- Dung "phan tich", "nhan dinh", "doi dau", "thong ke", "ty le" thay the
-- Tra ve DUNG JSON format
-- Content la mot string markdown duy nhat`;
+LƯU Ý QUAN TRỌNG:
+- PHẢI viết tiếng Việt CÓ DẤU đầy đủ (ví dụ: "phân tích", KHÔNG viết "phan tich")
+- KHÔNG dùng "soi kèo", "kèo nhà cái", "cá cược" trong title/excerpt/meta
+- Dùng "phân tích", "nhận định", "đối đầu", "thống kê" thay thế
+- Trả về ĐÚNG JSON format
+- Content là một string markdown duy nhất`;
 
   try {
     const response = await axios.post('https://api.anthropic.com/v1/messages', {
