@@ -21,7 +21,7 @@ const AutoArticleSchema = new mongoose.Schema({
   },
   excerpt: {
     type: String,
-    maxLength: 300,
+    maxLength: 500,
   },
   content: {
     type: String, // Full HTML or markdown content, single string
