@@ -29,11 +29,11 @@ const STATIC_PAGES = [
   { path: '/top-ghi-ban', priority: '0.7', changefreq: 'daily' },
   { path: '/nhan-dinh', priority: '0.8', changefreq: 'daily' },
   { path: '/world-cup-2026', priority: '0.9', changefreq: 'daily' },
-  { path: '/world-cup-2026/lich-thi-dau', priority: '0.9', changefreq: 'daily' },
-  { path: '/world-cup-2026/bang-dau', priority: '0.8', changefreq: 'weekly' },
-  { path: '/world-cup-2026/bang-xep-hang', priority: '0.8', changefreq: 'daily' },
-  { path: '/world-cup-2026/ket-qua', priority: '0.8', changefreq: 'daily' },
-  { path: '/world-cup-2026/top-ghi-ban', priority: '0.8', changefreq: 'daily' },
+  { path: '/lich-thi-dau/world-cup', priority: '0.9', changefreq: 'daily' },
+  { path: '/giai-dau/world-cup', priority: '0.8', changefreq: 'weekly' },
+  { path: '/bang-xep-hang/world-cup', priority: '0.8', changefreq: 'daily' },
+  { path: '/ket-qua/world-cup', priority: '0.8', changefreq: 'daily' },
+  { path: '/top-ghi-ban/world-cup', priority: '0.8', changefreq: 'daily' },
 ];
 
 const LEAGUES = [
