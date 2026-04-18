@@ -133,21 +133,41 @@ function generateMatchBanner({ homeName, homeLogo, awayName, awayLogo, leagueNam
 
 function markdownToHtml(text) {
   if (!text) return '';
-  return text
-    .replace(/^#{4,6}\s+(.+)$/gm, '<h4>$1</h4>')
-    .replace(/^###\s+(.+)$/gm, '<h3>$1</h3>')
-    .replace(/^##\s+(.+)$/gm, '<h2>$1</h2>')
-    .replace(/^#\s+(.+)$/gm, '<h2>$1</h2>')
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.*?)\*/g, '<em>$1</em>')
-    .replace(/^- (.+)$/gm, '<li>$1</li>')
-    .replace(/(<li>[\s\S]*?<\/li>)/g, function(match) {
-      if (!match.startsWith('<ul>')) return '<ul>' + match + '</ul>';
-      return match;
-    })
-    .replace(/<\/ul>\s*<ul>/g, '')
-    .replace(/\n\n/g, '</p><p>')
-    .replace(/\n/g, '<br>');
+
+  // Split by double newlines into blocks
+  const blocks = text.split(/\n\n+/);
+  const htmlBlocks = blocks.map(block => {
+    const trimmed = block.trim();
+    if (!trimmed) return '';
+
+    // Headings
+    if (/^#{4,6}\s+/.test(trimmed)) return trimmed.replace(/^#{4,6}\s+(.+)$/gm, '<h4>$1</h4>');
+    if (/^###\s+/.test(trimmed)) return trimmed.replace(/^###\s+(.+)$/gm, '<h3>$1</h3>');
+    if (/^##\s+/.test(trimmed)) return trimmed.replace(/^##\s+(.+)$/gm, '<h2>$1</h2>');
+    if (/^#\s+/.test(trimmed)) return trimmed.replace(/^#\s+(.+)$/gm, '<h2>$1</h2>');
+
+    // List block
+    if (/^- /.test(trimmed)) {
+      const items = trimmed.replace(/^- (.+)$/gm, '<li>$1</li>');
+      return '<ul>' + items + '</ul>';
+    }
+
+    // Regular paragraph
+    let html = trimmed
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      .replace(/\n/g, '<br>');
+    return '<p>' + html + '</p>';
+  });
+
+  // Apply inline formatting to headings and lists too
+  return htmlBlocks.join('\n')
+    .replace(/<(h[234]|li)>(.*?)<\/\1>/g, (match, tag, content) => {
+      const formatted = content
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>');
+      return `<${tag}>${formatted}</${tag}>`;
+    });
 }
 
 /**
