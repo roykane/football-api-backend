@@ -93,6 +93,44 @@ function formatTime(date) {
   return d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
 }
 
+function formatDateShort(date) {
+  if (!date) return '';
+  const d = new Date(date);
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const yyyy = d.getFullYear();
+  const hh = String(d.getHours()).padStart(2, '0');
+  const min = String(d.getMinutes()).padStart(2, '0');
+  return `${dd}/${mm}/${yyyy} | ${hh}:${min}`;
+}
+
+function generateMatchBanner({ homeName, homeLogo, awayName, awayLogo, leagueName, leagueLogo, matchDate }) {
+  const dateStr = formatDateShort(matchDate);
+  return `
+  <div class="match-card">
+    <div class="match-card-bg"></div>
+    <div class="match-card-content">
+      <div class="mc-team mc-home">
+        <div class="mc-logo-wrap home-accent">
+          ${homeLogo ? `<img src="${escapeHtml(homeLogo)}" alt="${escapeHtml(homeName)}">` : '<div class="mc-logo-placeholder">⚽</div>'}
+        </div>
+        <div class="mc-name">${escapeHtml(homeName)}</div>
+      </div>
+      <div class="mc-center">
+        <div class="mc-vs">VS</div>
+        <div class="mc-date">${escapeHtml(dateStr)}</div>
+        ${leagueName ? `<div class="mc-league">${leagueLogo ? `<img src="${escapeHtml(leagueLogo)}" alt="">` : ''}${escapeHtml(leagueName)}</div>` : ''}
+      </div>
+      <div class="mc-team mc-away">
+        <div class="mc-logo-wrap away-accent">
+          ${awayLogo ? `<img src="${escapeHtml(awayLogo)}" alt="${escapeHtml(awayName)}">` : '<div class="mc-logo-placeholder">⚽</div>'}
+        </div>
+        <div class="mc-name">${escapeHtml(awayName)}</div>
+      </div>
+    </div>
+  </div>`;
+}
+
 function markdownToHtml(text) {
   if (!text) return '';
   return text
@@ -371,7 +409,7 @@ async function buildSidebar(currentSlug, currentType) {
 // ============================================================
 // Shared dark layout for article pages (preview + h2h)
 // ============================================================
-function renderArticlePage({ title, description, url, breadcrumbItems, headerHtml, bodyHtml, sidebarHtml, structuredData }) {
+function renderArticlePage({ title, description, url, breadcrumbItems, bannerHtml, headerHtml, bodyHtml, sidebarHtml, structuredData }) {
   const safeTitle = escapeHtml(title);
   const safeDesc = escapeHtml(description);
   const ldScripts = (Array.isArray(structuredData) ? structuredData : [structuredData])
@@ -413,13 +451,25 @@ function renderArticlePage({ title, description, url, breadcrumbItems, headerHtm
     .page-wrapper { max-width: 1280px; margin: 0 auto; padding: 16px; }
     .breadcrumb { font-size: 13px; color: #64748b; margin-bottom: 12px; }
     .breadcrumb a { color: #2563eb; }
-    .page-header { background: linear-gradient(135deg, #1e3a5f, #0f2744); padding: 32px; border-radius: 6px; margin-bottom: 16px; text-align: center; color: #fff; }
-    .page-header h1 { font-size: 26px; font-weight: 800; margin-bottom: 12px; line-height: 1.3; }
-    .match-banner { display: flex; align-items: center; justify-content: center; gap: 24px; margin: 20px 0; padding: 20px; background: rgba(255,255,255,0.08); border-radius: 6px; }
-    .match-banner .team { text-align: center; flex: 1; max-width: 200px; }
-    .match-banner .team img { width: 72px; height: 72px; object-fit: contain; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.3)); }
-    .match-banner .team-name { font-size: 16px; font-weight: 700; margin-top: 8px; color: #fff; }
-    .match-banner .vs { font-size: 28px; font-weight: 900; color: #fbbf24; }
+    .page-header { background: linear-gradient(135deg, #1e3a5f, #0f2744); padding: 24px 32px; border-radius: 6px; margin-bottom: 16px; text-align: center; color: #fff; }
+    .page-header h1 { font-size: 24px; font-weight: 800; margin-bottom: 8px; line-height: 1.3; }
+    .match-card { position: relative; margin: 16px 0; border-radius: 8px; overflow: hidden; background: linear-gradient(135deg, #0b3d91 0%, #1565c0 40%, #0d47a1 100%); }
+    .match-card-bg { position: absolute; inset: 0; opacity: 0.08; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Ccircle cx='30' cy='30' r='28' stroke='white' stroke-width='1' fill='none'/%3E%3Cline x1='30' y1='2' x2='30' y2='58' stroke='white' stroke-width='0.5'/%3E%3Cline x1='2' y1='30' x2='58' y2='30' stroke='white' stroke-width='0.5'/%3E%3C/svg%3E") repeat; }
+    .match-card-content { position: relative; display: flex; align-items: center; justify-content: center; padding: 28px 20px; gap: 16px; }
+    .mc-team { flex: 1; text-align: center; max-width: 220px; }
+    .mc-logo-wrap { width: 90px; height: 90px; margin: 0 auto; border-radius: 50%; display: flex; align-items: center; justify-content: center; position: relative; }
+    .mc-logo-wrap.home-accent { background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%); }
+    .mc-logo-wrap.home-accent::before { content: ''; position: absolute; inset: -4px; border-radius: 50%; border: 2px solid rgba(236,72,153,0.4); }
+    .mc-logo-wrap.away-accent { background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%); }
+    .mc-logo-wrap.away-accent::before { content: ''; position: absolute; inset: -4px; border-radius: 50%; border: 2px solid rgba(251,191,36,0.4); }
+    .mc-logo-wrap img { width: 64px; height: 64px; object-fit: contain; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.4)); }
+    .mc-logo-placeholder { font-size: 40px; }
+    .mc-name { font-size: 16px; font-weight: 800; color: #fff; margin-top: 10px; text-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+    .mc-center { text-align: center; min-width: 160px; }
+    .mc-vs { font-size: 36px; font-weight: 900; color: #fbbf24; text-shadow: 0 2px 10px rgba(251,191,36,0.4); letter-spacing: 4px; }
+    .mc-date { background: rgba(0,0,0,0.3); padding: 6px 16px; border-radius: 4px; font-size: 13px; color: #e2e8f0; margin-top: 8px; display: inline-block; font-weight: 600; }
+    .mc-league { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 10px; font-size: 13px; color: #94a3b8; }
+    .mc-league img { width: 18px; height: 18px; object-fit: contain; }
     .league-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.12); padding: 6px 14px; border-radius: 4px; font-size: 14px; margin-top: 10px; color: #e2e8f0; }
     .league-badge img { width: 20px; height: 20px; object-fit: contain; }
     .subtitle { font-size: 14px; color: #94a3b8; margin-top: 8px; }
@@ -461,14 +511,20 @@ function renderArticlePage({ title, description, url, breadcrumbItems, headerHtm
       .page-header { padding: 20px 16px; }
       .page-header h1 { font-size: 20px; }
       .article-body { padding: 20px 16px; }
-      .match-banner .team img { width: 52px; height: 52px; }
-      .match-banner { gap: 16px; padding: 14px; }
+      .mc-logo-wrap { width: 70px; height: 70px; }
+      .mc-logo-wrap img { width: 48px; height: 48px; }
+      .mc-name { font-size: 14px; }
+      .mc-vs { font-size: 28px; }
+      .mc-center { min-width: 120px; }
+      .mc-date { font-size: 11px; padding: 4px 10px; }
+      .match-card-content { padding: 20px 12px; gap: 10px; }
     }
   </style>
 </head>
 <body>
   <div class="page-wrapper">
     <nav class="breadcrumb">${breadcrumb}</nav>
+    ${bannerHtml || ''}
     <div class="page-header">${headerHtml}</div>
     <div class="layout">
       <main class="main">
@@ -608,32 +664,26 @@ router.get('/doi-dau/:slug', async (req, res) => {
     const drawPct = total ? Math.round((draws / total) * 100) : 0;
     const awayPct = total ? Math.round((awayW / total) * 100) : 0;
 
+    const bannerHtml = generateMatchBanner({
+      homeName, homeLogo, awayName, awayLogo,
+      leagueName: matchInfo?.league?.name || '',
+      leagueLogo: matchInfo?.league?.logo || '',
+      matchDate: matchInfo?.matchDate,
+    });
+
     const headerHtml = `
       <h1>${escapeHtml(title)}</h1>
-      <div class="match-banner">
-        <div class="team">
-          ${homeLogo ? `<img src="${escapeHtml(homeLogo)}" alt="${escapeHtml(homeName)}" loading="lazy">` : ''}
-          <div class="team-name">${escapeHtml(homeName)}</div>
-        </div>
-        <div class="vs">VS</div>
-        <div class="team">
-          ${awayLogo ? `<img src="${escapeHtml(awayLogo)}" alt="${escapeHtml(awayName)}" loading="lazy">` : ''}
-          <div class="team-name">${escapeHtml(awayName)}</div>
-        </div>
-      </div>
-      ${matchInfo?.league ? `<div class="league-badge">${matchInfo.league.logo ? `<img src="${escapeHtml(matchInfo.league.logo)}" alt="" loading="lazy">` : ''}<span>${escapeHtml(matchInfo.league.name || '')}</span></div>` : ''}
-      ${matchInfo?.matchDate ? `<div class="subtitle">${escapeHtml(formatDate(matchInfo.matchDate))}</div>` : ''}
       ${total > 0 ? `
       <div class="h2h-stats">
         <div class="h2h-stat"><strong>${total}</strong>Tổng trận</div>
-        <div class="h2h-stat"><strong>${homeW}</strong>${escapeHtml(homeName)} thắng<br><small>${homePct}%</small></div>
+        <div class="h2h-stat"><strong>${homeW}</strong>${escapeHtml(homeName)}<br><small>${homePct}%</small></div>
         <div class="h2h-stat"><strong>${draws}</strong>Hòa<br><small>${drawPct}%</small></div>
-        <div class="h2h-stat"><strong>${awayW}</strong>${escapeHtml(awayName)} thắng<br><small>${awayPct}%</small></div>
+        <div class="h2h-stat"><strong>${awayW}</strong>${escapeHtml(awayName)}<br><small>${awayPct}%</small></div>
         ${h2hStats?.avgGoals ? `<div class="h2h-stat"><strong>${h2hStats.avgGoals.toFixed(1)}</strong>TB bàn/trận</div>` : ''}
       </div>
-      <div style="margin-top:12px;height:8px;display:flex;border-radius:4px;overflow:hidden;">
-        <div style="width:${homePct}%;background:#00D4FF;"></div>
-        <div style="width:${drawPct}%;background:#64748b;"></div>
+      <div style="margin-top:12px;height:6px;display:flex;border-radius:3px;overflow:hidden;">
+        <div style="width:${homePct}%;background:#3b82f6;"></div>
+        <div style="width:${drawPct}%;background:#94a3b8;"></div>
         <div style="width:${awayPct}%;background:#ef4444;"></div>
       </div>` : ''}`;
 
@@ -650,7 +700,7 @@ router.get('/doi-dau/:slug', async (req, res) => {
         { name: 'Đối đầu', url: '/soi-keo' },
         { name: `${homeName} vs ${awayName}`, url },
       ],
-      headerHtml, bodyHtml, sidebarHtml,
+      bannerHtml, headerHtml, bodyHtml, sidebarHtml,
       structuredData: [articleSchema, sportsEventSchema],
     });
 
