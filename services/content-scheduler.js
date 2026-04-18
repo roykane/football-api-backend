@@ -3,14 +3,11 @@ const roundPreviewGenerator = require('./round-preview-generator');
 const h2hGenerator = require('./h2h-generator');
 const AutoArticle = require('../models/AutoArticle');
 
-/**
- * Start the unified content scheduler for auto-generating articles
- *
- * Schedule:
- * - Round previews: Every 6 hours (0 */6 * * *), max 3 per run
- * - H2H analysis: Every 4 hours (0 */4 * * *), max 8 per run
- * - Cleanup old articles: Daily at 3am (0 3 * * *)
- */
+// Start the unified content scheduler for auto-generating articles
+// Schedule:
+// - Round previews: Every 6 hours, max 3 per run
+// - H2H analysis: Every 4 hours, max 8 per run
+// - Cleanup old articles: Daily at 3am
 function startContentScheduler() {
   // Round previews - 4 times/day (every 6 hours)
   cron.schedule('0 */6 * * *', async () => {
