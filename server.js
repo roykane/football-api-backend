@@ -20,6 +20,7 @@ const schedulerRouter = require('./routes/scheduler');
 const soiKeoRouter = require('./routes/soiKeo');
 const oddsSyncJob = require('./services/oddsSyncJob');
 const { startSoiKeoScheduler } = require('./services/soi-keo-scheduler');
+const { startContentScheduler } = require('./services/content-scheduler');
 // ✅ RE-ENABLED: $29 Ultra plan = 75,000 calls/day, worker uses ~3,000-5,000
 const matchCacheWorker = require('./workers/matchCacheWorker');
 const connectArticlesDB = require('./config/database');
@@ -176,6 +177,7 @@ app.use('/', require('./routes/sitemap'));
 
 // SEO: Server-rendered HTML pages for search engine crawlers
 app.use('/', require('./routes/seoPages'));
+app.use('/', require('./routes/seoContentPages'));
 
 // Mount routers - ✅ Thứ tự quan trọng!
 app.use('/api/competitions', competitionsRouter);
@@ -397,6 +399,7 @@ connectMongoDB().then(async () => {
     // startNewsScheduler();
     // Start Soi Keo scheduler (20 articles/day)
     startSoiKeoScheduler();
+    startContentScheduler();
   } catch (err) {
     console.error('Failed to setup Articles DB and scheduler:', err);
   }

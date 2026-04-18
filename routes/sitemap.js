@@ -8,6 +8,7 @@
 const express = require('express');
 const router = express.Router();
 const SoiKeoArticle = require('../models/SoiKeoArticle');
+const AutoArticle = require('../models/AutoArticle');
 
 const SITE_URL = process.env.SITE_URL || 'https://scoreline.io';
 const CACHE_TTL = 60 * 60 * 1000; // 1 hour
@@ -39,6 +40,9 @@ const LEAGUES = [
   { slug: 'v-league-1', priority: '0.9' },
   { slug: 'world-cup', priority: '0.7' },
 ];
+
+// Date slugs for results pages
+const RESULT_DATES = ['hom-nay', 'hom-qua'];
 
 function escapeXml(str) {
   return String(str)
@@ -92,9 +96,41 @@ async function generateSitemap() {
       urls.push(urlEntry(`${SITE_URL}/soi-keo/${article.slug}`, lastmod, changefreq, priority));
     }
 
-    console.log(`[Sitemap] Generated ${urls.length} URLs (${articles.length} soi-keo articles)`);
+    console.log(`[Sitemap] ${articles.length} soi-keo articles added`);
   } catch (err) {
-    console.error('[Sitemap] Failed to load articles:', err.message);
+    console.error('[Sitemap] Failed to load soi-keo articles:', err.message);
+  }
+
+  // 4. Auto articles (round previews, h2h)
+  try {
+    const autoArticles = await AutoArticle.find({ status: 'published' })
+      .sort({ createdAt: -1 })
+      .limit(300)
+      .select('type slug createdAt updatedAt matchInfo.matchDate leagueInfo.slug')
+      .lean();
+
+    for (const article of autoArticles) {
+      if (!article.slug) continue;
+      const lastmod = (article.updatedAt || article.createdAt || new Date()).toISOString().split('T')[0];
+      const prefix = article.type === 'round-preview' ? 'preview' : 'doi-dau';
+      const isUpcoming = article.matchInfo?.matchDate && new Date(article.matchInfo.matchDate) > new Date();
+      urls.push(urlEntry(`${SITE_URL}/${prefix}/${article.slug}`, lastmod, isUpcoming ? 'daily' : 'monthly', isUpcoming ? '0.7' : '0.4'));
+    }
+    console.log(`[Sitemap] ${autoArticles.length} auto articles added`);
+  } catch (err) {
+    console.error('[Sitemap] Failed to load auto articles:', err.message);
+  }
+
+  // 5. Data-driven pages (schedule, standings, top scorers per league)
+  for (const league of LEAGUES) {
+    urls.push(urlEntry(`${SITE_URL}/lich-thi-dau/${league.slug}`, today, 'daily', '0.7'));
+    urls.push(urlEntry(`${SITE_URL}/bang-xep-hang/${league.slug}`, today, 'daily', '0.7'));
+    urls.push(urlEntry(`${SITE_URL}/top-ghi-ban/${league.slug}`, today, 'daily', '0.6'));
+  }
+
+  // 6. Results pages
+  for (const dateSlug of RESULT_DATES) {
+    urls.push(urlEntry(`${SITE_URL}/ket-qua/${dateSlug}`, today, 'daily', '0.7'));
   }
 
   return `<?xml version="1.0" encoding="UTF-8"?>
