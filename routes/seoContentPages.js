@@ -309,6 +309,171 @@ function render500() {
 }
 
 // ============================================================
+// Helper: Build sidebar with related articles
+// ============================================================
+async function buildSidebar(currentSlug, currentType) {
+  let previewArticles = [];
+  let h2hArticles = [];
+  let soiKeoArticles = [];
+
+  try {
+    const SoiKeoArticle = require('../models/SoiKeoArticle');
+    [previewArticles, h2hArticles, soiKeoArticles] = await Promise.all([
+      AutoArticle.find({ type: 'round-preview', status: 'published', slug: { $ne: currentSlug } })
+        .sort({ createdAt: -1 }).limit(5).select('slug title leagueInfo.name createdAt').lean(),
+      AutoArticle.find({ type: 'h2h-analysis', status: 'published', slug: { $ne: currentSlug } })
+        .sort({ createdAt: -1 }).limit(5).select('slug title matchInfo.homeTeam matchInfo.awayTeam createdAt').lean(),
+      SoiKeoArticle.find({ status: 'published' })
+        .sort({ createdAt: -1 }).limit(5).select('slug title matchInfo.homeTeam matchInfo.awayTeam').lean(),
+    ]);
+  } catch (e) { /* ignore */ }
+
+  const renderList = (items, type) => items.map(a => {
+    const href = type === 'preview' ? `/preview/${a.slug}` : type === 'h2h' ? `/doi-dau/${a.slug}` : `/soi-keo/${a.slug}`;
+    const subtitle = type === 'preview' ? (a.leagueInfo?.name || '') :
+      `${a.matchInfo?.homeTeam?.name || ''} vs ${a.matchInfo?.awayTeam?.name || ''}`;
+    return `<a href="${href}" class="sidebar-article">
+      <span class="sidebar-article-title">${escapeHtml(a.title?.substring(0, 60) || '')}</span>
+      <span class="sidebar-article-sub">${escapeHtml(subtitle)}</span>
+    </a>`;
+  }).join('');
+
+  return `
+    <div class="sidebar-card">
+      <div class="sidebar-title">📋 Preview Vòng Đấu</div>
+      ${previewArticles.length ? renderList(previewArticles, 'preview') : '<span class="sidebar-empty">Chưa có bài</span>'}
+    </div>
+    <div class="sidebar-card">
+      <div class="sidebar-title">⚔️ Đối Đầu</div>
+      ${h2hArticles.length ? renderList(h2hArticles, 'h2h') : '<span class="sidebar-empty">Chưa có bài</span>'}
+    </div>
+    <div class="sidebar-card">
+      <div class="sidebar-title">📊 Nhận Định Mới Nhất</div>
+      ${soiKeoArticles.length ? renderList(soiKeoArticles, 'soikeo') : '<span class="sidebar-empty">Chưa có bài</span>'}
+    </div>
+    <div class="sidebar-card">
+      <div class="sidebar-title">🔗 Truy Cập Nhanh</div>
+      <a href="/lich-thi-dau" class="quick-link">📅 Lịch thi đấu</a>
+      <a href="/bang-xep-hang" class="quick-link">🏆 Bảng xếp hạng</a>
+      <a href="/ket-qua-bong-da" class="quick-link">⚽ Kết quả</a>
+      <a href="/top-ghi-ban" class="quick-link">🥇 Top ghi bàn</a>
+    </div>`;
+}
+
+// ============================================================
+// Shared dark layout for article pages (preview + h2h)
+// ============================================================
+function renderArticlePage({ title, description, url, breadcrumbItems, headerHtml, bodyHtml, sidebarHtml, structuredData }) {
+  const safeTitle = escapeHtml(title);
+  const safeDesc = escapeHtml(description);
+  const ldScripts = (Array.isArray(structuredData) ? structuredData : [structuredData])
+    .filter(Boolean).map(sd => `<script type="application/ld+json">${JSON.stringify(sd)}</script>`).join('\n  ');
+
+  const breadcrumb = breadcrumbItems.map((b, i) =>
+    i < breadcrumbItems.length - 1
+      ? `<a href="${b.url}">${escapeHtml(b.name)}</a>`
+      : `<span>${escapeHtml(b.name)}</span>`
+  ).join(' &rsaquo; ');
+
+  return `<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>${safeTitle} | ScoreLine</title>
+  <meta name="description" content="${safeDesc}">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="${escapeHtml(url)}">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="${escapeHtml(url)}">
+  <meta property="og:title" content="${safeTitle}">
+  <meta property="og:description" content="${safeDesc}">
+  <meta property="og:image" content="${SITE_URL}/og-image.jpg">
+  <meta property="og:locale" content="vi_VN">
+  <meta property="og:site_name" content="ScoreLine">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="${safeTitle}">
+  <meta name="twitter:description" content="${safeDesc}">
+  <meta name="twitter:image" content="${SITE_URL}/og-image.jpg">
+  ${ldScripts}
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f1923; color: #e2e8f0; min-height: 100vh; }
+    a { color: #00D4FF; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .page-wrapper { max-width: 1280px; margin: 0 auto; padding: 16px; }
+    .breadcrumb { font-size: 13px; color: #64748b; margin-bottom: 16px; }
+    .breadcrumb a { color: #94a3b8; }
+    .page-header { background: linear-gradient(135deg, #1a2744, #0d1f3c); padding: 32px; border-radius: 6px; margin-bottom: 16px; text-align: center; }
+    .page-header h1 { font-size: 26px; font-weight: 800; color: #fff; margin-bottom: 12px; line-height: 1.3; }
+    .match-banner { display: flex; align-items: center; justify-content: center; gap: 24px; margin: 20px 0; padding: 20px; background: rgba(0,0,0,0.2); border-radius: 6px; }
+    .match-banner .team { text-align: center; flex: 1; max-width: 200px; }
+    .match-banner .team img { width: 72px; height: 72px; object-fit: contain; filter: drop-shadow(0 4px 12px rgba(0,212,255,0.2)); }
+    .match-banner .team-name { font-size: 16px; font-weight: 700; margin-top: 8px; color: #fff; }
+    .match-banner .vs { font-size: 28px; font-weight: 900; color: #00D4FF; text-shadow: 0 0 20px rgba(0,212,255,0.3); }
+    .league-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.08); padding: 6px 14px; border-radius: 4px; font-size: 14px; margin-top: 10px; color: #94a3b8; }
+    .league-badge img { width: 20px; height: 20px; object-fit: contain; }
+    .subtitle { font-size: 14px; color: #64748b; margin-top: 8px; }
+    .h2h-stats { display: flex; gap: 12px; justify-content: center; margin-top: 16px; flex-wrap: wrap; }
+    .h2h-stat { background: rgba(0,212,255,0.08); border: 1px solid rgba(0,212,255,0.15); padding: 8px 16px; border-radius: 4px; font-size: 13px; color: #94a3b8; }
+    .h2h-stat strong { color: #00D4FF; font-size: 18px; display: block; text-align: center; }
+    .layout { display: grid; grid-template-columns: 1fr 300px; gap: 16px; align-items: start; }
+    .main { min-width: 0; }
+    .article-body { background: #1a2744; border-radius: 4px; padding: 32px; line-height: 1.8; }
+    .article-body h2 { font-size: 20px; font-weight: 800; color: #fff; margin: 28px 0 14px; padding-bottom: 8px; border-bottom: 2px solid #00D4FF; }
+    .article-body h2:first-child { margin-top: 0; }
+    .article-body h3 { font-size: 17px; font-weight: 700; color: #e2e8f0; margin: 20px 0 10px; }
+    .article-body p { margin-bottom: 14px; color: #cbd5e1; font-size: 15px; }
+    .article-body ul, .article-body ol { margin: 12px 0; padding-left: 24px; }
+    .article-body li { margin-bottom: 6px; color: #cbd5e1; font-size: 15px; }
+    .article-body strong { color: #fff; }
+    .article-body em { color: #00D4FF; font-style: normal; }
+    .tags { margin-top: 24px; display: flex; flex-wrap: wrap; gap: 6px; }
+    .tag { background: rgba(0,212,255,0.1); color: #00D4FF; padding: 4px 10px; border-radius: 3px; font-size: 12px; }
+    .sidebar { display: flex; flex-direction: column; gap: 12px; }
+    .sidebar-card { background: #1a2744; border-radius: 4px; padding: 16px; }
+    .sidebar-title { font-size: 13px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+    .sidebar-article { display: block; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .sidebar-article:last-child { border-bottom: none; }
+    .sidebar-article:hover { text-decoration: none; }
+    .sidebar-article-title { display: block; font-size: 13px; color: #e2e8f0; line-height: 1.4; }
+    .sidebar-article:hover .sidebar-article-title { color: #00D4FF; }
+    .sidebar-article-sub { display: block; font-size: 11px; color: #64748b; margin-top: 2px; }
+    .sidebar-empty { font-size: 13px; color: #475569; }
+    .quick-link { display: block; padding: 7px 0; font-size: 14px; color: #cbd5e1; }
+    .quick-link:hover { color: #00D4FF; text-decoration: none; }
+    .footer { text-align: center; margin-top: 24px; padding: 16px; color: #475569; font-size: 13px; }
+    @media (max-width: 768px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { order: 2; }
+      .page-header { padding: 20px 16px; }
+      .page-header h1 { font-size: 20px; }
+      .article-body { padding: 20px 16px; }
+      .match-banner .team img { width: 52px; height: 52px; }
+      .match-banner { gap: 16px; padding: 14px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-wrapper">
+    <nav class="breadcrumb">${breadcrumb}</nav>
+    <div class="page-header">${headerHtml}</div>
+    <div class="layout">
+      <main class="main">
+        <article class="article-body">${bodyHtml}</article>
+      </main>
+      <aside class="sidebar">${sidebarHtml}</aside>
+    </div>
+    <div class="footer">
+      <a href="${SITE_URL}">ScoreLine.io</a> - Cập nhật tỷ số trực tiếp, lịch thi đấu và phân tích bóng đá
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
+// ============================================================
 // 1. GET /preview/:slug - Round Preview (MongoDB)
 // ============================================================
 router.get('/preview/:slug', async (req, res) => {
@@ -323,56 +488,53 @@ router.get('/preview/:slug', async (req, res) => {
       return res.status(404).send(render404('Bài preview không tồn tại.'));
     }
 
-    // Increment views
     AutoArticle.updateOne({ _id: article._id }, { $inc: { views: 1 } }).catch(() => {});
 
     const url = `${SITE_URL}/preview/${article.slug}`;
     const title = article.metaTitle || article.title;
     const description = article.metaDescription || article.excerpt || '';
     const leagueName = article.leagueInfo?.name || '';
+    const leagueLogo = article.leagueInfo?.logo || '';
     const round = article.round || '';
 
     const structuredData = {
       '@context': 'https://schema.org',
       '@type': 'Article',
       headline: article.title,
-      description: description,
-      url: url,
+      description,
+      url,
       datePublished: article.createdAt,
       dateModified: article.updatedAt || article.createdAt,
       author: { '@type': 'Organization', name: 'ScoreLine', url: SITE_URL },
-      publisher: {
-        '@type': 'Organization',
-        name: 'ScoreLine',
-        logo: { '@type': 'ImageObject', url: `${SITE_URL}/og-image.jpg` },
-      },
+      publisher: { '@type': 'Organization', name: 'ScoreLine', logo: { '@type': 'ImageObject', url: `${SITE_URL}/og-image.jpg` } },
       image: `${SITE_URL}/og-image.jpg`,
       mainEntityOfPage: url,
     };
 
-    const breadcrumbHtml = `
-      <a href="/">Trang chủ</a> &rsaquo;
-      <a href="/preview">Nhận định</a> &rsaquo;
-      <span>Preview ${escapeHtml(leagueName)} ${escapeHtml(round)}</span>`;
-
     const headerHtml = `
       <h1>${escapeHtml(title)}</h1>
-      ${article.leagueInfo?.logo ? `<div class="league-badge"><img src="${escapeHtml(article.leagueInfo.logo)}" alt="${escapeHtml(leagueName)}" loading="lazy"><span>${escapeHtml(leagueName)}</span></div>` : ''}
-      <div class="subtitle">${escapeHtml(round)} &bull; Mùa giải ${article.seasonYear || 2025}</div>`;
+      <div class="match-banner">
+        ${leagueLogo ? `<img src="${escapeHtml(leagueLogo)}" alt="${escapeHtml(leagueName)}" style="width:64px;height:64px;object-fit:contain;">` : ''}
+        <div>
+          <div style="font-size:20px;font-weight:800;color:#fff;">${escapeHtml(leagueName)}</div>
+          <div style="font-size:14px;color:#00D4FF;margin-top:4px;">${escapeHtml(round)} &bull; Mùa giải ${article.seasonYear || 2025}/${(article.seasonYear || 2025) + 1}</div>
+        </div>
+      </div>`;
 
     const bodyHtml = `
       ${article.content ? markdownToHtml(article.content) : ''}
       ${article.tags?.length ? `<div class="tags">${article.tags.map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>` : ''}`;
 
-    const html = renderPage({
-      title,
-      description,
-      url,
-      ogType: 'article',
-      breadcrumbHtml,
-      headerHtml,
-      bodyHtml,
-      structuredData,
+    const sidebarHtml = await buildSidebar(article.slug, 'round-preview');
+
+    const html = renderArticlePage({
+      title, description, url,
+      breadcrumbItems: [
+        { name: 'Trang chủ', url: '/' },
+        { name: 'Preview', url: '/soi-keo' },
+        { name: `${leagueName} ${round}`, url },
+      ],
+      headerHtml, bodyHtml, sidebarHtml, structuredData,
     });
 
     res.set('Content-Type', 'text/html; charset=utf-8');
@@ -404,90 +566,80 @@ router.get('/doi-dau/:slug', async (req, res) => {
     const { matchInfo, h2hStats } = article;
     const homeName = matchInfo?.homeTeam?.name || '';
     const awayName = matchInfo?.awayTeam?.name || '';
+    const homeLogo = matchInfo?.homeTeam?.logo || '';
+    const awayLogo = matchInfo?.awayTeam?.logo || '';
     const url = `${SITE_URL}/doi-dau/${article.slug}`;
     const title = article.metaTitle || article.title;
     const description = article.metaDescription || article.excerpt || '';
 
     const articleSchema = {
-      '@context': 'https://schema.org',
-      '@type': 'Article',
-      headline: article.title,
-      description: description,
-      url: url,
-      datePublished: article.createdAt,
-      dateModified: article.updatedAt || article.createdAt,
+      '@context': 'https://schema.org', '@type': 'Article',
+      headline: article.title, description, url,
+      datePublished: article.createdAt, dateModified: article.updatedAt || article.createdAt,
       author: { '@type': 'Organization', name: 'ScoreLine', url: SITE_URL },
-      publisher: {
-        '@type': 'Organization',
-        name: 'ScoreLine',
-        logo: { '@type': 'ImageObject', url: `${SITE_URL}/og-image.jpg` },
-      },
-      image: `${SITE_URL}/og-image.jpg`,
-      mainEntityOfPage: url,
+      publisher: { '@type': 'Organization', name: 'ScoreLine', logo: { '@type': 'ImageObject', url: `${SITE_URL}/og-image.jpg` } },
+      image: `${SITE_URL}/og-image.jpg`, mainEntityOfPage: url,
     };
 
     const sportsEventSchema = {
-      '@context': 'https://schema.org',
-      '@type': 'SportsEvent',
-      name: `${homeName} vs ${awayName}`,
-      sport: 'Soccer',
+      '@context': 'https://schema.org', '@type': 'SportsEvent',
+      name: `${homeName} vs ${awayName}`, sport: 'Soccer',
       startDate: matchInfo?.matchDate,
-      homeTeam: {
-        '@type': 'SportsTeam',
-        name: homeName,
-        image: matchInfo?.homeTeam?.logo,
-      },
-      awayTeam: {
-        '@type': 'SportsTeam',
-        name: awayName,
-        image: matchInfo?.awayTeam?.logo,
-      },
-      location: {
-        '@type': 'Place',
-        name: matchInfo?.league?.name || 'TBD',
-      },
+      homeTeam: { '@type': 'SportsTeam', name: homeName, image: homeLogo },
+      awayTeam: { '@type': 'SportsTeam', name: awayName, image: awayLogo },
     };
 
-    const breadcrumbHtml = `
-      <a href="/">Trang chủ</a> &rsaquo;
-      <a href="/doi-dau">Đối đầu</a> &rsaquo;
-      <span>${escapeHtml(homeName)} vs ${escapeHtml(awayName)}</span>`;
+    const total = h2hStats?.totalMatches || 0;
+    const homeW = h2hStats?.homeWins || 0;
+    const draws = h2hStats?.draws || 0;
+    const awayW = h2hStats?.awayWins || 0;
+    const homePct = total ? Math.round((homeW / total) * 100) : 0;
+    const drawPct = total ? Math.round((draws / total) * 100) : 0;
+    const awayPct = total ? Math.round((awayW / total) * 100) : 0;
 
     const headerHtml = `
       <h1>${escapeHtml(title)}</h1>
-      <div class="match-info">
+      <div class="match-banner">
         <div class="team">
-          ${matchInfo?.homeTeam?.logo ? `<img src="${escapeHtml(matchInfo.homeTeam.logo)}" alt="${escapeHtml(homeName)}" loading="lazy">` : ''}
+          ${homeLogo ? `<img src="${escapeHtml(homeLogo)}" alt="${escapeHtml(homeName)}" loading="lazy">` : ''}
           <div class="team-name">${escapeHtml(homeName)}</div>
         </div>
         <div class="vs">VS</div>
         <div class="team">
-          ${matchInfo?.awayTeam?.logo ? `<img src="${escapeHtml(matchInfo.awayTeam.logo)}" alt="${escapeHtml(awayName)}" loading="lazy">` : ''}
+          ${awayLogo ? `<img src="${escapeHtml(awayLogo)}" alt="${escapeHtml(awayName)}" loading="lazy">` : ''}
           <div class="team-name">${escapeHtml(awayName)}</div>
         </div>
       </div>
-      ${matchInfo?.league ? `<div class="league-badge">${matchInfo.league.logo ? `<img src="${escapeHtml(matchInfo.league.logo)}" alt="${escapeHtml(matchInfo.league.name)}" loading="lazy">` : ''}<span>${escapeHtml(matchInfo.league.name)}${matchInfo.league.country ? ' - ' + escapeHtml(matchInfo.league.country) : ''}</span></div>` : ''}
+      ${matchInfo?.league ? `<div class="league-badge">${matchInfo.league.logo ? `<img src="${escapeHtml(matchInfo.league.logo)}" alt="" loading="lazy">` : ''}<span>${escapeHtml(matchInfo.league.name || '')}</span></div>` : ''}
       ${matchInfo?.matchDate ? `<div class="subtitle">${escapeHtml(formatDate(matchInfo.matchDate))}</div>` : ''}
-      ${h2hStats ? `
-      <div class="stat-bar">
-        <div class="stat-item">Tổng trận: <span class="stat-value">${h2hStats.totalMatches || 0}</span></div>
-        <div class="stat-item">${escapeHtml(homeName)} thắng: <span class="stat-value">${h2hStats.homeWins || 0}</span></div>
-        <div class="stat-item">Hòa: <span class="stat-value">${h2hStats.draws || 0}</span></div>
-        <div class="stat-item">${escapeHtml(awayName)} thắng: <span class="stat-value">${h2hStats.awayWins || 0}</span></div>
+      ${total > 0 ? `
+      <div class="h2h-stats">
+        <div class="h2h-stat"><strong>${total}</strong>Tổng trận</div>
+        <div class="h2h-stat"><strong>${homeW}</strong>${escapeHtml(homeName)} thắng<br><small>${homePct}%</small></div>
+        <div class="h2h-stat"><strong>${draws}</strong>Hòa<br><small>${drawPct}%</small></div>
+        <div class="h2h-stat"><strong>${awayW}</strong>${escapeHtml(awayName)} thắng<br><small>${awayPct}%</small></div>
+        ${h2hStats?.avgGoals ? `<div class="h2h-stat"><strong>${h2hStats.avgGoals.toFixed(1)}</strong>TB bàn/trận</div>` : ''}
+      </div>
+      <div style="margin-top:12px;height:8px;display:flex;border-radius:4px;overflow:hidden;">
+        <div style="width:${homePct}%;background:#00D4FF;"></div>
+        <div style="width:${drawPct}%;background:#64748b;"></div>
+        <div style="width:${awayPct}%;background:#ef4444;"></div>
       </div>` : ''}`;
 
     const bodyHtml = `
       ${article.content ? markdownToHtml(article.content) : ''}
       ${article.tags?.length ? `<div class="tags">${article.tags.map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>` : ''}`;
 
-    const html = renderPage({
-      title,
-      description,
-      url,
-      ogType: 'article',
-      breadcrumbHtml,
-      headerHtml,
-      bodyHtml,
+    const sidebarHtml = await buildSidebar(article.slug, 'h2h-analysis');
+
+    const html = renderArticlePage({
+      title, description, url,
+      breadcrumbItems: [
+        { name: 'Trang chủ', url: '/' },
+        { name: 'Đối đầu', url: '/soi-keo' },
+        { name: `${homeName} vs ${awayName}`, url },
+      ],
+      headerHtml, bodyHtml, sidebarHtml,
       structuredData: [articleSchema, sportsEventSchema],
     });
 
