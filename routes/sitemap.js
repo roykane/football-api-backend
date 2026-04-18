@@ -27,6 +27,7 @@ const STATIC_PAGES = [
   { path: '/soi-keo', priority: '0.9', changefreq: 'daily' },
   { path: '/giai-dau', priority: '0.7', changefreq: 'weekly' },
   { path: '/top-ghi-ban', priority: '0.7', changefreq: 'daily' },
+  { path: '/nhan-dinh', priority: '0.8', changefreq: 'daily' },
 ];
 
 const LEAGUES = [
