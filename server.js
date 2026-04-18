@@ -191,6 +191,7 @@ app.use('/api', aiRouter);
 app.use('/api/articles', articlesRouter);
 app.use('/api/scheduler', schedulerRouter);
 app.use('/api/soi-keo', soiKeoRouter);
+app.use('/api/content', require('./routes/contentApi'));
 
 // Legacy endpoints (chỉ giữ lại leagues và fixtures)
 app.get('/api/leagues', async (req, res) => {
