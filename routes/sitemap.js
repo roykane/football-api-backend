@@ -34,7 +34,6 @@ const STATIC_PAGES = [
   { path: '/world-cup-2026/bang-xep-hang', priority: '0.8', changefreq: 'daily' },
   { path: '/world-cup-2026/ket-qua', priority: '0.8', changefreq: 'daily' },
   { path: '/world-cup-2026/top-ghi-ban', priority: '0.8', changefreq: 'daily' },
-  { path: '/world-cup-2026/doi-tuyen-viet-nam', priority: '0.9', changefreq: 'daily' },
 ];
 
 const LEAGUES = [
