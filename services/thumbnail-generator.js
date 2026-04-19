@@ -31,10 +31,18 @@ if (!fs.existsSync(ASSETS_DIR)) {
 let vsBgImage = null;
 async function getVsBg() {
   if (vsBgImage) return vsBgImage;
+  console.log(`[Thumbnail] VS_BG_PATH: ${VS_BG_PATH}, exists: ${fs.existsSync(VS_BG_PATH)}`);
   if (fs.existsSync(VS_BG_PATH)) {
-    vsBgImage = await loadImage(VS_BG_PATH);
-    return vsBgImage;
+    try {
+      vsBgImage = await loadImage(VS_BG_PATH);
+      console.log(`[Thumbnail] VS background loaded: ${vsBgImage.width}x${vsBgImage.height}`);
+      return vsBgImage;
+    } catch (e) {
+      console.error(`[Thumbnail] Failed to load VS background: ${e.message}`);
+      return null;
+    }
   }
+  console.warn(`[Thumbnail] VS background not found at ${VS_BG_PATH}`);
   return null;
 }
 
