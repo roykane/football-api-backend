@@ -134,12 +134,6 @@ function renderSoiKeoHtml(article, thumbnailUrl) {
   const description = escapeHtml(article.metaDescription || article.excerpt);
   const url = `${SITE_URL}/soi-keo/${article.slug}`;
   const matchDate = formatDate(matchInfo?.matchDate);
-  const homeName = escapeHtml(matchInfo?.homeTeam?.name || '');
-  const awayName = escapeHtml(matchInfo?.awayTeam?.name || '');
-  const homeLogo = matchInfo?.homeTeam?.logo ? escapeHtml(matchInfo.homeTeam.logo) : '';
-  const awayLogo = matchInfo?.awayTeam?.logo ? escapeHtml(matchInfo.awayTeam.logo) : '';
-  const leagueName = escapeHtml(matchInfo?.league?.name || '');
-  const leagueLogo = matchInfo?.league?.logo ? escapeHtml(matchInfo.league.logo) : '';
 
   const structuredData = {
     "@context": "https://schema.org",
@@ -188,92 +182,6 @@ function renderSoiKeoHtml(article, thumbnailUrl) {
     }
   };
 
-  // Build odds HTML
-  let oddsHtml = '';
-  if (oddsData) {
-    const oddsGroups = [];
-    if (oddsData.homeWin) {
-      oddsGroups.push(`
-        <div class="odds-group">
-          <div class="odds-group-label">1X2</div>
-          <div class="odds-chips">
-            <span class="odds-chip"><em>1</em>${oddsData.homeWin}</span>
-            <span class="odds-chip"><em>X</em>${oddsData.draw || '-'}</span>
-            <span class="odds-chip"><em>2</em>${oddsData.awayWin || '-'}</span>
-          </div>
-        </div>`);
-    }
-    if (oddsData.handicap?.line) {
-      oddsGroups.push(`
-        <div class="odds-group">
-          <div class="odds-group-label">Chấp ${oddsData.handicap.line}</div>
-          <div class="odds-chips">
-            <span class="odds-chip"><em>Chủ</em>${oddsData.handicap.home?.toFixed(2) || '-'}</span>
-            <span class="odds-chip"><em>Khách</em>${oddsData.handicap.away?.toFixed(2) || '-'}</span>
-          </div>
-        </div>`);
-    }
-    if (oddsData.overUnder?.line) {
-      oddsGroups.push(`
-        <div class="odds-group">
-          <div class="odds-group-label">T/X ${oddsData.overUnder.line}</div>
-          <div class="odds-chips">
-            <span class="odds-chip odds-over"><em>Tài</em>${oddsData.overUnder.over?.toFixed(2) || '-'}</span>
-            <span class="odds-chip odds-under"><em>Xỉu</em>${oddsData.overUnder.under?.toFixed(2) || '-'}</span>
-          </div>
-        </div>`);
-    }
-    if (oddsGroups.length) {
-      oddsHtml = `<div class="odds-panel">${oddsGroups.join('')}</div>`;
-    }
-  }
-
-  // Build content sections
-  const sections = [];
-  if (content?.introduction || content?.teamAnalysis) {
-    sections.push(`
-      <div class="section-card">
-        <h2><span class="section-icon">⚽</span> Phong độ và lực lượng ${homeName} vs ${awayName}</h2>
-        ${content?.introduction ? markdownToHtml(content.introduction) : ''}
-        ${content?.teamAnalysis ? `<div class="section-divider"></div>${markdownToHtml(content.teamAnalysis)}` : ''}
-      </div>`);
-  }
-  if (content?.h2hHistory) {
-    sections.push(`
-      <div class="section-card">
-        <h2><span class="section-icon">🏆</span> Lịch sử đối đầu ${homeName} vs ${awayName}</h2>
-        ${markdownToHtml(content.h2hHistory)}
-      </div>`);
-  }
-  if (content?.formAnalysis) {
-    sections.push(`
-      <div class="section-card">
-        <h2><span class="section-icon">📈</span> Phong độ gần đây</h2>
-        ${markdownToHtml(content.formAnalysis)}
-      </div>`);
-  }
-  if (content?.oddsAnalysis) {
-    sections.push(`
-      <div class="section-card">
-        <h2><span class="section-icon">💹</span> Nhận định kèo ${homeName} vs ${awayName}</h2>
-        ${markdownToHtml(content.oddsAnalysis)}
-      </div>`);
-  }
-  if (content?.prediction) {
-    sections.push(`
-      <div class="section-card prediction-card">
-        <h2><span class="section-icon">🎯</span> Dự đoán kết quả</h2>
-        ${markdownToHtml(content.prediction)}
-      </div>`);
-  }
-  if (content?.bettingTips) {
-    sections.push(`
-      <div class="section-card tips-card">
-        <h2><span class="section-icon">🔥</span> Kèo khuyên chọn</h2>
-        ${markdownToHtml(content.bettingTips)}
-      </div>`);
-  }
-
   return `<!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -304,112 +212,50 @@ function renderSoiKeoHtml(article, thumbnailUrl) {
 
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.8; color: #1e293b; background: #f1f5f9; }
-    a { color: #2563eb; text-decoration: none; }
-    a:hover { text-decoration: underline; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.8; color: #1a1a2e; background: #f1f5f9; }
     .container { max-width: 1280px; margin: 0 auto; padding: 16px; }
-    .breadcrumb { font-size: 13px; color: #64748b; margin-bottom: 12px; }
-    .breadcrumb a { color: #2563eb; }
-
-    /* Match Hero Banner */
-    .match-banner { position: relative; border-radius: 8px; overflow: hidden; background: linear-gradient(135deg, #0b3d91 0%, #1565c0 40%, #0d47a1 100%); margin-bottom: 16px; }
-    .match-banner-bg { position: absolute; inset: 0; opacity: 0.08; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Ccircle cx='30' cy='30' r='28' stroke='white' stroke-width='1' fill='none'/%3E%3Cline x1='30' y1='2' x2='30' y2='58' stroke='white' stroke-width='0.5'/%3E%3Cline x1='2' y1='30' x2='58' y2='30' stroke='white' stroke-width='0.5'/%3E%3C/svg%3E") repeat; }
-    .match-banner-inner { position: relative; text-align: center; padding: 28px 20px; }
-    .match-banner h1 { font-size: 24px; font-weight: 800; color: #fff; margin-bottom: 16px; line-height: 1.3; }
-    .match-teams { display: flex; align-items: center; justify-content: center; gap: 16px; margin: 20px 0; }
-    .match-team { flex: 1; max-width: 200px; text-align: center; }
-    .team-logo-wrap { width: 80px; height: 80px; margin: 0 auto; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%); }
-    .team-logo-wrap.home { border: 2px solid rgba(236,72,153,0.4); }
-    .team-logo-wrap.away { border: 2px solid rgba(251,191,36,0.4); }
-    .team-logo-wrap img { width: 56px; height: 56px; object-fit: contain; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.3)); }
-    .team-name { font-size: 15px; font-weight: 700; color: #fff; margin-top: 8px; text-shadow: 0 1px 3px rgba(0,0,0,0.3); }
-    .match-vs { text-align: center; min-width: 120px; }
-    .match-vs-text { font-size: 32px; font-weight: 900; color: #fbbf24; text-shadow: 0 2px 10px rgba(251,191,36,0.4); letter-spacing: 3px; }
-    .match-date { display: inline-block; background: rgba(0,0,0,0.3); padding: 4px 14px; border-radius: 4px; font-size: 13px; color: #e2e8f0; margin-top: 6px; font-weight: 600; }
-    .match-league { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 12px; font-size: 13px; color: #94a3b8; }
-    .match-league img { width: 20px; height: 20px; object-fit: contain; }
-
-    /* Odds Panel */
-    .odds-panel { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.1); }
-    .odds-group { text-align: center; }
-    .odds-group-label { font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
-    .odds-chips { display: flex; gap: 4px; }
-    .odds-chip { display: flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.1); padding: 5px 10px; border-radius: 4px; font-size: 13px; font-weight: 700; color: #fff; }
-    .odds-chip em { font-style: normal; font-size: 10px; color: #94a3b8; font-weight: 600; }
-    .odds-over { background: rgba(34,197,94,0.15); color: #4ade80; }
-    .odds-under { background: rgba(239,68,68,0.15); color: #f87171; }
-
-    /* Layout */
     .layout { display: grid; grid-template-columns: 1fr 300px; gap: 16px; align-items: start; }
     .main { min-width: 0; }
-
-    /* Section Cards */
-    .section-card { background: #fff; border-radius: 8px; padding: 24px; margin-bottom: 16px; border-left: 4px solid #2563eb; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
-    .section-card h2 { font-size: 20px; font-weight: 800; color: #0f172a; margin: 0 0 14px; padding: 0; border-bottom: none; display: flex; align-items: center; gap: 8px; }
-    .section-card h3 { font-size: 17px; font-weight: 700; color: #1e293b; margin: 18px 0 8px; }
-    .section-card p { margin-bottom: 12px; color: #334155; font-size: 15px; }
-    .section-card ul { margin: 12px 0; padding-left: 24px; }
-    .section-card li { margin-bottom: 6px; color: #334155; font-size: 15px; }
-    .section-card strong { color: #0f172a; }
-    .section-card em { color: #2563eb; font-style: normal; }
-    .section-icon { font-size: 20px; flex-shrink: 0; }
-    .section-divider { height: 1px; background: #e2e8f0; margin: 16px 0; }
-    .prediction-card { border-left-color: #16a34a; background: linear-gradient(135deg, #f0fdf4, #fff); }
-    .tips-card { border-left-color: #f59e0b; background: linear-gradient(135deg, #fffbeb, #fff); }
-
-    /* Related Links */
-    .related-box { background: #fff; border-radius: 8px; padding: 16px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
-    .related-box h3 { font-size: 14px; font-weight: 700; color: #0f172a; margin-bottom: 10px; }
-    .related-links { display: flex; flex-wrap: wrap; gap: 6px; }
-    .related-links a { display: inline-block; padding: 6px 12px; border-radius: 4px; font-size: 13px; text-decoration: none; }
-
-    /* Tags */
-    .tags { margin-top: 20px; display: flex; flex-wrap: wrap; gap: 6px; }
-    .tag { background: #eff6ff; color: #2563eb; padding: 4px 10px; border-radius: 3px; font-size: 12px; }
-
-    /* Sidebar */
     .sidebar { display: flex; flex-direction: column; gap: 12px; }
-    .sidebar-card { background: #fff; border-radius: 8px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
-    .sidebar-title { font-size: 13px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
-    .sidebar-article { display: flex; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid #f1f5f9; text-decoration: none; }
-    .sidebar-article:last-child { border-bottom: none; }
-    .sidebar-article:hover { text-decoration: none; }
-    .sidebar-thumb { width: 60px; height: 40px; border-radius: 4px; object-fit: cover; flex-shrink: 0; background: #f1f5f9; }
-    .sidebar-logos { width: 60px; height: 40px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; gap: 2px; background: #f1f5f9; border-radius: 4px; padding: 4px; }
-    .sidebar-logos img { width: 18px; height: 18px; object-fit: contain; }
-    .sidebar-info { flex: 1; min-width: 0; }
-    .sidebar-article-title { display: block; font-size: 13px; color: #1e293b; line-height: 1.4; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-    .sidebar-article:hover .sidebar-article-title { color: #2563eb; }
-    .sidebar-article-sub { display: block; font-size: 11px; color: #94a3b8; margin-top: 2px; }
-    .sidebar-link { display: block; padding: 7px 0; font-size: 14px; color: #475569; border-bottom: 1px solid #f1f5f9; text-decoration: none; }
+    .sidebar-card { background: white; border-radius: 6px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+    .sidebar-title { font-size: 13px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+    .sidebar-link { display: block; padding: 6px 0; font-size: 13px; color: #334155; text-decoration: none; border-bottom: 1px solid #f1f5f9; }
     .sidebar-link:last-child { border-bottom: none; }
-    .sidebar-link:hover { color: #2563eb; text-decoration: none; }
-
-    /* Author */
-    .author-box { background: #fff; border-radius: 8px; padding: 16px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); display: flex; gap: 12px; align-items: center; }
-    .author-avatar { width: 48px; height: 48px; background: #eff6ff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
-    .author-name { font-size: 14px; font-weight: 700; color: #0f172a; }
-    .author-bio { font-size: 13px; color: #64748b; margin-top: 2px; }
-
-    /* Footer */
-    .footer { text-align: center; margin-top: 24px; padding: 16px; color: #94a3b8; font-size: 13px; }
-    .footer a { color: #2563eb; }
-
+    .sidebar-link:hover { color: #2563eb; }
+    .banner img { width: 100%; height: auto; display: block; border-radius: 6px; }
+    .header { text-align: center; padding: 28px 20px; background: linear-gradient(135deg, #0a1628, #1a2744); color: white; border-radius: 6px; margin-bottom: 16px; }
+    .header h1 { font-size: 24px; font-weight: 800; margin-bottom: 12px; line-height: 1.3; }
+    .match-info { display: flex; align-items: center; justify-content: center; gap: 20px; margin: 20px 0; }
+    .team { text-align: center; }
+    .team img { width: 64px; height: 64px; object-fit: contain; }
+    .team-name { font-size: 16px; font-weight: 700; margin-top: 8px; }
+    .vs { font-size: 24px; font-weight: 900; color: #00D4FF; }
+    .league-info { font-size: 14px; opacity: 0.8; margin-top: 10px; }
+    .date-info { font-size: 14px; opacity: 0.7; margin-top: 5px; }
+    .odds-bar { display: flex; gap: 15px; justify-content: center; margin-top: 20px; flex-wrap: wrap; }
+    .odds-item { background: rgba(255,255,255,0.1); padding: 8px 16px; border-radius: 8px; font-size: 13px; }
+    .odds-value { font-weight: 700; color: #00D4FF; }
+    .content { background: white; border-radius: 6px; padding: 28px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+    .content h2 { font-size: 20px; font-weight: 800; color: #0f172a; margin: 24px 0 12px; padding-bottom: 8px; border-bottom: 3px solid #2563eb; }
+    .content h2:first-child { margin-top: 0; }
+    .content p { margin-bottom: 12px; color: #334155; font-size: 15px; }
+    .content ul { margin: 12px 0; padding-left: 20px; }
+    .content li { margin-bottom: 6px; color: #334155; font-size: 15px; }
+    .content strong { color: #0f172a; }
+    .tags { margin-top: 30px; display: flex; flex-wrap: wrap; gap: 8px; }
+    .tag { background: #f1f5f9; color: #475569; padding: 4px 12px; border-radius: 20px; font-size: 13px; }
+    .footer { text-align: center; margin-top: 30px; padding: 20px; color: #94a3b8; font-size: 14px; }
+    .footer a { color: #00D4FF; text-decoration: none; }
+    .breadcrumb { margin-bottom: 20px; font-size: 14px; color: #64748b; }
+    .breadcrumb a { color: #3b82f6; text-decoration: none; }
     @media (max-width: 768px) {
       .layout { grid-template-columns: 1fr; }
       .sidebar { order: 2; }
       .container { padding: 10px; }
-      .match-banner-inner { padding: 20px 12px; }
-      .match-banner h1 { font-size: 20px; }
-      .team-logo-wrap { width: 64px; height: 64px; }
-      .team-logo-wrap img { width: 44px; height: 44px; }
-      .team-name { font-size: 13px; }
-      .match-vs-text { font-size: 24px; }
-      .match-vs { min-width: 80px; }
-      .section-card { padding: 16px 14px; }
-      .section-card h2 { font-size: 18px; }
-      .odds-panel { gap: 6px; }
-      .odds-chip { padding: 4px 8px; font-size: 12px; }
+      .header { padding: 20px 15px; }
+      .header h1 { font-size: 20px; }
+      .content { padding: 16px 12px; }
+      .team img { width: 48px; height: 48px; }
     }
   </style>
 </head>
@@ -418,68 +264,59 @@ function renderSoiKeoHtml(article, thumbnailUrl) {
     <nav class="breadcrumb">
       <a href="/">Trang chủ</a> &rsaquo;
       <a href="/soi-keo">Nhận định bóng đá</a> &rsaquo;
-      <span>${homeName} vs ${awayName}</span>
+      <span>${escapeHtml(matchInfo?.homeTeam?.name)} vs ${escapeHtml(matchInfo?.awayTeam?.name)}</span>
     </nav>
 
-    ${thumbnailUrl ? `<div style="margin-bottom:16px;"><img src="${escapeHtml(thumbnailUrl)}" alt="${title}" style="width:100%;height:auto;display:block;border-radius:8px;" loading="eager"></div>` : ''}
+    ${thumbnailUrl ? `<div class="banner"><img src="${escapeHtml(thumbnailUrl)}" alt="${title}" loading="eager"></div>` : ''}
 
-    <!-- Match Hero Banner -->
-    <div class="match-banner">
-      <div class="match-banner-bg"></div>
-      <div class="match-banner-inner">
-        <h1>${title}</h1>
-        <div class="match-teams">
-          <div class="match-team">
-            <div class="team-logo-wrap home">
-              ${homeLogo ? `<img src="${homeLogo}" alt="${homeName}" loading="lazy">` : ''}
-            </div>
-            <div class="team-name">${homeName}</div>
-          </div>
-          <div class="match-vs">
-            <div class="match-vs-text">VS</div>
-            <div class="match-date">${escapeHtml(matchDate)}</div>
-          </div>
-          <div class="match-team">
-            <div class="team-logo-wrap away">
-              ${awayLogo ? `<img src="${awayLogo}" alt="${awayName}" loading="lazy">` : ''}
-            </div>
-            <div class="team-name">${awayName}</div>
-          </div>
+    <div class="header">
+      <h1>${title}</h1>
+      <div class="match-info">
+        <div class="team">
+          ${matchInfo?.homeTeam?.logo ? `<img src="${escapeHtml(matchInfo.homeTeam.logo)}" alt="${escapeHtml(matchInfo.homeTeam.name)}" loading="lazy">` : ''}
+          <div class="team-name">${escapeHtml(matchInfo?.homeTeam?.name)}</div>
         </div>
-        <div class="match-league">
-          ${leagueLogo ? `<img src="${leagueLogo}" alt="">` : ''}
-          ${leagueName} ${matchInfo?.league?.country ? '- ' + escapeHtml(matchInfo.league.country) : ''}
+        <div class="vs">VS</div>
+        <div class="team">
+          ${matchInfo?.awayTeam?.logo ? `<img src="${escapeHtml(matchInfo.awayTeam.logo)}" alt="${escapeHtml(matchInfo.awayTeam.name)}" loading="lazy">` : ''}
+          <div class="team-name">${escapeHtml(matchInfo?.awayTeam?.name)}</div>
         </div>
-        ${oddsHtml}
       </div>
+      <div class="league-info">${escapeHtml(matchInfo?.league?.name)} ${matchInfo?.league?.country ? '- ' + escapeHtml(matchInfo.league.country) : ''}</div>
+      <div class="date-info">${escapeHtml(matchDate)}</div>
+      ${oddsData ? `
+      <div class="odds-bar">
+        ${oddsData.homeWin ? `<div class="odds-item">Chủ <span class="odds-value">${oddsData.homeWin}</span></div>` : ''}
+        ${oddsData.draw ? `<div class="odds-item">Hòa <span class="odds-value">${oddsData.draw}</span></div>` : ''}
+        ${oddsData.awayWin ? `<div class="odds-item">Khách <span class="odds-value">${oddsData.awayWin}</span></div>` : ''}
+        ${oddsData.overUnder?.line ? `<div class="odds-item">T/X <span class="odds-value">${oddsData.overUnder.line}</span></div>` : ''}
+      </div>` : ''}
     </div>
 
     <div class="layout">
-      <main class="main">
-        ${sections.join('\n')}
+      <div class="main">
+        <article class="content">
+          ${content?.introduction ? `<h2>Giới thiệu</h2><p>${markdownToHtml(content.introduction)}</p>` : ''}
+          ${content?.teamAnalysis ? `<h2>Phân tích đội hình</h2><p>${markdownToHtml(content.teamAnalysis)}</p>` : ''}
+          ${content?.h2hHistory ? `<h2>Lịch sử đối đầu</h2><p>${markdownToHtml(content.h2hHistory)}</p>` : ''}
+          ${content?.formAnalysis ? `<h2>Phong độ gần đây</h2><p>${markdownToHtml(content.formAnalysis)}</p>` : ''}
+          ${content?.oddsAnalysis ? `<h2>Phân tích tỷ lệ</h2><p>${markdownToHtml(content.oddsAnalysis)}</p>` : ''}
+          ${content?.prediction ? `<h2>Dự đoán kết quả</h2><p>${markdownToHtml(content.prediction)}</p>` : ''}
+          ${content?.bettingTips ? `<h2>Gợi ý theo dõi</h2><p>${markdownToHtml(content.bettingTips)}</p>` : ''}
 
-        ${article.tags?.length ? `
-        <div class="section-card" style="border-left-color:#94a3b8;">
+          ${article.tags?.length ? `
           <div class="tags">
-            ${article.tags.map(tag => `<a href="/soi-keo?tag=${encodeURIComponent(tag)}" class="tag">${escapeHtml(tag)}</a>`).join('')}
-          </div>
-        </div>` : ''}
+            ${article.tags.map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join('')}
+          </div>` : ''}
+        </article>
 
-        <div class="related-box">
-          <h3>Xem thêm</h3>
-          <div class="related-links">
+        <div style="margin-top:12px;padding:16px;background:white;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+          <h3 style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:10px;">Xem thêm</h3>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;">
             RELATED_LINKS_PLACEHOLDER
           </div>
         </div>
-
-        <div class="author-box">
-          <div class="author-avatar">🤖</div>
-          <div>
-            <div class="author-name"><a href="/about">Scoreline AI</a></div>
-            <div class="author-bio">Hệ thống AI phân tích 500+ trận đấu mỗi tuần, kết hợp dữ liệu phong độ và lịch sử đối đầu.</div>
-          </div>
-        </div>
-      </main>
+      </div>
 
       <aside class="sidebar">
         <div class="sidebar-card">
@@ -573,30 +410,18 @@ router.get('/soi-keo/:slug', async (req, res) => {
       relatedLinks = links.join('\n        ');
     } catch (e) { /* ignore */ }
 
-    // Build sidebar content with thumbnails
+    // Build sidebar content
     let sidebarSoiKeo = '';
     let sidebarH2H = '';
     try {
       const [recentSK, recentH2H] = await Promise.all([
         SoiKeoArticle.find({ status: 'published', slug: { $ne: slug } })
-          .sort({ createdAt: -1 }).limit(5).select('slug title thumbnail matchInfo.homeTeam.logo matchInfo.awayTeam.logo').lean(),
+          .sort({ createdAt: -1 }).limit(5).select('slug title').lean(),
         AutoArticle.find({ type: 'h2h-analysis', status: 'published' })
-          .sort({ createdAt: -1 }).limit(5).select('slug title matchInfo.homeTeam.logo matchInfo.awayTeam.logo').lean(),
+          .sort({ createdAt: -1 }).limit(5).select('slug title').lean(),
       ]);
-      sidebarSoiKeo = recentSK.map(a => {
-        const thumbHtml = a.thumbnail
-          ? `<img src="${escapeHtml(a.thumbnail)}" alt="" class="sidebar-thumb" loading="lazy">`
-          : (a.matchInfo?.homeTeam?.logo && a.matchInfo?.awayTeam?.logo)
-            ? `<div class="sidebar-logos"><img src="${escapeHtml(a.matchInfo.homeTeam.logo)}" alt="" loading="lazy"><span style="color:#94a3b8;font-size:10px;">vs</span><img src="${escapeHtml(a.matchInfo.awayTeam.logo)}" alt="" loading="lazy"></div>`
-            : '';
-        return `<a href="/soi-keo/${a.slug}" class="sidebar-article">${thumbHtml}<div class="sidebar-info"><span class="sidebar-article-title">${escapeHtml(a.title?.substring(0, 60) || '')}</span></div></a>`;
-      }).join('');
-      sidebarH2H = recentH2H.map(a => {
-        const thumbHtml = (a.matchInfo?.homeTeam?.logo && a.matchInfo?.awayTeam?.logo)
-          ? `<div class="sidebar-logos"><img src="${escapeHtml(a.matchInfo.homeTeam.logo)}" alt="" loading="lazy"><span style="color:#94a3b8;font-size:10px;">vs</span><img src="${escapeHtml(a.matchInfo.awayTeam.logo)}" alt="" loading="lazy"></div>`
-          : '';
-        return `<a href="/doi-dau/${a.slug}" class="sidebar-article">${thumbHtml}<div class="sidebar-info"><span class="sidebar-article-title">${escapeHtml(a.title?.substring(0, 60) || '')}</span></div></a>`;
-      }).join('');
+      sidebarSoiKeo = recentSK.map(a => `<a href="/soi-keo/${a.slug}" class="sidebar-link">${escapeHtml(a.title?.substring(0, 45))}...</a>`).join('');
+      sidebarH2H = recentH2H.map(a => `<a href="/doi-dau/${a.slug}" class="sidebar-link">${escapeHtml(a.title?.substring(0, 45))}...</a>`).join('');
     } catch (e) { /* ignore */ }
 
     let html = renderSoiKeoHtml(article, thumbnailUrl);
