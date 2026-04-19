@@ -426,31 +426,6 @@ function renderSoiKeoHtml(article, thumbnailUrl) {
       <span>${homeName} vs ${awayName}</span>
     </nav>
 
-    <!-- League Badge -->
-    <div class="league-bar">
-      ${leagueLogo ? `<img src="${leagueLogo}" alt="">` : ''}
-      <span>${leagueName} ${matchInfo?.league?.country ? '- ' + escapeHtml(matchInfo.league.country) : ''}</span>
-    </div>
-
-    <!-- Match Card -->
-    <div class="match-card">
-      <div class="match-teams">
-        <div class="match-team">
-          ${homeLogo ? `<img src="${homeLogo}" alt="${homeName}" loading="lazy">` : ''}
-          <div class="team-name">${homeName}</div>
-        </div>
-        <div class="match-vs">
-          <div class="match-time">${matchInfo?.matchDate ? new Date(matchInfo.matchDate).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : 'VS'}</div>
-          <div class="match-date">${matchInfo?.matchDate ? new Date(matchInfo.matchDate).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : ''}</div>
-        </div>
-        <div class="match-team">
-          ${awayLogo ? `<img src="${awayLogo}" alt="${awayName}" loading="lazy">` : ''}
-          <div class="team-name">${awayName}</div>
-        </div>
-      </div>
-      ${oddsHtml}
-    </div>
-
     <!-- Article Header -->
     <div class="article-header">
       <h1>${title}</h1>
