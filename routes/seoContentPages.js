@@ -388,21 +388,40 @@ async function buildSidebar(currentSlug, currentType) {
     const SoiKeoArticle = require('../models/SoiKeoArticle');
     [previewArticles, h2hArticles, soiKeoArticles] = await Promise.all([
       AutoArticle.find({ type: 'round-preview', status: 'published', slug: { $ne: currentSlug } })
-        .sort({ createdAt: -1 }).limit(5).select('slug title leagueInfo.name createdAt').lean(),
+        .sort({ createdAt: -1 }).limit(5).select('slug title leagueInfo.name leagueInfo.logo createdAt').lean(),
       AutoArticle.find({ type: 'h2h-analysis', status: 'published', slug: { $ne: currentSlug } })
         .sort({ createdAt: -1 }).limit(5).select('slug title matchInfo.homeTeam matchInfo.awayTeam createdAt').lean(),
       SoiKeoArticle.find({ status: 'published' })
-        .sort({ createdAt: -1 }).limit(5).select('slug title matchInfo.homeTeam matchInfo.awayTeam').lean(),
+        .sort({ createdAt: -1 }).limit(5).select('slug title thumbnail matchInfo.homeTeam.logo matchInfo.awayTeam.logo matchInfo.homeTeam.name matchInfo.awayTeam.name').lean(),
     ]);
   } catch (e) { /* ignore */ }
+
+  const renderThumb = (article, type) => {
+    if (type === 'soikeo' && article.thumbnail) {
+      return `<img src="${escapeHtml(article.thumbnail)}" alt="" class="sidebar-thumb" loading="lazy">`;
+    }
+    const homeLogo = article.matchInfo?.homeTeam?.logo;
+    const awayLogo = article.matchInfo?.awayTeam?.logo;
+    if (homeLogo && awayLogo) {
+      return `<div class="sidebar-logos"><img src="${escapeHtml(homeLogo)}" alt="" loading="lazy"><span style="color:#94a3b8;font-size:10px;">vs</span><img src="${escapeHtml(awayLogo)}" alt="" loading="lazy"></div>`;
+    }
+    if (type === 'preview' && article.leagueInfo?.logo) {
+      return `<div class="sidebar-logos"><img src="${escapeHtml(article.leagueInfo.logo)}" alt="" loading="lazy" style="width:24px;height:24px;"></div>`;
+    }
+    return '';
+  };
 
   const renderList = (items, type) => items.map(a => {
     const href = type === 'preview' ? `/preview/${a.slug}` : type === 'h2h' ? `/doi-dau/${a.slug}` : `/soi-keo/${a.slug}`;
     const subtitle = type === 'preview' ? (a.leagueInfo?.name || '') :
       `${a.matchInfo?.homeTeam?.name || ''} vs ${a.matchInfo?.awayTeam?.name || ''}`;
+    const thumbHtml = renderThumb(a, type);
     return `<a href="${href}" class="sidebar-article">
-      <span class="sidebar-article-title">${escapeHtml(a.title?.substring(0, 60) || '')}</span>
-      <span class="sidebar-article-sub">${escapeHtml(subtitle)}</span>
+      ${thumbHtml}
+      <div class="sidebar-info">
+        <span class="sidebar-article-title">${escapeHtml(a.title?.substring(0, 60) || '')}</span>
+        <span class="sidebar-article-sub">${escapeHtml(subtitle)}</span>
+      </div>
     </a>`;
   }).join('');
 
@@ -501,10 +520,11 @@ function renderArticlePage({ title, description, url, breadcrumbItems, bannerHtm
     .h2h-stat small { color: #94a3b8; }
     .layout { display: grid; grid-template-columns: 1fr 300px; gap: 16px; align-items: start; }
     .main { min-width: 0; }
-    .article-body { background: #fff; border-radius: 6px; padding: 32px; line-height: 1.8; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
-    .article-body h2 { font-size: 20px; font-weight: 800; color: #0f172a; margin: 28px 0 14px; padding-bottom: 8px; border-bottom: 3px solid #2563eb; }
+    .article-body { background: #fff; border-radius: 8px; padding: 32px; line-height: 1.8; box-shadow: 0 1px 3px rgba(0,0,0,0.06); border-left: 4px solid #2563eb; }
+    .article-body h2 { font-size: 20px; font-weight: 800; color: #0f172a; margin: 28px 0 14px; padding-bottom: 8px; border-bottom: 2px solid #e2e8f0; }
     .article-body h2:first-child { margin-top: 0; }
     .article-body h3 { font-size: 17px; font-weight: 700; color: #1e293b; margin: 20px 0 10px; }
+    .article-body h4 { font-size: 15px; font-weight: 700; color: #334155; margin: 16px 0 8px; }
     .article-body p { margin-bottom: 14px; color: #334155; font-size: 15px; }
     .article-body ul, .article-body ol { margin: 12px 0; padding-left: 24px; }
     .article-body li { margin-bottom: 6px; color: #334155; font-size: 15px; }
@@ -513,12 +533,16 @@ function renderArticlePage({ title, description, url, breadcrumbItems, bannerHtm
     .tags { margin-top: 24px; display: flex; flex-wrap: wrap; gap: 6px; }
     .tag { background: #eff6ff; color: #2563eb; padding: 4px 10px; border-radius: 3px; font-size: 12px; }
     .sidebar { display: flex; flex-direction: column; gap: 12px; }
-    .sidebar-card { background: #fff; border-radius: 6px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+    .sidebar-card { background: #fff; border-radius: 8px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
     .sidebar-title { font-size: 13px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
-    .sidebar-article { display: block; padding: 8px 0; border-bottom: 1px solid #f1f5f9; }
+    .sidebar-article { display: flex; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid #f1f5f9; text-decoration: none; }
     .sidebar-article:last-child { border-bottom: none; }
     .sidebar-article:hover { text-decoration: none; }
-    .sidebar-article-title { display: block; font-size: 13px; color: #1e293b; line-height: 1.4; }
+    .sidebar-thumb { width: 60px; height: 40px; border-radius: 4px; object-fit: cover; flex-shrink: 0; background: #f1f5f9; }
+    .sidebar-logos { width: 60px; height: 40px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; gap: 2px; background: #f1f5f9; border-radius: 4px; padding: 4px; }
+    .sidebar-logos img { width: 18px; height: 18px; object-fit: contain; }
+    .sidebar-info { flex: 1; min-width: 0; }
+    .sidebar-article-title { display: block; font-size: 13px; color: #1e293b; line-height: 1.4; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
     .sidebar-article:hover .sidebar-article-title { color: #2563eb; }
     .sidebar-article-sub { display: block; font-size: 11px; color: #94a3b8; margin-top: 2px; }
     .sidebar-empty { font-size: 13px; color: #94a3b8; }
