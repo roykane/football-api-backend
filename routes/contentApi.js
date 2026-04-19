@@ -69,4 +69,25 @@ router.get('/articles', async (req, res) => {
   }
 });
 
+// GET /api/content/articles/:slug - Get single article by slug
+router.get('/articles/:slug', async (req, res) => {
+  try {
+    const article = await AutoArticle.findOne({
+      slug: req.params.slug,
+      status: 'published',
+    }).lean();
+
+    if (!article) {
+      return res.status(404).json({ success: false, error: 'Article not found' });
+    }
+
+    // Increment views
+    AutoArticle.updateOne({ _id: article._id }, { $inc: { views: 1 } }).catch(() => {});
+
+    res.json({ success: true, data: article });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 module.exports = router;
