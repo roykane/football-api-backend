@@ -413,7 +413,47 @@ class SoiKeoGenerator {
 - Tài/Xỉu: Mốc 2.5 - Tài ${oddsData.overUnder.over || '-'} | Xỉu ${oddsData.overUnder.under || '-'}`;
     }
 
-    return `Bạn là chuyên gia phân tích bóng đá hàng đầu Việt Nam, viết bài soi kèo SEO chất lượng cao cho website thể thao.
+    // Randomize writing style for each article to avoid template spam
+    const writingStyles = [
+      'Viết như BLV bóng đá đang tường thuật trước trận — sôi nổi, hào hứng, dùng nhiều câu ngắn và câu hỏi tu từ.',
+      'Viết như nhà phân tích dữ liệu — lạnh lùng, khách quan, nặng số liệu, ít cảm xúc, nhiều so sánh định lượng.',
+      'Viết như phóng viên thể thao kỳ cựu — kể chuyện, đan xen giai thoại, nhấn mạnh bối cảnh lịch sử và drama.',
+      'Viết như HLV đang họp chiến thuật — tập trung vào sơ đồ, điểm yếu đối thủ, cách khai thác, giọng trầm tĩnh.',
+      'Viết như fan cuồng nhiệt nhưng có kiến thức — đam mê, thiên vị nhẹ đội nhà, nhưng vẫn tôn trọng số liệu.',
+      'Viết kiểu podcast bóng đá — giao tiếp trực tiếp với người đọc, thoải mái, xen lẫn humor nhẹ và nhận xét sắc bén.',
+    ];
+
+    const openingStyles = [
+      'Mở bài bằng một câu hỏi kích thích tư duy về trận đấu.',
+      'Mở bài bằng một thống kê bất ngờ hoặc kỷ lục thú vị liên quan.',
+      'Mở bài bằng câu chuyện/bối cảnh tại sao trận đấu này quan trọng với mùa giải.',
+      'Mở bài bằng so sánh phong độ gần đây — ai đang nóng, ai đang nguội.',
+      'Mở bài bằng flashback trận đối đầu gần nhất và bài học rút ra.',
+      'Mở bài thẳng vào vấn đề — dự đoán trước, rồi giải thích tại sao.',
+    ];
+
+    const structureVariants = [
+      'Gộp phân tích 2 đội thành so sánh song song (không tách riêng từng đội). Đan xen H2H vào phân tích đội.',
+      'Bắt đầu từ kèo ngược lên — phân tích odds trước, rồi giải thích bằng phong độ và H2H.',
+      'Kể theo timeline — từ lịch sử đối đầu xa → gần → phong độ hiện tại → dự đoán.',
+      'Chia theo chủ đề: tấn công, phòng ngự, bóng chết, yếu tố tâm lý — thay vì chia theo đội.',
+      'Viết dạng Q&A — mỗi section trả lời một câu hỏi mà người đọc thắc mắc.',
+      'Trình bày dạng "3 lý do chọn X" + "3 rủi ro cần cảnh giác" thay vì phân tích truyền thống.',
+    ];
+
+    const style = writingStyles[Math.floor(Math.random() * writingStyles.length)];
+    const opening = openingStyles[Math.floor(Math.random() * openingStyles.length)];
+    const structure = structureVariants[Math.floor(Math.random() * structureVariants.length)];
+
+    return `Bạn là chuyên gia phân tích bóng đá, viết bài nhận định chất lượng cao bằng tiếng Việt.
+
+**GIỌNG VĂN & PHONG CÁCH:**
+${style}
+${opening}
+
+**CẤU TRÚC BÀI VIẾT:**
+${structure}
+Quan trọng: KHÔNG viết theo template cố định. Mỗi bài phải có cách tiếp cận riêng, câu mở bài khác nhau, cách phân tích khác nhau. Đọc xong phải cảm thấy đây là bài viết do CON NGƯỜI viết, không phải AI.
 
 **THÔNG TIN TRẬN ĐẤU:**
 - Trận: ${teams.home.name} vs ${teams.away.name}
@@ -431,70 +471,45 @@ ${h2hData}
 - ${teams.home.name}: ${homeForm}
 - ${teams.away.name}: ${awayForm}
 
-Viết bài soi kèo DÀI 2500-3000 TỪ, SEO-friendly, giọng văn chuyên gia, chia thành các phần:
+**YÊU CẦU NỘI DUNG:**
+Viết bài 2500-3000 từ, bao gồm 7 phần bắt buộc (nhưng tự do sắp xếp thứ tự, gộp, hoặc đặt tên khác):
 
-1. **introduction** (200-300 từ): Giới thiệu trận đấu, vòng đấu, tầm quan trọng với mùa giải, bối cảnh lịch sử đối đầu, lý do trận đấu này đáng chú ý. Keyword chính: "nhận định ${teams.home.name} vs ${teams.away.name}", "phân tích ${teams.home.name}", "dự đoán tỷ số".
+1. **introduction**: Mở bài (200-300 từ) — dùng kiểu mở bài đã chọn ở trên
+2. **teamAnalysis**: Phân tích 2 đội (600-800 từ) — điểm mạnh, điểm yếu, lối chơi, form gần đây
+3. **h2hHistory**: Lịch sử đối đầu (300-400 từ) — xu hướng, trận đáng chú ý, thống kê nổi bật
+4. **formAnalysis**: Phong độ chi tiết (400-500 từ) — 10 trận gần nhất, tấn công/phòng ngự, chuỗi, Tài/Xỉu
+5. **oddsAnalysis**: Phân tích kèo (400-500 từ) — Châu Á, 1X2, Tài/Xỉu, bẫy kèo
+6. **prediction**: Dự đoán (200-300 từ) — tỷ số cụ thể + lý do + kịch bản thay thế
+7. **bettingTips**: Tip theo dõi (150-200 từ) — rõ ràng, có lý do
 
-2. **teamAnalysis** (600-800 từ): Phân tích CỰC CHI TIẾT từng đội:
-   - Đội nhà **${teams.home.name}**: Vị trí BXH hiện tại (ước lượng), điểm số, phong độ sân nhà (dựa trên form 10 trận), điểm mạnh (tấn công/phòng ngự), điểm yếu, lối chơi, cầu thủ chủ chốt (nếu bạn biết), xu hướng gần đây
-   - Đội khách **${teams.away.name}**: Tương tự, nhấn mạnh thành tích sân khách, khả năng thích nghi
-   (Mỗi đội 300-400 từ, chia nhiều đoạn, dùng **bold** cho tên đội/cầu thủ)
-
-3. **h2hHistory** (300-400 từ): Phân tích DÀI về lịch sử đối đầu:
-   - Tổng quan 10 trận gần nhất (thắng/hòa/thua)
-   - Xu hướng ghi bàn (trung bình, Tài/Xỉu, cả 2 ghi bàn)
-   - Phân tích các trận gần nhất cụ thể
-   - So sánh với phong độ hiện tại
-
-4. **formAnalysis** (400-500 từ): Đánh giá phong độ SÂU:
-   - Phân tích 10 trận gần nhất từng đội với số liệu cụ thể
-   - Khả năng tấn công (bàn thắng/trận), khả năng phòng ngự (thủng lưới/trận)
-   - Chuỗi thắng/thua/bất bại
-   - Xu hướng Tài/Xỉu của từng đội
-   - So sánh trực tiếp phong độ 2 đội
-
-5. **oddsAnalysis** (400-500 từ): Phân tích TỶ LỆ KÈO chi tiết:
-   - Kèo Châu Á (handicap): Ý nghĩa của line, bên nào đang được đánh giá cao, có hợp lý không
-   - Kèo Châu Âu (1X2): So sánh odds 3 cửa, xác suất ngầm
-   - Tài/Xỉu 2.5: Dựa vào xu hướng H2H và form để phán đoán
-   - Cảnh báo bẫy kèo, các yếu tố ảnh hưởng
-
-6. **prediction** (200-300 từ): Dự đoán DÀI:
-   - Tỷ số dự đoán cụ thể DỰA TRÊN phân tích (ĐA DẠNG: 1-0, 2-0, 1-1, 0-0, 2-2, 3-1, 0-1, 1-2, 2-1 tùy case)
-   - Lý do dự đoán, các kịch bản có thể xảy ra
-   - Tỷ số phải PHÙ HỢP với Tài/Xỉu đã nhận định
-
-7. **bettingTips** (150-200 từ): Lời khuyên cược RÕ RÀNG:
-   - Kèo Châu Á: [lựa chọn + lý do ngắn]
-   - Kèo 1X2: [lựa chọn + lý do]
-   - Tài/Xỉu 2.5: [Tài/Xỉu + lý do]
-   - Tỷ số dự đoán: [X-X]
-   - Thẻ vàng/phạt góc (nếu có thể dự đoán)
+**ĐA DẠNG HÓA — CỰC KỲ QUAN TRỌNG:**
+- KHÔNG bắt đầu bài bằng "Trận đấu giữa X và Y..." — quá template
+- KHÔNG dùng cùng cấu trúc câu cho mọi bài
+- Thay đổi cách dẫn dắt, cách chuyển đoạn, cách kết luận
+- Dùng ví von, so sánh, metaphor khi phù hợp
+- Xen kẽ câu dài và câu ngắn, đoạn dài và đoạn ngắn
+- Tỷ số dự đoán ĐA DẠNG tùy phân tích (không mặc định 2-1)
 
 Format JSON trả về:
 {
-  "title": "Nhận định ${teams.home.name} vs ${teams.away.name} ${matchTime} ngày ${matchDateStr} - ${league.name}",
-  "excerpt": "[150-160 ký tự - SEO meta description - dùng 'nhận định', 'phân tích', 'dự đoán' thay vì 'soi kèo']",
-  "introduction": "[200-300 từ]",
-  "teamAnalysis": "[600-800 từ với **bold** tên đội]",
-  "h2hHistory": "[300-400 từ]",
-  "formAnalysis": "[400-500 từ]",
-  "oddsAnalysis": "[400-500 từ]",
-  "prediction": "[200-300 từ]",
+  "title": "[ĐA DẠNG title - không chỉ dùng 'Nhận định X vs Y HH:MM ngày DD/MM' — thử các format khác như 'X đấu Y: Cuộc chiến...' hoặc 'Phân tích X vs Y - Ai sẽ...']",
+  "excerpt": "[150-160 ký tự - SEO meta, ĐA DẠNG không template]",
+  "introduction": "[text]",
+  "teamAnalysis": "[text]",
+  "h2hHistory": "[text]",
+  "formAnalysis": "[text]",
+  "oddsAnalysis": "[text]",
+  "prediction": "[text]",
   "bettingTips": "- Kèo Châu Á: [tip]\\n- Kèo 1X2: [tip]\\n- Tài/Xỉu: [tip]\\n- Tỷ số: [X-X]",
-  "tags": ["${teams.home.name}", "${teams.away.name}", "${league.name}", "nhận định ${teams.home.name}", "phân tích ${teams.away.name}", "dự đoán bóng đá", "phân tích trận đấu"]
+  "tags": ["${teams.home.name}", "${teams.away.name}", "${league.name}", "nhận định bóng đá", "phân tích trận đấu"]
 }
 
-LƯU Ý SEO:
-- QUAN TRỌNG: Trong title và excerpt, dùng "nhận định", "phân tích", "dự đoán" thay vì "soi kèo", "cược", "nhà cái" (tránh bị Google đánh dấu gambling)
-- Trong body content (introduction, teamAnalysis...) có thể dùng "soi kèo" tự nhiên 2-3 lần
-- Dùng sub-heading **bold** để break content thành nhiều đoạn ngắn (dễ đọc, SEO tốt)
-- Tên đội ở dạng **bold** khi lần đầu xuất hiện trong mỗi phần
-- Excerpt phải chứa keyword + số (vd: "Dự đoán tỷ số 2-1...")
-- TỔNG BÀI VIẾT 2500-3000 TỪ
-- Tỷ số dự đoán ĐA DẠNG - không mặc định 2-1
-- KHÔNG bịa chấn thương cầu thủ, chỉ dùng kiến thức chung
-- Trả về ĐÚNG JSON format, không ký tự đặc biệt`;
+LƯU Ý:
+- Title và excerpt: dùng "nhận định", "phân tích", "dự đoán" — KHÔNG dùng "soi kèo", "cược", "nhà cái"
+- Body content: có thể dùng "soi kèo" tự nhiên 1-2 lần
+- Dùng **bold** cho tên đội, sub-heading
+- KHÔNG bịa chấn thương cầu thủ
+- Trả về ĐÚNG JSON format`;
   }
 
   /**

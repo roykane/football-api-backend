@@ -202,7 +202,23 @@ TB ban/tran: ${h2hData.stats.avgGoals} | Ca 2 ghi ban: ${h2hData.summary.bttsPer
 Chi tiet: ${h2hData.details.map(d => `${d.date}: ${d.home} ${d.score} ${d.away} (${d.league})`).join(' | ')}`
     : 'Khong co du lieu doi dau.';
 
-  const prompt = `Bạn là chuyên gia phân tích bóng đá hàng đầu Việt Nam. Viết bài phân tích đối đầu chi tiết bằng tiếng Việt CÓ DẤU đầy đủ.
+  // Randomize approach for each H2H article
+  const approaches = [
+    'Viết dạng kể chuyện — bắt đầu từ trận đối đầu drama nhất, rồi mở rộng ra xu hướng chung.',
+    'Viết dạng phân tích dữ liệu — tập trung vào con số, tỷ lệ, xu hướng thống kê.',
+    'Viết dạng so sánh — liên tục đặt 2 đội cạnh nhau, đối chiếu từng khía cạnh.',
+    'Viết dạng timeline — đi từ trận xa nhất đến gần nhất, cho thấy sự thay đổi cán cân.',
+    'Viết dạng "điều bạn chưa biết" — tìm những insight bất ngờ từ dữ liệu H2H.',
+    'Viết dạng preview — đặt H2H trong bối cảnh trận sắp tới, ai có lợi thế hơn.',
+  ];
+
+  const approach = approaches[Math.floor(Math.random() * approaches.length)];
+
+  const prompt = `Bạn là chuyên gia phân tích bóng đá. Viết bài phân tích đối đầu bằng tiếng Việt CÓ DẤU đầy đủ.
+
+**PHONG CÁCH:**
+${approach}
+KHÔNG viết theo template — mỗi bài phải có cách tiếp cận riêng, câu mở khác nhau. Viết như con người, không như AI.
 
 **THÔNG TIN TRẬN ĐẤU:**
 - Trận: ${homeTeam.name} vs ${awayTeam.name}
@@ -216,38 +232,32 @@ ${h2hSummary}
 - ${homeTeam.name}: ${homeForm}
 - ${awayTeam.name}: ${awayForm}
 
-Viết bài phân tích đối đầu DÀI 800-1200 từ, SEO-friendly, bao gồm:
+Viết bài 800-1200 từ. Bao gồm các nội dung (tự do sắp xếp, gộp, đặt tên heading khác):
+- Lịch sử đối đầu tổng quan
+- Xu hướng gần đây
+- Thống kê bàn thắng (TB/trận, BTTS, Tài/Xỉu)
+- So sánh phong độ hiện tại
+- Điều thú vị hoặc insight bất ngờ
 
-1. **Tổng quan lịch sử đối đầu** (200-300 từ): Tóm tắt lịch sử, ai thống trị, xu hướng chung
+**ĐA DẠNG HÓA:**
+- KHÔNG mở bài bằng "Cặp đối đầu giữa X và Y là..." — quá template
+- Thay đổi heading, cách dẫn dắt giữa các đoạn
+- Xen kẽ câu dài ngắn, dùng ví von khi phù hợp
 
-2. **Phân tích xu hướng gần đây** (200-300 từ): Xu hướng 5-10 trận gần nhất, ai đang có lợi thế, thay đổi động lực
-
-3. **Phân tích bàn thắng & xu hướng ghi bàn** (150-200 từ):
-   - Trung bình bàn thắng/trận
-   - Tỷ lệ cả 2 đội ghi bàn (BTTS)
-   - Xu hướng Tài/Xỉu
-   - Sân nhà vs sân khách
-
-4. **So sánh phong độ hiện tại** (150-200 từ): Phong độ 5 trận gần nhất của mỗi đội, ai đang mạnh hơn
-
-5. **Thống kê và điều thú vị** (100-150 từ): Các thống kê nổi bật, kỷ lục, điều thú vị về cặp đối đầu này
-
-Format trả về JSON:
+Format JSON:
 {
-  "title": "${homeTeam.name} vs ${awayTeam.name} - Lịch sử đối đầu và phân tích chi tiết",
-  "excerpt": "[150-200 ký tự - tóm tắt đối đầu, dùng 'phân tích', 'lịch sử đối đầu', 'thống kê']",
-  "content": "[Toàn bộ nội dung 800-1200 từ, markdown format với ## heading, **bold**, bullet points]",
-  "metaTitle": "${homeTeam.name} vs ${awayTeam.name} | Lịch sử đối đầu & Thống kê chi tiết",
-  "metaDescription": "[150-160 ký tự - SEO meta]",
+  "title": "[ĐA DẠNG - không chỉ 'X vs Y - Lịch sử đối đầu...' — thử 'Khi X gặp Y: ...', 'X đấu Y - Ai thống trị?', v.v.]",
+  "excerpt": "[150-200 ký tự, ĐA DẠNG]",
+  "content": "[800-1200 từ, markdown: ## heading, **bold**, bullet points]",
+  "metaTitle": "[ĐA DẠNG format]",
+  "metaDescription": "[150-160 ký tự]",
   "tags": ["${homeTeam.name}", "${awayTeam.name}", "${league.name}", "đối đầu", "phân tích", "thống kê"]
 }
 
-LƯU Ý QUAN TRỌNG:
-- PHẢI viết tiếng Việt CÓ DẤU đầy đủ (ví dụ: "phân tích", KHÔNG viết "phan tich")
-- KHÔNG dùng "soi kèo", "kèo nhà cái", "cá cược" trong title/excerpt/meta
-- Dùng "phân tích", "nhận định", "đối đầu", "thống kê" thay thế
-- Trả về ĐÚNG JSON format
-- Content là một string markdown duy nhất`;
+LƯU Ý:
+- Tiếng Việt CÓ DẤU đầy đủ
+- KHÔNG dùng "soi kèo", "cá cược" trong title/meta
+- Trả về ĐÚNG JSON, content là markdown string duy nhất`;
 
   try {
     const response = await axios.post('https://api.anthropic.com/v1/messages', {
