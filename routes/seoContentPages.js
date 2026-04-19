@@ -520,16 +520,15 @@ function renderArticlePage({ title, description, url, breadcrumbItems, bannerHtm
     .h2h-stat small { color: #94a3b8; }
     .layout { display: grid; grid-template-columns: 1fr 300px; gap: 16px; align-items: start; }
     .main { min-width: 0; }
-    .article-body { background: #fff; border-radius: 8px; padding: 32px; line-height: 1.8; box-shadow: 0 1px 3px rgba(0,0,0,0.06); border-left: 4px solid #2563eb; }
-    .article-body h2 { font-size: 20px; font-weight: 800; color: #0f172a; margin: 28px 0 14px; padding-bottom: 8px; border-bottom: 2px solid #e2e8f0; }
+    .article-body { background: #fff; border-radius: 6px; padding: 28px; line-height: 1.8; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+    .article-body h2 { font-size: 20px; font-weight: 800; color: #0f172a; margin: 24px 0 12px; padding-bottom: 8px; border-bottom: 3px solid #2563eb; }
     .article-body h2:first-child { margin-top: 0; }
-    .article-body h3 { font-size: 17px; font-weight: 700; color: #1e293b; margin: 20px 0 10px; }
+    .article-body h3 { font-size: 17px; font-weight: 700; color: #1e293b; margin: 20px 0 10px; padding-left: 12px; border-left: 3px solid #3b82f6; }
     .article-body h4 { font-size: 15px; font-weight: 700; color: #334155; margin: 16px 0 8px; }
-    .article-body p { margin-bottom: 14px; color: #334155; font-size: 15px; }
-    .article-body ul, .article-body ol { margin: 12px 0; padding-left: 24px; }
+    .article-body p { margin-bottom: 12px; color: #334155; font-size: 15px; }
+    .article-body ul, .article-body ol { margin: 12px 0; padding-left: 20px; }
     .article-body li { margin-bottom: 6px; color: #334155; font-size: 15px; }
     .article-body strong { color: #0f172a; }
-    .article-body em { color: #2563eb; font-style: normal; }
     .tags { margin-top: 24px; display: flex; flex-wrap: wrap; gap: 6px; }
     .tag { background: #eff6ff; color: #2563eb; padding: 4px 10px; border-radius: 3px; font-size: 12px; }
     .sidebar { display: flex; flex-direction: column; gap: 12px; }
@@ -657,7 +656,7 @@ router.get('/preview/:slug', async (req, res) => {
       title, description, url,
       breadcrumbItems: [
         { name: 'Trang chủ', url: '/' },
-        { name: 'Preview', url: '/soi-keo' },
+        { name: 'Preview', url: '/nhan-dinh' },
         { name: `${leagueName} ${round}`, url },
       ],
       bannerHtml: bannerImgHtml,
@@ -770,7 +769,7 @@ router.get('/doi-dau/:slug', async (req, res) => {
       title, description, url,
       breadcrumbItems: [
         { name: 'Trang chủ', url: '/' },
-        { name: 'Đối đầu', url: '/soi-keo' },
+        { name: 'Đối đầu', url: '/nhan-dinh' },
         { name: `${homeName} vs ${awayName}`, url },
       ],
       bannerHtml: h2hBannerHtml, headerHtml, bodyHtml, sidebarHtml,
