@@ -495,26 +495,31 @@ function renderArticlePage({ title, description, url, breadcrumbItems, bannerHtm
     .breadcrumb { font-size: 13px; color: #64748b; margin-bottom: 12px; }
     .breadcrumb a { color: #2563eb; }
 
-    /* Match Hero Banner */
-    .match-banner { position: relative; border-radius: 8px; overflow: hidden; background: linear-gradient(135deg, #0b3d91 0%, #1565c0 40%, #0d47a1 100%); margin-bottom: 16px; }
-    .match-banner-bg { position: absolute; inset: 0; opacity: 0.08; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Ccircle cx='30' cy='30' r='28' stroke='white' stroke-width='1' fill='none'/%3E%3Cline x1='30' y1='2' x2='30' y2='58' stroke='white' stroke-width='0.5'/%3E%3Cline x1='2' y1='30' x2='58' y2='30' stroke='white' stroke-width='0.5'/%3E%3C/svg%3E") repeat; }
-    .match-banner-inner { position: relative; text-align: center; padding: 28px 20px; }
-    .match-banner h1 { font-size: 24px; font-weight: 800; color: #fff; margin-bottom: 16px; line-height: 1.3; }
-    .match-teams { display: flex; align-items: center; justify-content: center; gap: 16px; margin: 20px 0; }
-    .match-team { flex: 1; max-width: 200px; text-align: center; }
-    .team-logo-wrap { width: 80px; height: 80px; margin: 0 auto; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%); }
-    .team-logo-wrap.home { border: 2px solid rgba(236,72,153,0.4); }
-    .team-logo-wrap.away { border: 2px solid rgba(251,191,36,0.4); }
-    .team-logo-wrap img { width: 56px; height: 56px; object-fit: contain; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.3)); }
-    .team-name { font-size: 15px; font-weight: 700; color: #fff; margin-top: 8px; text-shadow: 0 1px 3px rgba(0,0,0,0.3); }
-    .match-vs { text-align: center; min-width: 120px; }
-    .match-vs-text { font-size: 32px; font-weight: 900; color: #fbbf24; text-shadow: 0 2px 10px rgba(251,191,36,0.4); letter-spacing: 3px; }
-    .match-date { display: inline-block; background: rgba(0,0,0,0.3); padding: 4px 14px; border-radius: 4px; font-size: 13px; color: #e2e8f0; margin-top: 6px; font-weight: 600; }
+    /* League Bar */
+    .league-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+    .league-bar img { width: 24px; height: 24px; object-fit: contain; }
+    .league-bar span { font-size: 13px; font-weight: 600; color: #64748b; }
+
+    /* Match Card - Light Theme */
+    .match-card { background: #fff; border-radius: 12px; padding: 24px 20px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border: 1px solid #e2e8f0; text-align: center; }
+    .match-teams { display: flex; align-items: center; justify-content: center; gap: 16px; }
+    .match-team { flex: 1; max-width: 180px; text-align: center; }
+    .match-team img { width: 64px; height: 64px; object-fit: contain; }
+    .team-name { font-size: 14px; font-weight: 700; color: #1e293b; margin-top: 8px; }
+    .match-vs { text-align: center; min-width: 80px; }
+    .match-time { font-size: 28px; font-weight: 800; color: #0066FF; letter-spacing: 1px; }
+    .match-date { font-size: 12px; color: #94a3b8; margin-top: 4px; }
     .match-league { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 12px; font-size: 13px; color: #94a3b8; }
     .match-league img { width: 20px; height: 20px; object-fit: contain; }
-    .h2h-stats { display: flex; gap: 10px; justify-content: center; margin-top: 16px; flex-wrap: wrap; }
-    .h2h-stat { background: rgba(255,255,255,0.1); padding: 8px 16px; border-radius: 4px; font-size: 13px; color: #e2e8f0; text-align: center; }
-    .h2h-stat strong { color: #fbbf24; font-size: 20px; display: block; }
+
+    /* Article Header */
+    .article-header { margin-bottom: 16px; }
+    .article-header h1 { font-size: 22px; font-weight: 800; color: #0f172a; line-height: 1.4; margin-bottom: 8px; }
+
+    /* H2H Stats */
+    .h2h-stats { display: flex; gap: 8px; justify-content: center; margin-top: 12px; flex-wrap: wrap; }
+    .h2h-stat { background: #f0f9ff; padding: 8px 14px; border-radius: 6px; font-size: 13px; color: #334155; text-align: center; border: 1px solid #bfdbfe; }
+    .h2h-stat strong { color: #0066FF; font-size: 20px; display: block; }
 
     /* Layout */
     .layout { display: grid; grid-template-columns: 1fr 300px; gap: 16px; align-items: start; }
@@ -570,13 +575,12 @@ function renderArticlePage({ title, description, url, breadcrumbItems, bannerHtm
       .layout { grid-template-columns: 1fr; }
       .sidebar { order: 2; }
       .container { padding: 10px; }
-      .match-banner-inner { padding: 20px 12px; }
-      .match-banner h1 { font-size: 20px; }
-      .team-logo-wrap { width: 64px; height: 64px; }
-      .team-logo-wrap img { width: 44px; height: 44px; }
+      .match-card { padding: 16px 12px; }
+      .match-team img { width: 48px; height: 48px; }
       .team-name { font-size: 13px; }
-      .match-vs-text { font-size: 24px; }
-      .match-vs { min-width: 80px; }
+      .match-time { font-size: 22px; }
+      .match-vs { min-width: 60px; }
+      .article-header h1 { font-size: 19px; }
       .section-card { padding: 16px 14px; }
       .section-card h2 { font-size: 18px; }
     }
@@ -656,15 +660,12 @@ router.get('/preview/:slug', async (req, res) => {
     };
 
     const headerHtml = `
-      <div class="match-banner">
-        <div class="match-banner-bg"></div>
-        <div class="match-banner-inner">
-          <h1>${escapeHtml(title)}</h1>
-          <div class="match-league">
-            ${leagueLogo ? `<img src="${escapeHtml(leagueLogo)}" alt="">` : ''}
-            ${escapeHtml(leagueName)} ${round ? '- ' + escapeHtml(round) : ''} &bull; Mùa giải ${article.seasonYear || 2025}/${(article.seasonYear || 2025) + 1}
-          </div>
-        </div>
+      <div class="league-bar">
+        ${leagueLogo ? `<img src="${escapeHtml(leagueLogo)}" alt="">` : ''}
+        <span>${escapeHtml(leagueName)} ${round ? '- ' + escapeHtml(round) : ''} &bull; Mùa giải ${article.seasonYear || 2025}/${(article.seasonYear || 2025) + 1}</span>
+      </div>
+      <div class="article-header">
+        <h1>${escapeHtml(title)}</h1>
       </div>`;
 
     const bodyHtml = `
@@ -771,41 +772,36 @@ router.get('/doi-dau/:slug', async (req, res) => {
     const matchDateStr = matchInfo?.matchDate ? formatDate(matchInfo.matchDate) : '';
 
     const headerHtml = `
-      <div class="match-banner">
-        <div class="match-banner-bg"></div>
-        <div class="match-banner-inner">
-          <h1>${escapeHtml(title)}</h1>
-          <div class="match-teams">
-            <div class="match-team">
-              <div class="team-logo-wrap home">
-                ${homeLogo ? `<img src="${escapeHtml(homeLogo)}" alt="${escapeHtml(homeName)}" loading="lazy">` : ''}
-              </div>
-              <div class="team-name">${escapeHtml(homeName)}</div>
-            </div>
-            <div class="match-vs">
-              <div class="match-vs-text">VS</div>
-              ${matchDateStr ? `<div class="match-date">${escapeHtml(matchDateStr)}</div>` : ''}
-            </div>
-            <div class="match-team">
-              <div class="team-logo-wrap away">
-                ${awayLogo ? `<img src="${escapeHtml(awayLogo)}" alt="${escapeHtml(awayName)}" loading="lazy">` : ''}
-              </div>
-              <div class="team-name">${escapeHtml(awayName)}</div>
-            </div>
+      <div class="league-bar">
+        ${leagueLogo ? `<img src="${leagueLogo}" alt="">` : ''}
+        <span>${leagueName2}</span>
+      </div>
+      <div class="match-card">
+        <div class="match-teams">
+          <div class="match-team">
+            ${homeLogo ? `<img src="${escapeHtml(homeLogo)}" alt="${escapeHtml(homeName)}" loading="lazy">` : ''}
+            <div class="team-name">${escapeHtml(homeName)}</div>
           </div>
-          <div class="match-league">
-            ${leagueLogo ? `<img src="${leagueLogo}" alt="">` : ''}
-            ${leagueName2}
+          <div class="match-vs">
+            <div class="match-time">${matchInfo?.matchDate ? new Date(matchInfo.matchDate).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : 'VS'}</div>
+            <div class="match-date">${matchInfo?.matchDate ? new Date(matchInfo.matchDate).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : ''}</div>
           </div>
-          ${total > 0 ? `
-          <div class="h2h-stats">
-            <div class="h2h-stat"><strong>${total}</strong>Tổng trận</div>
-            <div class="h2h-stat"><strong>${homeW}</strong>${escapeHtml(homeName)}<br><small>${homePct}%</small></div>
-            <div class="h2h-stat"><strong>${draws}</strong>Hòa<br><small>${drawPct}%</small></div>
-            <div class="h2h-stat"><strong>${awayW}</strong>${escapeHtml(awayName)}<br><small>${awayPct}%</small></div>
-            ${h2hStats?.avgGoals ? `<div class="h2h-stat"><strong>${h2hStats.avgGoals.toFixed(1)}</strong>TB bàn/trận</div>` : ''}
-          </div>` : ''}
+          <div class="match-team">
+            ${awayLogo ? `<img src="${escapeHtml(awayLogo)}" alt="${escapeHtml(awayName)}" loading="lazy">` : ''}
+            <div class="team-name">${escapeHtml(awayName)}</div>
+          </div>
         </div>
+        ${total > 0 ? `
+        <div class="h2h-stats">
+          <div class="h2h-stat"><strong>${total}</strong>Tổng trận</div>
+          <div class="h2h-stat"><strong>${homeW}</strong>${escapeHtml(homeName)}<br><small>${homePct}%</small></div>
+          <div class="h2h-stat"><strong>${draws}</strong>Hòa<br><small>${drawPct}%</small></div>
+          <div class="h2h-stat"><strong>${awayW}</strong>${escapeHtml(awayName)}<br><small>${awayPct}%</small></div>
+          ${h2hStats?.avgGoals ? `<div class="h2h-stat"><strong>${h2hStats.avgGoals.toFixed(1)}</strong>TB bàn/trận</div>` : ''}
+        </div>` : ''}
+      </div>
+      <div class="article-header">
+        <h1>${escapeHtml(title)}</h1>
       </div>`;
 
     const bodyHtml = `

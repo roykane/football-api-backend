@@ -311,33 +311,39 @@ function renderSoiKeoHtml(article, thumbnailUrl) {
     .breadcrumb { font-size: 13px; color: #64748b; margin-bottom: 12px; }
     .breadcrumb a { color: #2563eb; }
 
-    /* Match Hero Banner */
-    .match-banner { position: relative; border-radius: 8px; overflow: hidden; background: linear-gradient(135deg, #0b3d91 0%, #1565c0 40%, #0d47a1 100%); margin-bottom: 16px; }
-    .match-banner-bg { position: absolute; inset: 0; opacity: 0.08; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Ccircle cx='30' cy='30' r='28' stroke='white' stroke-width='1' fill='none'/%3E%3Cline x1='30' y1='2' x2='30' y2='58' stroke='white' stroke-width='0.5'/%3E%3Cline x1='2' y1='30' x2='58' y2='30' stroke='white' stroke-width='0.5'/%3E%3C/svg%3E") repeat; }
-    .match-banner-inner { position: relative; text-align: center; padding: 28px 20px; }
-    .match-banner h1 { font-size: 24px; font-weight: 800; color: #fff; margin-bottom: 16px; line-height: 1.3; }
-    .match-teams { display: flex; align-items: center; justify-content: center; gap: 16px; margin: 20px 0; }
-    .match-team { flex: 1; max-width: 200px; text-align: center; }
-    .team-logo-wrap { width: 80px; height: 80px; margin: 0 auto; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%); }
-    .team-logo-wrap.home { border: 2px solid rgba(236,72,153,0.4); }
-    .team-logo-wrap.away { border: 2px solid rgba(251,191,36,0.4); }
-    .team-logo-wrap img { width: 56px; height: 56px; object-fit: contain; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.3)); }
-    .team-name { font-size: 15px; font-weight: 700; color: #fff; margin-top: 8px; text-shadow: 0 1px 3px rgba(0,0,0,0.3); }
-    .match-vs { text-align: center; min-width: 120px; }
-    .match-vs-text { font-size: 32px; font-weight: 900; color: #fbbf24; text-shadow: 0 2px 10px rgba(251,191,36,0.4); letter-spacing: 3px; }
-    .match-date { display: inline-block; background: rgba(0,0,0,0.3); padding: 4px 14px; border-radius: 4px; font-size: 13px; color: #e2e8f0; margin-top: 6px; font-weight: 600; }
-    .match-league { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 12px; font-size: 13px; color: #94a3b8; }
-    .match-league img { width: 20px; height: 20px; object-fit: contain; }
+    /* League Bar */
+    .league-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+    .league-bar img { width: 24px; height: 24px; object-fit: contain; }
+    .league-bar span { font-size: 13px; font-weight: 600; color: #64748b; }
 
-    /* Odds Panel */
-    .odds-panel { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.1); }
+    /* Match Card - Light Theme */
+    .match-card { background: #fff; border-radius: 12px; padding: 24px 20px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border: 1px solid #e2e8f0; text-align: center; }
+    .match-teams { display: flex; align-items: center; justify-content: center; gap: 16px; }
+    .match-team { flex: 1; max-width: 180px; text-align: center; }
+    .match-team img { width: 64px; height: 64px; object-fit: contain; }
+    .team-name { font-size: 14px; font-weight: 700; color: #1e293b; margin-top: 8px; }
+    .match-vs { text-align: center; min-width: 80px; }
+    .match-time { font-size: 28px; font-weight: 800; color: #0066FF; letter-spacing: 1px; }
+    .match-date { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+
+    /* Article Header */
+    .article-header { margin-bottom: 16px; }
+    .article-header h1 { font-size: 22px; font-weight: 800; color: #0f172a; line-height: 1.4; margin-bottom: 8px; }
+    .article-meta { display: flex; align-items: center; gap: 12px; font-size: 13px; color: #94a3b8; flex-wrap: wrap; }
+
+    /* Excerpt */
+    .excerpt { background: #f8fafc; border-radius: 8px; padding: 16px; margin-bottom: 16px; border: 1px solid #e2e8f0; }
+    .excerpt p { font-size: 14px; color: #475569; margin: 0; line-height: 1.7; }
+
+    /* Odds Panel - Light */
+    .odds-panel { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; padding: 12px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; margin-top: 12px; }
     .odds-group { text-align: center; }
-    .odds-group-label { font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .odds-group-label { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
     .odds-chips { display: flex; gap: 4px; }
-    .odds-chip { display: flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.1); padding: 5px 10px; border-radius: 4px; font-size: 13px; font-weight: 700; color: #fff; }
+    .odds-chip { display: flex; align-items: center; gap: 4px; background: #fff; padding: 5px 10px; border-radius: 6px; font-size: 13px; font-weight: 700; color: #0066FF; border: 1px solid #e2e8f0; }
     .odds-chip em { font-style: normal; font-size: 10px; color: #94a3b8; font-weight: 600; }
-    .odds-over { background: rgba(34,197,94,0.15); color: #4ade80; }
-    .odds-under { background: rgba(239,68,68,0.15); color: #f87171; }
+    .odds-over { border-color: #bbf7d0; color: #16a34a; background: #f0fdf4; }
+    .odds-under { border-color: #fecaca; color: #dc2626; background: #fef2f2; }
 
     /* Layout */
     .layout { display: grid; grid-template-columns: 1fr 300px; gap: 16px; align-items: start; }
@@ -399,13 +405,12 @@ function renderSoiKeoHtml(article, thumbnailUrl) {
       .layout { grid-template-columns: 1fr; }
       .sidebar { order: 2; }
       .container { padding: 10px; }
-      .match-banner-inner { padding: 20px 12px; }
-      .match-banner h1 { font-size: 20px; }
-      .team-logo-wrap { width: 64px; height: 64px; }
-      .team-logo-wrap img { width: 44px; height: 44px; }
+      .match-card { padding: 16px 12px; }
+      .match-team img { width: 48px; height: 48px; }
       .team-name { font-size: 13px; }
-      .match-vs-text { font-size: 24px; }
-      .match-vs { min-width: 80px; }
+      .match-time { font-size: 22px; }
+      .match-vs { min-width: 60px; }
+      .article-header h1 { font-size: 19px; }
       .section-card { padding: 16px 14px; }
       .section-card h2 { font-size: 18px; }
       .odds-panel { gap: 6px; }
@@ -421,38 +426,44 @@ function renderSoiKeoHtml(article, thumbnailUrl) {
       <span>${homeName} vs ${awayName}</span>
     </nav>
 
-    ${thumbnailUrl ? `<div style="margin-bottom:16px;"><img src="${escapeHtml(thumbnailUrl)}" alt="${title}" style="width:100%;height:auto;display:block;border-radius:8px;" loading="eager"></div>` : ''}
+    <!-- League Badge -->
+    <div class="league-bar">
+      ${leagueLogo ? `<img src="${leagueLogo}" alt="">` : ''}
+      <span>${leagueName} ${matchInfo?.league?.country ? '- ' + escapeHtml(matchInfo.league.country) : ''}</span>
+    </div>
 
-    <!-- Match Hero Banner -->
-    <div class="match-banner">
-      <div class="match-banner-bg"></div>
-      <div class="match-banner-inner">
-        <h1>${title}</h1>
-        <div class="match-teams">
-          <div class="match-team">
-            <div class="team-logo-wrap home">
-              ${homeLogo ? `<img src="${homeLogo}" alt="${homeName}" loading="lazy">` : ''}
-            </div>
-            <div class="team-name">${homeName}</div>
-          </div>
-          <div class="match-vs">
-            <div class="match-vs-text">VS</div>
-            <div class="match-date">${escapeHtml(matchDate)}</div>
-          </div>
-          <div class="match-team">
-            <div class="team-logo-wrap away">
-              ${awayLogo ? `<img src="${awayLogo}" alt="${awayName}" loading="lazy">` : ''}
-            </div>
-            <div class="team-name">${awayName}</div>
-          </div>
+    <!-- Match Card -->
+    <div class="match-card">
+      <div class="match-teams">
+        <div class="match-team">
+          ${homeLogo ? `<img src="${homeLogo}" alt="${homeName}" loading="lazy">` : ''}
+          <div class="team-name">${homeName}</div>
         </div>
-        <div class="match-league">
-          ${leagueLogo ? `<img src="${leagueLogo}" alt="">` : ''}
-          ${leagueName} ${matchInfo?.league?.country ? '- ' + escapeHtml(matchInfo.league.country) : ''}
+        <div class="match-vs">
+          <div class="match-time">${matchInfo?.matchDate ? new Date(matchInfo.matchDate).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : 'VS'}</div>
+          <div class="match-date">${matchInfo?.matchDate ? new Date(matchInfo.matchDate).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : ''}</div>
         </div>
-        ${oddsHtml}
+        <div class="match-team">
+          ${awayLogo ? `<img src="${awayLogo}" alt="${awayName}" loading="lazy">` : ''}
+          <div class="team-name">${awayName}</div>
+        </div>
+      </div>
+      ${oddsHtml}
+    </div>
+
+    <!-- Article Header -->
+    <div class="article-header">
+      <h1>${title}</h1>
+      <div class="article-meta">
+        <span>📅 ${escapeHtml(matchDate)}</span>
+        <span>👁 ${article.views?.toLocaleString() || 0} lượt xem</span>
       </div>
     </div>
+
+    ${thumbnailUrl ? `<div style="margin-bottom:16px;"><img src="${escapeHtml(thumbnailUrl)}" alt="${title}" style="width:100%;height:auto;display:block;border-radius:8px;" loading="eager"></div>` : ''}
+
+    <!-- Excerpt -->
+    ${article.excerpt ? `<div class="excerpt"><p>${escapeHtml(article.excerpt)}</p></div>` : ''}
 
     <div class="layout">
       <main class="main">
