@@ -179,89 +179,79 @@ async function generateMatchThumbnail({
     downloadImage(leagueLogo),
   ]);
 
-  // ── Home team logo with glow ──
-  const logoSize = 110;
-  const homeX = 200, homeY = 60;
+  // ── Position logos on the podiums ──
+  // Blue podium center: ~27% from left = 324px, Red podium center: ~73% = 876px
+  // Podium top is at ~55% height = 220px (in 400px canvas)
+  const logoSize = 130;
+  const homeCx = 310, awayCx = 870;
+  const logoTop = 60; // logos float above podiums
 
-  const homeGlow = ctx.createRadialGradient(homeX + logoSize/2, homeY + logoSize/2, 10, homeX + logoSize/2, homeY + logoSize/2, logoSize);
-  homeGlow.addColorStop(0, 'rgba(59,130,246,0.4)');
-  homeGlow.addColorStop(1, 'transparent');
-  ctx.fillStyle = homeGlow;
-  ctx.fillRect(homeX - 30, homeY - 30, logoSize + 60, logoSize + 60);
+  // Home team logo (on blue podium)
+  if (homeLogo) {
+    // Glow effect
+    ctx.shadowColor = 'rgba(59,130,246,0.8)';
+    ctx.shadowBlur = 30;
+    ctx.drawImage(homeLogo, homeCx - logoSize/2, logoTop, logoSize, logoSize);
+    ctx.shadowBlur = 0;
+  }
 
-  ctx.beginPath();
-  ctx.arc(homeX + logoSize/2, homeY + logoSize/2, logoSize/2 + 6, 0, Math.PI * 2);
-  ctx.strokeStyle = 'rgba(59,130,246,0.5)';
-  ctx.lineWidth = 2;
-  ctx.stroke();
+  // Away team logo (on red podium)
+  if (awayLogo) {
+    ctx.shadowColor = 'rgba(239,68,68,0.8)';
+    ctx.shadowBlur = 30;
+    ctx.drawImage(awayLogo, awayCx - logoSize/2, logoTop, logoSize, logoSize);
+    ctx.shadowBlur = 0;
+  }
 
-  if (homeLogo) ctx.drawImage(homeLogo, homeX, homeY, logoSize, logoSize);
-
-  // ── Away team logo with glow ──
-  const awayX = 890, awayY = 60;
-
-  const awayGlow = ctx.createRadialGradient(awayX + logoSize/2, awayY + logoSize/2, 10, awayX + logoSize/2, awayY + logoSize/2, logoSize);
-  awayGlow.addColorStop(0, 'rgba(239,68,68,0.4)');
-  awayGlow.addColorStop(1, 'transparent');
-  ctx.fillStyle = awayGlow;
-  ctx.fillRect(awayX - 30, awayY - 30, logoSize + 60, logoSize + 60);
-
-  ctx.beginPath();
-  ctx.arc(awayX + logoSize/2, awayY + logoSize/2, logoSize/2 + 6, 0, Math.PI * 2);
-  ctx.strokeStyle = 'rgba(239,68,68,0.5)';
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  if (awayLogo) ctx.drawImage(awayLogo, awayX, awayY, logoSize, logoSize);
-
-  // ── Team names ──
-  ctx.font = 'bold 24px Arial, sans-serif';
+  // ── Team names below logos ──
+  ctx.font = 'bold 26px Arial, sans-serif';
   ctx.fillStyle = '#ffffff';
   ctx.textAlign = 'center';
-  ctx.shadowColor = 'rgba(0,0,0,0.8)';
-  ctx.shadowBlur = 8;
-  ctx.fillText(truncateText(ctx, homeTeamName, 240), homeX + logoSize/2, homeY + logoSize + 30);
-  ctx.fillText(truncateText(ctx, awayTeamName, 240), awayX + logoSize/2, awayY + logoSize + 30);
+  ctx.shadowColor = 'rgba(0,0,0,0.9)';
+  ctx.shadowBlur = 10;
+  ctx.fillText(truncateText(ctx, homeTeamName, 260), homeCx, logoTop + logoSize + 30);
+  ctx.fillText(truncateText(ctx, awayTeamName, 260), awayCx, logoTop + logoSize + 30);
   ctx.shadowBlur = 0;
 
-  // ── League + date bar ──
-  drawRoundedRect(ctx, 150, H - 60, W - 300, 40, 4);
-  ctx.fillStyle = 'rgba(0,0,0,0.5)';
+  // ── League + date bar at bottom ──
+  drawRoundedRect(ctx, 100, H - 55, W - 200, 38, 4);
+  ctx.fillStyle = 'rgba(0,0,0,0.6)';
   ctx.fill();
 
-  if (leagueImg) ctx.drawImage(leagueImg, 165, H - 55, 30, 30);
+  if (leagueImg) ctx.drawImage(leagueImg, 115, H - 50, 28, 28);
 
-  ctx.font = '15px Arial, sans-serif';
+  ctx.font = 'bold 14px Arial, sans-serif';
   ctx.fillStyle = '#e2e8f0';
   ctx.textAlign = 'left';
-  ctx.shadowColor = 'rgba(0,0,0,0.5)';
+  ctx.shadowColor = 'rgba(0,0,0,0.6)';
   ctx.shadowBlur = 3;
-  ctx.fillText(leagueName || '', leagueImg ? 202 : 165, H - 34);
+  ctx.fillText(leagueName || '', leagueImg ? 150 : 115, H - 30);
 
   if (matchDate) {
     ctx.textAlign = 'right';
     const d = new Date(matchDate);
     const dateStr = `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()} - ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
-    ctx.fillText(dateStr, W - 165, H - 34);
+    ctx.fillText(dateStr, W - 115, H - 30);
   }
   ctx.shadowBlur = 0;
 
-  // ── Type badge ──
+  // ── Type badge (top left) ──
   const badgeText = type === 'h2h' ? 'ĐỐI ĐẦU' : 'NHẬN ĐỊNH';
-  ctx.font = 'bold 11px Arial, sans-serif';
+  ctx.font = 'bold 12px Arial, sans-serif';
   ctx.textAlign = 'left';
   const badgeWidth = ctx.measureText(badgeText).width + 20;
-  drawRoundedRect(ctx, 24, 20, badgeWidth, 24, 3);
-  ctx.fillStyle = type === 'h2h' ? '#ef4444' : '#3b82f6';
+  drawRoundedRect(ctx, 20, 16, badgeWidth, 26, 3);
+  ctx.fillStyle = type === 'h2h' ? 'rgba(239,68,68,0.9)' : 'rgba(59,130,246,0.9)';
   ctx.fill();
   ctx.fillStyle = '#ffffff';
-  ctx.fillText(badgeText, 34, 37);
+  ctx.shadowBlur = 0;
+  ctx.fillText(badgeText, 30, 34);
 
-  // ── ScoreLine branding ──
-  ctx.font = 'bold 14px Arial, sans-serif';
-  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  // ── ScoreLine branding (top right) ──
+  ctx.font = 'bold 13px Arial, sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
   ctx.textAlign = 'right';
-  ctx.fillText('ScoreLine.io', W - 24, 36);
+  ctx.fillText('ScoreLine.io', W - 20, 32);
 
   // Save
   const filePath = path.join(THUMBNAIL_DIR, filename);
