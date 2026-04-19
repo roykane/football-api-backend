@@ -448,11 +448,13 @@ async function buildSidebar(currentSlug, currentType) {
 }
 
 // ============================================================
-// Shared dark layout for article pages (preview + h2h)
+// Shared layout for article pages (preview + h2h)
+// Same layout as soi-keo SSR for consistency
 // ============================================================
-function renderArticlePage({ title, description, url, breadcrumbItems, bannerHtml, headerHtml, bodyHtml, sidebarHtml, structuredData }) {
+function renderArticlePage({ title, description, url, breadcrumbItems, bannerHtml, headerHtml, bodyHtml, sidebarHtml, structuredData, ogImage }) {
   const safeTitle = escapeHtml(title);
   const safeDesc = escapeHtml(description);
+  const image = ogImage || `${SITE_URL}/og-image.jpg`;
   const ldScripts = (Array.isArray(structuredData) ? structuredData : [structuredData])
     .filter(Boolean).map(sd => `<script type="application/ld+json">${JSON.stringify(sd)}</script>`).join('\n  ');
 
@@ -476,61 +478,63 @@ function renderArticlePage({ title, description, url, breadcrumbItems, bannerHtm
   <meta property="og:url" content="${escapeHtml(url)}">
   <meta property="og:title" content="${safeTitle}">
   <meta property="og:description" content="${safeDesc}">
-  <meta property="og:image" content="${SITE_URL}/og-image.jpg">
+  <meta property="og:image" content="${escapeHtml(image)}">
   <meta property="og:locale" content="vi_VN">
   <meta property="og:site_name" content="ScoreLine">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="${safeTitle}">
   <meta name="twitter:description" content="${safeDesc}">
-  <meta name="twitter:image" content="${SITE_URL}/og-image.jpg">
+  <meta name="twitter:image" content="${escapeHtml(image)}">
   ${ldScripts}
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f1f5f9; color: #1e293b; min-height: 100vh; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.8; color: #1e293b; background: #f1f5f9; }
     a { color: #2563eb; text-decoration: none; }
     a:hover { text-decoration: underline; }
-    .page-wrapper { max-width: 1280px; margin: 0 auto; padding: 16px; }
+    .container { max-width: 1280px; margin: 0 auto; padding: 16px; }
     .breadcrumb { font-size: 13px; color: #64748b; margin-bottom: 12px; }
     .breadcrumb a { color: #2563eb; }
-    .page-header { background: linear-gradient(135deg, #1e3a5f, #0f2744); padding: 24px 32px; border-radius: 6px; margin-bottom: 16px; text-align: center; color: #fff; }
-    .page-header h1 { font-size: 24px; font-weight: 800; margin-bottom: 8px; line-height: 1.3; }
-    .match-card { position: relative; margin: 16px 0; border-radius: 8px; overflow: hidden; background: linear-gradient(135deg, #0b3d91 0%, #1565c0 40%, #0d47a1 100%); }
-    .match-card-bg { position: absolute; inset: 0; opacity: 0.08; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Ccircle cx='30' cy='30' r='28' stroke='white' stroke-width='1' fill='none'/%3E%3Cline x1='30' y1='2' x2='30' y2='58' stroke='white' stroke-width='0.5'/%3E%3Cline x1='2' y1='30' x2='58' y2='30' stroke='white' stroke-width='0.5'/%3E%3C/svg%3E") repeat; }
-    .match-card-content { position: relative; display: flex; align-items: center; justify-content: center; padding: 28px 20px; gap: 16px; }
-    .mc-team { flex: 1; text-align: center; max-width: 220px; }
-    .mc-logo-wrap { width: 90px; height: 90px; margin: 0 auto; border-radius: 50%; display: flex; align-items: center; justify-content: center; position: relative; }
-    .mc-logo-wrap.home-accent { background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%); }
-    .mc-logo-wrap.home-accent::before { content: ''; position: absolute; inset: -4px; border-radius: 50%; border: 2px solid rgba(236,72,153,0.4); }
-    .mc-logo-wrap.away-accent { background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%); }
-    .mc-logo-wrap.away-accent::before { content: ''; position: absolute; inset: -4px; border-radius: 50%; border: 2px solid rgba(251,191,36,0.4); }
-    .mc-logo-wrap img { width: 64px; height: 64px; object-fit: contain; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.4)); }
-    .mc-logo-placeholder { font-size: 40px; }
-    .mc-name { font-size: 16px; font-weight: 800; color: #fff; margin-top: 10px; text-shadow: 0 1px 3px rgba(0,0,0,0.3); }
-    .mc-center { text-align: center; min-width: 160px; }
-    .mc-vs { font-size: 36px; font-weight: 900; color: #fbbf24; text-shadow: 0 2px 10px rgba(251,191,36,0.4); letter-spacing: 4px; }
-    .mc-date { background: rgba(0,0,0,0.3); padding: 6px 16px; border-radius: 4px; font-size: 13px; color: #e2e8f0; margin-top: 8px; display: inline-block; font-weight: 600; }
-    .mc-league { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 10px; font-size: 13px; color: #94a3b8; }
-    .mc-league img { width: 18px; height: 18px; object-fit: contain; }
-    .league-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.12); padding: 6px 14px; border-radius: 4px; font-size: 14px; margin-top: 10px; color: #e2e8f0; }
-    .league-badge img { width: 20px; height: 20px; object-fit: contain; }
-    .subtitle { font-size: 14px; color: #94a3b8; margin-top: 8px; }
+
+    /* Match Hero Banner */
+    .match-banner { position: relative; border-radius: 8px; overflow: hidden; background: linear-gradient(135deg, #0b3d91 0%, #1565c0 40%, #0d47a1 100%); margin-bottom: 16px; }
+    .match-banner-bg { position: absolute; inset: 0; opacity: 0.08; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Ccircle cx='30' cy='30' r='28' stroke='white' stroke-width='1' fill='none'/%3E%3Cline x1='30' y1='2' x2='30' y2='58' stroke='white' stroke-width='0.5'/%3E%3Cline x1='2' y1='30' x2='58' y2='30' stroke='white' stroke-width='0.5'/%3E%3C/svg%3E") repeat; }
+    .match-banner-inner { position: relative; text-align: center; padding: 28px 20px; }
+    .match-banner h1 { font-size: 24px; font-weight: 800; color: #fff; margin-bottom: 16px; line-height: 1.3; }
+    .match-teams { display: flex; align-items: center; justify-content: center; gap: 16px; margin: 20px 0; }
+    .match-team { flex: 1; max-width: 200px; text-align: center; }
+    .team-logo-wrap { width: 80px; height: 80px; margin: 0 auto; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%); }
+    .team-logo-wrap.home { border: 2px solid rgba(236,72,153,0.4); }
+    .team-logo-wrap.away { border: 2px solid rgba(251,191,36,0.4); }
+    .team-logo-wrap img { width: 56px; height: 56px; object-fit: contain; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.3)); }
+    .team-name { font-size: 15px; font-weight: 700; color: #fff; margin-top: 8px; text-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+    .match-vs { text-align: center; min-width: 120px; }
+    .match-vs-text { font-size: 32px; font-weight: 900; color: #fbbf24; text-shadow: 0 2px 10px rgba(251,191,36,0.4); letter-spacing: 3px; }
+    .match-date { display: inline-block; background: rgba(0,0,0,0.3); padding: 4px 14px; border-radius: 4px; font-size: 13px; color: #e2e8f0; margin-top: 6px; font-weight: 600; }
+    .match-league { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 12px; font-size: 13px; color: #94a3b8; }
+    .match-league img { width: 20px; height: 20px; object-fit: contain; }
     .h2h-stats { display: flex; gap: 10px; justify-content: center; margin-top: 16px; flex-wrap: wrap; }
     .h2h-stat { background: rgba(255,255,255,0.1); padding: 8px 16px; border-radius: 4px; font-size: 13px; color: #e2e8f0; text-align: center; }
     .h2h-stat strong { color: #fbbf24; font-size: 20px; display: block; }
-    .h2h-stat small { color: #94a3b8; }
+
+    /* Layout */
     .layout { display: grid; grid-template-columns: 1fr 300px; gap: 16px; align-items: start; }
     .main { min-width: 0; }
-    .article-body { background: #fff; border-radius: 6px; padding: 28px; line-height: 1.8; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
-    .article-body h2 { font-size: 20px; font-weight: 800; color: #0f172a; margin: 24px 0 12px; padding-bottom: 8px; border-bottom: 3px solid #2563eb; }
-    .article-body h2:first-child { margin-top: 0; }
-    .article-body h3 { font-size: 17px; font-weight: 700; color: #1e293b; margin: 20px 0 10px; padding-left: 12px; border-left: 3px solid #3b82f6; }
-    .article-body h4 { font-size: 15px; font-weight: 700; color: #334155; margin: 16px 0 8px; }
-    .article-body p { margin-bottom: 12px; color: #334155; font-size: 15px; }
-    .article-body ul, .article-body ol { margin: 12px 0; padding-left: 20px; }
-    .article-body li { margin-bottom: 6px; color: #334155; font-size: 15px; }
-    .article-body strong { color: #0f172a; }
-    .tags { margin-top: 24px; display: flex; flex-wrap: wrap; gap: 6px; }
+
+    /* Section Cards */
+    .section-card { background: #fff; border-radius: 8px; padding: 24px; margin-bottom: 16px; border-left: 4px solid #2563eb; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+    .section-card h2 { font-size: 20px; font-weight: 800; color: #0f172a; margin: 0 0 14px; padding: 0; border-bottom: none; display: flex; align-items: center; gap: 8px; }
+    .section-card h3 { font-size: 17px; font-weight: 700; color: #1e293b; margin: 18px 0 8px; }
+    .section-card p { margin-bottom: 12px; color: #334155; font-size: 15px; }
+    .section-card ul { margin: 12px 0; padding-left: 24px; }
+    .section-card li { margin-bottom: 6px; color: #334155; font-size: 15px; }
+    .section-card strong { color: #0f172a; }
+    .section-icon { font-size: 20px; flex-shrink: 0; }
+
+    /* Tags */
+    .tags { margin-top: 20px; display: flex; flex-wrap: wrap; gap: 6px; }
     .tag { background: #eff6ff; color: #2563eb; padding: 4px 10px; border-radius: 3px; font-size: 12px; }
+
+    /* Sidebar */
     .sidebar { display: flex; flex-direction: column; gap: 12px; }
     .sidebar-card { background: #fff; border-radius: 8px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
     .sidebar-title { font-size: 13px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
@@ -545,35 +549,54 @@ function renderArticlePage({ title, description, url, breadcrumbItems, bannerHtm
     .sidebar-article:hover .sidebar-article-title { color: #2563eb; }
     .sidebar-article-sub { display: block; font-size: 11px; color: #94a3b8; margin-top: 2px; }
     .sidebar-empty { font-size: 13px; color: #94a3b8; }
-    .quick-link { display: block; padding: 7px 0; font-size: 14px; color: #475569; border-bottom: 1px solid #f1f5f9; }
+    .quick-link { display: block; padding: 7px 0; font-size: 14px; color: #475569; border-bottom: 1px solid #f1f5f9; text-decoration: none; }
     .quick-link:last-child { border-bottom: none; }
     .quick-link:hover { color: #2563eb; text-decoration: none; }
+    .sidebar-link { display: block; padding: 7px 0; font-size: 14px; color: #475569; border-bottom: 1px solid #f1f5f9; text-decoration: none; }
+    .sidebar-link:last-child { border-bottom: none; }
+    .sidebar-link:hover { color: #2563eb; text-decoration: none; }
+
+    /* Author */
+    .author-box { background: #fff; border-radius: 8px; padding: 16px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); display: flex; gap: 12px; align-items: center; }
+    .author-avatar { width: 48px; height: 48px; background: #eff6ff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
+    .author-name { font-size: 14px; font-weight: 700; color: #0f172a; }
+    .author-bio { font-size: 13px; color: #64748b; margin-top: 2px; }
+
+    /* Footer */
     .footer { text-align: center; margin-top: 24px; padding: 16px; color: #94a3b8; font-size: 13px; }
     .footer a { color: #2563eb; }
+
     @media (max-width: 768px) {
       .layout { grid-template-columns: 1fr; }
       .sidebar { order: 2; }
-      .page-header { padding: 20px 16px; }
-      .page-header h1 { font-size: 20px; }
-      .article-body { padding: 20px 16px; }
-      .mc-logo-wrap { width: 70px; height: 70px; }
-      .mc-logo-wrap img { width: 48px; height: 48px; }
-      .mc-name { font-size: 14px; }
-      .mc-vs { font-size: 28px; }
-      .mc-center { min-width: 120px; }
-      .mc-date { font-size: 11px; padding: 4px 10px; }
-      .match-card-content { padding: 20px 12px; gap: 10px; }
+      .container { padding: 10px; }
+      .match-banner-inner { padding: 20px 12px; }
+      .match-banner h1 { font-size: 20px; }
+      .team-logo-wrap { width: 64px; height: 64px; }
+      .team-logo-wrap img { width: 44px; height: 44px; }
+      .team-name { font-size: 13px; }
+      .match-vs-text { font-size: 24px; }
+      .match-vs { min-width: 80px; }
+      .section-card { padding: 16px 14px; }
+      .section-card h2 { font-size: 18px; }
     }
   </style>
 </head>
 <body>
-  <div class="page-wrapper">
+  <div class="container">
     <nav class="breadcrumb">${breadcrumb}</nav>
     ${bannerHtml || ''}
-    <div class="page-header">${headerHtml}</div>
+    ${headerHtml}
     <div class="layout">
       <main class="main">
-        <article class="article-body">${bodyHtml}</article>
+        ${bodyHtml}
+        <div class="author-box">
+          <div class="author-avatar">🤖</div>
+          <div>
+            <div class="author-name"><a href="/about">Scoreline AI</a></div>
+            <div class="author-bio">Hệ thống AI phân tích 500+ trận đấu mỗi tuần, kết hợp dữ liệu phong độ và lịch sử đối đầu.</div>
+          </div>
+        </div>
       </main>
       <aside class="sidebar">${sidebarHtml}</aside>
     </div>
@@ -633,18 +656,22 @@ router.get('/preview/:slug', async (req, res) => {
     };
 
     const headerHtml = `
-      <h1>${escapeHtml(title)}</h1>
       <div class="match-banner">
-        ${leagueLogo ? `<img src="${escapeHtml(leagueLogo)}" alt="${escapeHtml(leagueName)}" style="width:64px;height:64px;object-fit:contain;">` : ''}
-        <div>
-          <div style="font-size:20px;font-weight:800;color:#fff;">${escapeHtml(leagueName)}</div>
-          <div style="font-size:14px;color:#00D4FF;margin-top:4px;">${escapeHtml(round)} &bull; Mùa giải ${article.seasonYear || 2025}/${(article.seasonYear || 2025) + 1}</div>
+        <div class="match-banner-bg"></div>
+        <div class="match-banner-inner">
+          <h1>${escapeHtml(title)}</h1>
+          <div class="match-league">
+            ${leagueLogo ? `<img src="${escapeHtml(leagueLogo)}" alt="">` : ''}
+            ${escapeHtml(leagueName)} ${round ? '- ' + escapeHtml(round) : ''} &bull; Mùa giải ${article.seasonYear || 2025}/${(article.seasonYear || 2025) + 1}
+          </div>
         </div>
       </div>`;
 
     const bodyHtml = `
-      ${article.content ? markdownToHtml(article.content) : ''}
-      ${article.tags?.length ? `<div class="tags">${article.tags.map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>` : ''}`;
+      <div class="section-card">
+        ${article.content ? markdownToHtml(article.content) : ''}
+      </div>
+      ${article.tags?.length ? `<div class="section-card" style="border-left-color:#94a3b8;"><div class="tags">${article.tags.map(t => `<a href="/nhan-dinh?tag=${encodeURIComponent(t)}" class="tag">${escapeHtml(t)}</a>`).join('')}</div></div>` : ''}`;
 
     const sidebarHtml = await buildSidebar(article.slug, 'round-preview');
 
@@ -739,31 +766,59 @@ router.get('/doi-dau/:slug', async (req, res) => {
       matchDate: matchInfo?.matchDate,
     });
 
+    const leagueLogo = matchInfo?.league?.logo ? escapeHtml(matchInfo.league.logo) : '';
+    const leagueName2 = escapeHtml(matchInfo?.league?.name || '');
+    const matchDateStr = matchInfo?.matchDate ? formatDate(matchInfo.matchDate) : '';
+
     const headerHtml = `
-      <h1>${escapeHtml(title)}</h1>
-      ${total > 0 ? `
-      <div class="h2h-stats">
-        <div class="h2h-stat"><strong>${total}</strong>Tổng trận</div>
-        <div class="h2h-stat"><strong>${homeW}</strong>${escapeHtml(homeName)}<br><small>${homePct}%</small></div>
-        <div class="h2h-stat"><strong>${draws}</strong>Hòa<br><small>${drawPct}%</small></div>
-        <div class="h2h-stat"><strong>${awayW}</strong>${escapeHtml(awayName)}<br><small>${awayPct}%</small></div>
-        ${h2hStats?.avgGoals ? `<div class="h2h-stat"><strong>${h2hStats.avgGoals.toFixed(1)}</strong>TB bàn/trận</div>` : ''}
-      </div>
-      <div style="margin-top:12px;height:6px;display:flex;border-radius:3px;overflow:hidden;">
-        <div style="width:${homePct}%;background:#3b82f6;"></div>
-        <div style="width:${drawPct}%;background:#94a3b8;"></div>
-        <div style="width:${awayPct}%;background:#ef4444;"></div>
-      </div>` : ''}`;
+      <div class="match-banner">
+        <div class="match-banner-bg"></div>
+        <div class="match-banner-inner">
+          <h1>${escapeHtml(title)}</h1>
+          <div class="match-teams">
+            <div class="match-team">
+              <div class="team-logo-wrap home">
+                ${homeLogo ? `<img src="${escapeHtml(homeLogo)}" alt="${escapeHtml(homeName)}" loading="lazy">` : ''}
+              </div>
+              <div class="team-name">${escapeHtml(homeName)}</div>
+            </div>
+            <div class="match-vs">
+              <div class="match-vs-text">VS</div>
+              ${matchDateStr ? `<div class="match-date">${escapeHtml(matchDateStr)}</div>` : ''}
+            </div>
+            <div class="match-team">
+              <div class="team-logo-wrap away">
+                ${awayLogo ? `<img src="${escapeHtml(awayLogo)}" alt="${escapeHtml(awayName)}" loading="lazy">` : ''}
+              </div>
+              <div class="team-name">${escapeHtml(awayName)}</div>
+            </div>
+          </div>
+          <div class="match-league">
+            ${leagueLogo ? `<img src="${leagueLogo}" alt="">` : ''}
+            ${leagueName2}
+          </div>
+          ${total > 0 ? `
+          <div class="h2h-stats">
+            <div class="h2h-stat"><strong>${total}</strong>Tổng trận</div>
+            <div class="h2h-stat"><strong>${homeW}</strong>${escapeHtml(homeName)}<br><small>${homePct}%</small></div>
+            <div class="h2h-stat"><strong>${draws}</strong>Hòa<br><small>${drawPct}%</small></div>
+            <div class="h2h-stat"><strong>${awayW}</strong>${escapeHtml(awayName)}<br><small>${awayPct}%</small></div>
+            ${h2hStats?.avgGoals ? `<div class="h2h-stat"><strong>${h2hStats.avgGoals.toFixed(1)}</strong>TB bàn/trận</div>` : ''}
+          </div>` : ''}
+        </div>
+      </div>`;
 
     const bodyHtml = `
-      ${article.content ? markdownToHtml(article.content) : ''}
-      ${article.tags?.length ? `<div class="tags">${article.tags.map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>` : ''}`;
+      <div class="section-card">
+        ${article.content ? markdownToHtml(article.content) : ''}
+      </div>
+      ${article.tags?.length ? `<div class="section-card" style="border-left-color:#94a3b8;"><div class="tags">${article.tags.map(t => `<a href="/nhan-dinh?tag=${encodeURIComponent(t)}" class="tag">${escapeHtml(t)}</a>`).join('')}</div></div>` : ''}`;
 
     const sidebarHtml = await buildSidebar(article.slug, 'h2h-analysis');
 
     const h2hBannerHtml = thumbUrl !== `${SITE_URL}/og-image.jpg`
-      ? `<img src="${escapeHtml(thumbUrl)}" alt="${escapeHtml(title)}" style="width:100%;height:auto;display:block;border-radius:6px;margin-bottom:16px;" loading="eager">`
-      : (bannerHtml || '');
+      ? `<img src="${escapeHtml(thumbUrl)}" alt="${escapeHtml(title)}" style="width:100%;height:auto;display:block;border-radius:8px;margin-bottom:16px;" loading="eager">`
+      : '';
 
     const html = renderArticlePage({
       title, description, url,
