@@ -2,6 +2,7 @@
 const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
+const path = require('path');
 const mongoose = require('mongoose');
 const cron = require('node-cron');
 const rateLimit = require('express-rate-limit');
@@ -171,6 +172,12 @@ app.get('/health', (req, res) => {
     port: PORT
   });
 });
+
+// Serve static thumbnails
+app.use('/thumbnails', express.static(path.join(__dirname, 'public', 'thumbnails'), {
+  maxAge: '7d',
+  immutable: true,
+}));
 
 // Public SEO endpoints (sitemap.xml, robots.txt) - no API key required
 app.use('/', require('./routes/sitemap'));

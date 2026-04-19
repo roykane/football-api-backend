@@ -13,6 +13,8 @@ const express = require('express');
 const router = express.Router();
 const SoiKeoArticle = require('../models/SoiKeoArticle');
 const AutoArticle = require('../models/AutoArticle');
+let thumbnailGenerator;
+try { thumbnailGenerator = require('../services/thumbnail-generator'); } catch (e) { /* canvas not installed */ }
 
 const SITE_URL = process.env.SITE_URL || 'https://scoreline.io';
 
@@ -98,7 +100,7 @@ function markdownToHtml(text) {
     .replace(/\n/g, '<br>');
 }
 
-function renderSoiKeoHtml(article) {
+function renderSoiKeoHtml(article, thumbnailUrl) {
   const { matchInfo, content, oddsData } = article;
   const title = escapeHtml(article.metaTitle || article.title);
   const description = escapeHtml(article.metaDescription || article.excerpt);
@@ -126,7 +128,7 @@ function renderSoiKeoHtml(article) {
         "url": `${SITE_URL}/og-image.jpg`
       }
     },
-    "image": article.thumbnail || `${SITE_URL}/og-image.jpg`,
+    "image": thumbnailUrl || article.thumbnail || `${SITE_URL}/og-image.jpg`,
     "mainEntityOfPage": url
   };
 
@@ -167,14 +169,14 @@ function renderSoiKeoHtml(article) {
   <meta property="og:url" content="${escapeHtml(url)}">
   <meta property="og:title" content="${title}">
   <meta property="og:description" content="${description}">
-  <meta property="og:image" content="${escapeHtml(article.thumbnail || SITE_URL + '/og-image.jpg')}">
+  <meta property="og:image" content="${escapeHtml(thumbnailUrl || SITE_URL + '/og-image.jpg')}">
   <meta property="og:locale" content="vi_VN">
   <meta property="og:site_name" content="ScoreLine">
 
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="${title}">
   <meta name="twitter:description" content="${description}">
-  <meta name="twitter:image" content="${escapeHtml(article.thumbnail || SITE_URL + '/og-image.jpg')}">
+  <meta name="twitter:image" content="${escapeHtml(thumbnailUrl || SITE_URL + '/og-image.jpg')}">
 
   <script type="application/ld+json">${JSON.stringify(structuredData)}</script>
   <script type="application/ld+json">${JSON.stringify(sportsEventData)}</script>
@@ -226,7 +228,9 @@ function renderSoiKeoHtml(article) {
       <span>${escapeHtml(matchInfo?.homeTeam?.name)} vs ${escapeHtml(matchInfo?.awayTeam?.name)}</span>
     </nav>
 
-    <div class="header">
+    ${thumbnailUrl ? `<div class="banner"><img src="${escapeHtml(thumbnailUrl)}" alt="${title}" loading="eager" style="width:100%;height:auto;display:block;border-radius:6px 6px 0 0;"></div>` : ''}
+
+    <div class="header" ${thumbnailUrl ? 'style="border-radius:0 0 6px 6px;"' : ''}>
       <h1>${title}</h1>
       <div class="match-info">
         <div class="team">
@@ -305,6 +309,15 @@ router.get('/soi-keo/:slug', async (req, res) => {
     // Increment views
     await SoiKeoArticle.updateOne({ slug }, { $inc: { views: 1 } });
 
+    // Generate thumbnail if canvas available
+    let thumbnailUrl = article.thumbnail || `${SITE_URL}/og-image.jpg`;
+    if (thumbnailGenerator) {
+      try {
+        const thumbPath = await thumbnailGenerator.generateForSoiKeo(article);
+        if (thumbPath) thumbnailUrl = `${SITE_URL}${thumbPath}`;
+      } catch (e) { /* ignore */ }
+    }
+
     // Find related articles for internal linking
     let relatedLinks = '';
     try {
@@ -335,7 +348,7 @@ router.get('/soi-keo/:slug', async (req, res) => {
       relatedLinks = links.join('\n        ');
     } catch (e) { /* ignore */ }
 
-    let html = renderSoiKeoHtml(article);
+    let html = renderSoiKeoHtml(article, thumbnailUrl);
     html = html.replace('RELATED_LINKS_PLACEHOLDER', relatedLinks);
 
     res.set('Content-Type', 'text/html; charset=utf-8');

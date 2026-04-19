@@ -17,6 +17,8 @@ const express = require('express');
 const router = express.Router();
 const axios = require('axios');
 const AutoArticle = require('../models/AutoArticle');
+let thumbnailGenerator;
+try { thumbnailGenerator = require('../services/thumbnail-generator'); } catch (e) { /* canvas not installed */ }
 
 const SITE_URL = process.env.SITE_URL || 'https://scoreline.io';
 const API_SPORTS_KEY = process.env.API_SPORTS_KEY;
@@ -577,6 +579,15 @@ router.get('/preview/:slug', async (req, res) => {
 
     AutoArticle.updateOne({ _id: article._id }, { $inc: { views: 1 } }).catch(() => {});
 
+    // Generate thumbnail
+    let thumbUrl = `${SITE_URL}/og-image.jpg`;
+    if (thumbnailGenerator) {
+      try {
+        const tp = await thumbnailGenerator.generateForPreview(article);
+        if (tp) thumbUrl = `${SITE_URL}${tp}`;
+      } catch (e) { /* ignore */ }
+    }
+
     const url = `${SITE_URL}/preview/${article.slug}`;
     const title = article.metaTitle || article.title;
     const description = article.metaDescription || article.excerpt || '';
@@ -594,7 +605,7 @@ router.get('/preview/:slug', async (req, res) => {
       dateModified: article.updatedAt || article.createdAt,
       author: { '@type': 'Organization', name: 'ScoreLine', url: SITE_URL },
       publisher: { '@type': 'Organization', name: 'ScoreLine', logo: { '@type': 'ImageObject', url: `${SITE_URL}/og-image.jpg` } },
-      image: `${SITE_URL}/og-image.jpg`,
+      image: thumbUrl,
       mainEntityOfPage: url,
     };
 
@@ -614,6 +625,10 @@ router.get('/preview/:slug', async (req, res) => {
 
     const sidebarHtml = await buildSidebar(article.slug, 'round-preview');
 
+    const bannerImgHtml = thumbUrl !== `${SITE_URL}/og-image.jpg`
+      ? `<img src="${escapeHtml(thumbUrl)}" alt="${escapeHtml(title)}" style="width:100%;height:auto;display:block;border-radius:6px;margin-bottom:16px;" loading="eager">`
+      : '';
+
     const html = renderArticlePage({
       title, description, url,
       breadcrumbItems: [
@@ -621,6 +636,7 @@ router.get('/preview/:slug', async (req, res) => {
         { name: 'Preview', url: '/soi-keo' },
         { name: `${leagueName} ${round}`, url },
       ],
+      bannerHtml: bannerImgHtml,
       headerHtml, bodyHtml, sidebarHtml, structuredData,
     });
 
@@ -650,6 +666,15 @@ router.get('/doi-dau/:slug', async (req, res) => {
 
     AutoArticle.updateOne({ _id: article._id }, { $inc: { views: 1 } }).catch(() => {});
 
+    // Generate thumbnail
+    let thumbUrl = `${SITE_URL}/og-image.jpg`;
+    if (thumbnailGenerator) {
+      try {
+        const tp = await thumbnailGenerator.generateForH2H(article);
+        if (tp) thumbUrl = `${SITE_URL}${tp}`;
+      } catch (e) { /* ignore */ }
+    }
+
     const { matchInfo, h2hStats } = article;
     const homeName = matchInfo?.homeTeam?.name || '';
     const awayName = matchInfo?.awayTeam?.name || '';
@@ -665,7 +690,7 @@ router.get('/doi-dau/:slug', async (req, res) => {
       datePublished: article.createdAt, dateModified: article.updatedAt || article.createdAt,
       author: { '@type': 'Organization', name: 'ScoreLine', url: SITE_URL },
       publisher: { '@type': 'Organization', name: 'ScoreLine', logo: { '@type': 'ImageObject', url: `${SITE_URL}/og-image.jpg` } },
-      image: `${SITE_URL}/og-image.jpg`, mainEntityOfPage: url,
+      image: thumbUrl, mainEntityOfPage: url,
     };
 
     const sportsEventSchema = {
@@ -713,6 +738,10 @@ router.get('/doi-dau/:slug', async (req, res) => {
 
     const sidebarHtml = await buildSidebar(article.slug, 'h2h-analysis');
 
+    const h2hBannerHtml = thumbUrl !== `${SITE_URL}/og-image.jpg`
+      ? `<img src="${escapeHtml(thumbUrl)}" alt="${escapeHtml(title)}" style="width:100%;height:auto;display:block;border-radius:6px;margin-bottom:16px;" loading="eager">`
+      : (bannerHtml || '');
+
     const html = renderArticlePage({
       title, description, url,
       breadcrumbItems: [
@@ -720,7 +749,7 @@ router.get('/doi-dau/:slug', async (req, res) => {
         { name: 'Đối đầu', url: '/soi-keo' },
         { name: `${homeName} vs ${awayName}`, url },
       ],
-      bannerHtml, headerHtml, bodyHtml, sidebarHtml,
+      bannerHtml: h2hBannerHtml, headerHtml, bodyHtml, sidebarHtml,
       structuredData: [articleSchema, sportsEventSchema, {
         "@context": "https://schema.org",
         "@type": "FAQPage",
