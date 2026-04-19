@@ -529,4 +529,215 @@ router.get('/soi-keo/:slug', async (req, res) => {
   }
 });
 
+// ========================================
+// GET /doi-bong/:slug - Team detail SSR page
+// ========================================
+router.get('/doi-bong/:slug', async (req, res) => {
+  try {
+    const Team = require('../models/Team');
+    const team = await Team.findOne({ slug: req.params.slug }).lean();
+
+    if (!team) {
+      return res.status(404).send(`<!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8"><title>Không tìm thấy đội bóng | ScoreLine</title><meta name="robots" content="noindex"></head><body><h1>Đội bóng không tồn tại</h1><p><a href="/">Trang chủ</a></p></body></html>`);
+    }
+
+    const SITE_URL_LOCAL = process.env.SITE_URL || 'https://scoreline.io';
+    const title = escapeHtml(`${team.name} - Thông tin, BXH & Phân tích | ${team.league?.name || ''}`);
+    const description = escapeHtml(`Trang thông tin ${team.name}: vị trí BXH #${team.standings?.rank || '?'}, ${team.standings?.points || 0} điểm, phong độ ${team.standings?.form || 'N/A'}. Lịch sử, sân vận động ${team.venue?.name || ''} và phân tích chi tiết.`);
+    const url = `${SITE_URL_LOCAL}/doi-bong/${team.slug}`;
+
+    const structuredData = {
+      "@context": "https://schema.org",
+      "@type": "SportsTeam",
+      "name": team.name,
+      "url": url,
+      "logo": team.logo,
+      "sport": "Soccer",
+      "memberOf": {
+        "@type": "SportsOrganization",
+        "name": team.league?.name || '',
+      },
+      "location": team.venue?.name ? {
+        "@type": "Place",
+        "name": team.venue.name,
+        "address": { "@type": "PostalAddress", "addressLocality": team.venue.city || '' },
+      } : undefined,
+    };
+
+    // Build recent matches HTML
+    const recentHtml = (team.recentMatches || []).map(m => {
+      const date = new Date(m.date).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+      return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:14px;">
+        <span style="color:#94a3b8;min-width:40px;">${date}</span>
+        <span style="flex:1;font-weight:${m.home.name === team.name ? '700' : '400'};">${escapeHtml(m.home.name)}</span>
+        <span style="font-weight:800;color:#0f172a;">${m.home.goals} - ${m.away.goals}</span>
+        <span style="flex:1;text-align:right;font-weight:${m.away.name === team.name ? '700' : '400'};">${escapeHtml(m.away.name)}</span>
+      </div>`;
+    }).join('');
+
+    // Build upcoming matches HTML
+    const upcomingHtml = (team.upcomingMatches || []).map(m => {
+      const date = new Date(m.date).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+      const time = new Date(m.date).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+      return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:14px;">
+        <span style="color:#94a3b8;min-width:40px;">${date}</span>
+        <span style="flex:1;">${escapeHtml(m.home.name)}</span>
+        <span style="color:#0066FF;font-weight:700;">${time}</span>
+        <span style="flex:1;text-align:right;">${escapeHtml(m.away.name)}</span>
+      </div>`;
+    }).join('');
+
+    const s = team.standings || {};
+
+    const html = `<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>${title} | ScoreLine</title>
+  <meta name="description" content="${description}">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="${escapeHtml(url)}">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="${escapeHtml(url)}">
+  <meta property="og:title" content="${title}">
+  <meta property="og:description" content="${description}">
+  <meta property="og:image" content="${escapeHtml(team.logo || SITE_URL_LOCAL + '/og-image.jpg')}">
+  <meta property="og:locale" content="vi_VN">
+  <meta property="og:site_name" content="ScoreLine">
+  <script type="application/ld+json">${JSON.stringify(structuredData)}</script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.8; color: #1e293b; background: #f1f5f9; }
+    a { color: #2563eb; text-decoration: none; }
+    .container { max-width: 1280px; margin: 0 auto; padding: 16px; }
+    .breadcrumb { font-size: 13px; color: #64748b; margin-bottom: 12px; }
+    .breadcrumb a { color: #2563eb; }
+    .layout { display: grid; grid-template-columns: 1fr 300px; gap: 16px; align-items: start; }
+    .main { min-width: 0; }
+    .section-card { background: #fff; border-radius: 8px; padding: 24px; margin-bottom: 16px; border-left: 4px solid #2563eb; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+    .section-card h2 { font-size: 20px; font-weight: 800; color: #0f172a; margin: 0 0 14px; display: flex; align-items: center; gap: 8px; }
+    .section-card h3 { font-size: 17px; font-weight: 700; color: #1e293b; margin: 18px 0 8px; }
+    .section-card p { margin-bottom: 12px; color: #334155; font-size: 15px; }
+    .section-card ul { margin: 12px 0; padding-left: 24px; }
+    .section-card li { margin-bottom: 6px; color: #334155; font-size: 15px; }
+    .section-card strong { color: #0f172a; }
+    .sidebar { display: flex; flex-direction: column; gap: 12px; }
+    .sidebar-card { background: #fff; border-radius: 8px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+    .sidebar-title { font-size: 13px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+    .sidebar-link { display: block; padding: 7px 0; font-size: 14px; color: #475569; border-bottom: 1px solid #f1f5f9; text-decoration: none; }
+    .sidebar-link:last-child { border-bottom: none; }
+    .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; }
+    .stat-box { background: #f8fafc; border-radius: 8px; padding: 12px; text-align: center; border: 1px solid #e2e8f0; }
+    .stat-num { font-size: 24px; font-weight: 800; color: #0066FF; display: block; }
+    .stat-label { font-size: 11px; color: #64748b; text-transform: uppercase; }
+    .footer { text-align: center; margin-top: 24px; padding: 16px; color: #94a3b8; font-size: 13px; }
+    .footer a { color: #2563eb; }
+    @media (max-width: 768px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { order: 2; }
+      .stat-grid { grid-template-columns: repeat(2, 1fr); }
+      .section-card { padding: 16px 14px; }
+    }
+  </style>
+</head>
+<body>
+  ${siteHeader()}
+  <div class="container">
+    <nav class="breadcrumb">
+      <a href="/">Trang chủ</a> &rsaquo;
+      <a href="/doi-bong">Đội bóng</a> &rsaquo;
+      <span>${escapeHtml(team.name)}</span>
+    </nav>
+
+    <div class="layout">
+      <main class="main">
+        <!-- Team Header -->
+        <div class="section-card" style="text-align:center;border-left-color:#0066FF;">
+          <img src="${escapeHtml(team.logo)}" alt="${escapeHtml(team.name)}" width="80" height="80" style="object-fit:contain;margin-bottom:12px;">
+          <h1 style="font-size:26px;font-weight:800;color:#0f172a;margin-bottom:4px;">${escapeHtml(team.name)}</h1>
+          <div style="font-size:14px;color:#64748b;">
+            ${escapeHtml(team.country || '')} ${team.founded ? '• Thành lập ' + team.founded : ''} ${team.venue?.name ? '• ' + escapeHtml(team.venue.name) : ''}
+          </div>
+          ${team.league?.name ? `<div style="margin-top:8px;"><span style="background:#eff6ff;color:#2563eb;padding:4px 12px;border-radius:4px;font-size:13px;font-weight:600;">${escapeHtml(team.league.name)}</span></div>` : ''}
+        </div>
+
+        <!-- Standings -->
+        ${s.rank ? `
+        <div class="section-card">
+          <h2>📊 Bảng xếp hạng mùa giải</h2>
+          <div class="stat-grid">
+            <div class="stat-box"><span class="stat-num">#${s.rank}</span><span class="stat-label">Vị trí</span></div>
+            <div class="stat-box"><span class="stat-num">${s.points}</span><span class="stat-label">Điểm</span></div>
+            <div class="stat-box"><span class="stat-num" style="color:#16a34a;">${s.win}</span><span class="stat-label">Thắng</span></div>
+            <div class="stat-box"><span class="stat-num" style="color:#f59e0b;">${s.draw}</span><span class="stat-label">Hòa</span></div>
+            <div class="stat-box"><span class="stat-num" style="color:#ef4444;">${s.lose}</span><span class="stat-label">Thua</span></div>
+            <div class="stat-box"><span class="stat-num">${s.goalsFor}</span><span class="stat-label">Bàn thắng</span></div>
+            <div class="stat-box"><span class="stat-num">${s.goalsAgainst}</span><span class="stat-label">Bàn thua</span></div>
+            <div class="stat-box"><span class="stat-num">${s.goalsDiff > 0 ? '+' : ''}${s.goalsDiff}</span><span class="stat-label">Hiệu số</span></div>
+          </div>
+          ${s.form ? `<div style="text-align:center;"><span style="font-size:13px;color:#64748b;">Phong độ: </span>${s.form.split('').map(f => `<span style="display:inline-block;width:24px;height:24px;line-height:24px;text-align:center;border-radius:4px;font-size:11px;font-weight:700;color:#fff;margin:0 2px;background:${f === 'W' ? '#16a34a' : f === 'D' ? '#f59e0b' : '#ef4444'};">${f === 'W' ? 'T' : f === 'D' ? 'H' : 'B'}</span>`).join('')}</div>` : ''}
+        </div>` : ''}
+
+        <!-- Recent Matches -->
+        ${recentHtml ? `
+        <div class="section-card">
+          <h2>⚽ Kết quả gần đây</h2>
+          ${recentHtml}
+        </div>` : ''}
+
+        <!-- Upcoming Matches -->
+        ${upcomingHtml ? `
+        <div class="section-card">
+          <h2>📅 Lịch thi đấu sắp tới</h2>
+          ${upcomingHtml}
+        </div>` : ''}
+
+        <!-- AI Content -->
+        ${team.aiContent ? `
+        <div class="section-card">
+          <h2>📝 Phân tích ${escapeHtml(team.name)}</h2>
+          ${markdownToHtml(team.aiContent)}
+        </div>` : ''}
+
+        <!-- Author -->
+        <div style="background:#fff;border-radius:8px;padding:16px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);display:flex;gap:12px;align-items:center;">
+          <div style="width:48px;height:48px;background:#eff6ff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;">🤖</div>
+          <div>
+            <div style="font-size:14px;font-weight:700;color:#0f172a;"><a href="/about">Scoreline AI</a></div>
+            <div style="font-size:13px;color:#64748b;">Phân tích tự động dựa trên dữ liệu thống kê mùa giải.</div>
+          </div>
+        </div>
+      </main>
+
+      <aside class="sidebar">
+        <div class="sidebar-card">
+          <div class="sidebar-title">🔗 Truy cập nhanh</div>
+          <a href="/nhan-dinh" class="sidebar-link">Nhận Định Bóng Đá</a>
+          <a href="/lich-thi-dau" class="sidebar-link">Lịch Thi Đấu</a>
+          <a href="/bang-xep-hang" class="sidebar-link">Bảng Xếp Hạng</a>
+          <a href="/ket-qua-bong-da" class="sidebar-link">Kết Quả</a>
+          <a href="/world-cup-2026" class="sidebar-link">🏆 World Cup 2026</a>
+        </div>
+      </aside>
+    </div>
+
+    <div class="footer">
+      <a href="${SITE_URL_LOCAL}">ScoreLine.io</a> - Cập nhật tỷ số trực tiếp, lịch thi đấu và phân tích bóng đá
+    </div>
+  </div>
+</body>
+</html>`;
+
+    res.set('Content-Type', 'text/html; charset=utf-8');
+    res.set('Cache-Control', 'public, max-age=86400');
+    res.send(html);
+
+  } catch (error) {
+    console.error('[SEO Pages] Error rendering team:', error);
+    res.status(500).send('<html><body><h1>Server Error</h1></body></html>');
+  }
+});
+
 module.exports = router;

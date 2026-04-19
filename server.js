@@ -26,6 +26,7 @@ const { startContentScheduler } = require('./services/content-scheduler');
 const matchCacheWorker = require('./workers/matchCacheWorker');
 const connectArticlesDB = require('./config/database');
 const { startNewsScheduler } = require('./services/news-scheduler');
+const teamSync = require('./services/team-sync');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -199,6 +200,7 @@ app.use('/api/articles', articlesRouter);
 app.use('/api/scheduler', schedulerRouter);
 app.use('/api/soi-keo', soiKeoRouter);
 app.use('/api/content', require('./routes/contentApi'));
+app.use('/api/teams', require('./routes/teams'));
 
 // Legacy endpoints (chỉ giữ lại leagues và fixtures)
 app.get('/api/leagues', async (req, res) => {
@@ -408,6 +410,7 @@ connectMongoDB().then(async () => {
     // Start Soi Keo scheduler (20 articles/day)
     startSoiKeoScheduler();
     startContentScheduler();
+    teamSync.start();
   } catch (err) {
     console.error('Failed to setup Articles DB and scheduler:', err);
   }

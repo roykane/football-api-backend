@@ -140,6 +140,21 @@ async function generateSitemap() {
     urls.push(urlEntry(`${SITE_URL}/ket-qua/${dateSlug}`, today, 'daily', '0.7'));
   }
 
+  // 7. Team pages
+  try {
+    const Team = require('../models/Team');
+    const teams = await Team.find({})
+      .select('slug updatedAt')
+      .lean();
+    for (const team of teams) {
+      const lastmod = (team.updatedAt || new Date()).toISOString().split('T')[0];
+      urls.push(urlEntry(`${SITE_URL}/doi-bong/${team.slug}`, lastmod, 'weekly', '0.7'));
+    }
+    console.log(`[Sitemap] ${teams.length} team pages added`);
+  } catch (err) {
+    console.error('[Sitemap] Failed to load teams:', err.message);
+  }
+
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${urls.join('\n')}
