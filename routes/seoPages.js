@@ -138,10 +138,6 @@ function renderSoiKeoHtml(article, thumbnailUrl) {
   const matchDate = formatDate(matchInfo?.matchDate);
   const homeName = escapeHtml(matchInfo?.homeTeam?.name || '');
   const awayName = escapeHtml(matchInfo?.awayTeam?.name || '');
-  const homeLogo = matchInfo?.homeTeam?.logo ? escapeHtml(matchInfo.homeTeam.logo) : '';
-  const awayLogo = matchInfo?.awayTeam?.logo ? escapeHtml(matchInfo.awayTeam.logo) : '';
-  const leagueName = escapeHtml(matchInfo?.league?.name || '');
-  const leagueLogo = matchInfo?.league?.logo ? escapeHtml(matchInfo.league.logo) : '';
 
   const structuredData = {
     "@context": "https://schema.org",
@@ -189,46 +185,6 @@ function renderSoiKeoHtml(article, thumbnailUrl) {
       "name": matchInfo?.venue || matchInfo?.league?.name
     }
   };
-
-  // Build odds HTML
-  let oddsHtml = '';
-  if (oddsData) {
-    const oddsGroups = [];
-    if (oddsData.homeWin) {
-      oddsGroups.push(`
-        <div class="odds-group">
-          <div class="odds-group-label">1X2</div>
-          <div class="odds-chips">
-            <span class="odds-chip"><em>1</em>${oddsData.homeWin}</span>
-            <span class="odds-chip"><em>X</em>${oddsData.draw || '-'}</span>
-            <span class="odds-chip"><em>2</em>${oddsData.awayWin || '-'}</span>
-          </div>
-        </div>`);
-    }
-    if (oddsData.handicap?.line) {
-      oddsGroups.push(`
-        <div class="odds-group">
-          <div class="odds-group-label">Chấp ${oddsData.handicap.line}</div>
-          <div class="odds-chips">
-            <span class="odds-chip"><em>Chủ</em>${oddsData.handicap.home?.toFixed(2) || '-'}</span>
-            <span class="odds-chip"><em>Khách</em>${oddsData.handicap.away?.toFixed(2) || '-'}</span>
-          </div>
-        </div>`);
-    }
-    if (oddsData.overUnder?.line) {
-      oddsGroups.push(`
-        <div class="odds-group">
-          <div class="odds-group-label">T/X ${oddsData.overUnder.line}</div>
-          <div class="odds-chips">
-            <span class="odds-chip odds-over"><em>Tài</em>${oddsData.overUnder.over?.toFixed(2) || '-'}</span>
-            <span class="odds-chip odds-under"><em>Xỉu</em>${oddsData.overUnder.under?.toFixed(2) || '-'}</span>
-          </div>
-        </div>`);
-    }
-    if (oddsGroups.length) {
-      oddsHtml = `<div class="odds-panel">${oddsGroups.join('')}</div>`;
-    }
-  }
 
   // Build content sections
   const sections = [];
@@ -313,21 +269,6 @@ function renderSoiKeoHtml(article, thumbnailUrl) {
     .breadcrumb { font-size: 13px; color: #64748b; margin-bottom: 12px; }
     .breadcrumb a { color: #2563eb; }
 
-    /* League Bar */
-    .league-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
-    .league-bar img { width: 24px; height: 24px; object-fit: contain; }
-    .league-bar span { font-size: 13px; font-weight: 600; color: #64748b; }
-
-    /* Match Card - Light Theme */
-    .match-card { background: #fff; border-radius: 12px; padding: 24px 20px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border: 1px solid #e2e8f0; text-align: center; }
-    .match-teams { display: flex; align-items: center; justify-content: center; gap: 16px; }
-    .match-team { flex: 1; max-width: 180px; text-align: center; }
-    .match-team img { width: 64px; height: 64px; object-fit: contain; }
-    .team-name { font-size: 14px; font-weight: 700; color: #1e293b; margin-top: 8px; }
-    .match-vs { text-align: center; min-width: 80px; }
-    .match-time { font-size: 28px; font-weight: 800; color: #0066FF; letter-spacing: 1px; }
-    .match-date { font-size: 12px; color: #94a3b8; margin-top: 4px; }
-
     /* Article Header */
     .article-header { margin-bottom: 16px; }
     .article-header h1 { font-size: 22px; font-weight: 800; color: #0f172a; line-height: 1.4; margin-bottom: 8px; }
@@ -336,16 +277,6 @@ function renderSoiKeoHtml(article, thumbnailUrl) {
     /* Excerpt */
     .excerpt { background: #f8fafc; border-radius: 8px; padding: 16px; margin-bottom: 16px; border: 1px solid #e2e8f0; }
     .excerpt p { font-size: 14px; color: #475569; margin: 0; line-height: 1.7; }
-
-    /* Odds Panel - Light */
-    .odds-panel { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; padding: 12px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; margin-top: 12px; }
-    .odds-group { text-align: center; }
-    .odds-group-label { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
-    .odds-chips { display: flex; gap: 4px; }
-    .odds-chip { display: flex; align-items: center; gap: 4px; background: #fff; padding: 5px 10px; border-radius: 6px; font-size: 13px; font-weight: 700; color: #0066FF; border: 1px solid #e2e8f0; }
-    .odds-chip em { font-style: normal; font-size: 10px; color: #94a3b8; font-weight: 600; }
-    .odds-over { border-color: #bbf7d0; color: #16a34a; background: #f0fdf4; }
-    .odds-under { border-color: #fecaca; color: #dc2626; background: #fef2f2; }
 
     /* Layout */
     .layout { display: grid; grid-template-columns: 1fr 300px; gap: 16px; align-items: start; }
@@ -407,11 +338,6 @@ function renderSoiKeoHtml(article, thumbnailUrl) {
       .layout { grid-template-columns: 1fr; }
       .sidebar { order: 2; }
       .container { padding: 10px; }
-      .match-card { padding: 16px 12px; }
-      .match-team img { width: 48px; height: 48px; }
-      .team-name { font-size: 13px; }
-      .match-time { font-size: 22px; }
-      .match-vs { min-width: 60px; }
       .article-header h1 { font-size: 19px; }
       .section-card { padding: 16px 14px; }
       .section-card h2 { font-size: 18px; }
