@@ -143,7 +143,7 @@ async function generateMatchThumbnail({
   filename,
 }) {
   const W = 1200;
-  const H = 630;
+  const H = 400;
   const canvas = createCanvas(W, H);
   const ctx = canvas.getContext('2d');
 
@@ -179,106 +179,89 @@ async function generateMatchThumbnail({
     downloadImage(leagueLogo),
   ]);
 
-  // ── Home team logo with glow ring ──
-  const homeX = 230, homeY = 180, logoSize = 150;
+  // ── Home team logo with glow ──
+  const logoSize = 110;
+  const homeX = 200, homeY = 60;
 
-  // Glow behind logo
   const homeGlow = ctx.createRadialGradient(homeX + logoSize/2, homeY + logoSize/2, 10, homeX + logoSize/2, homeY + logoSize/2, logoSize);
-  homeGlow.addColorStop(0, 'rgba(59,130,246,0.5)');
-  homeGlow.addColorStop(0.6, 'rgba(59,130,246,0.15)');
+  homeGlow.addColorStop(0, 'rgba(59,130,246,0.4)');
   homeGlow.addColorStop(1, 'transparent');
   ctx.fillStyle = homeGlow;
-  ctx.fillRect(homeX - 40, homeY - 40, logoSize + 80, logoSize + 80);
+  ctx.fillRect(homeX - 30, homeY - 30, logoSize + 60, logoSize + 60);
 
-  // Ring around logo
   ctx.beginPath();
-  ctx.arc(homeX + logoSize/2, homeY + logoSize/2, logoSize/2 + 8, 0, Math.PI * 2);
-  ctx.strokeStyle = 'rgba(59,130,246,0.6)';
-  ctx.lineWidth = 3;
+  ctx.arc(homeX + logoSize/2, homeY + logoSize/2, logoSize/2 + 6, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(59,130,246,0.5)';
+  ctx.lineWidth = 2;
   ctx.stroke();
 
-  // Logo
-  if (homeLogo) {
-    ctx.drawImage(homeLogo, homeX, homeY, logoSize, logoSize);
-  }
+  if (homeLogo) ctx.drawImage(homeLogo, homeX, homeY, logoSize, logoSize);
 
-  // ── Away team logo with glow ring ──
-  const awayX = 820, awayY = 180;
+  // ── Away team logo with glow ──
+  const awayX = 890, awayY = 60;
 
   const awayGlow = ctx.createRadialGradient(awayX + logoSize/2, awayY + logoSize/2, 10, awayX + logoSize/2, awayY + logoSize/2, logoSize);
-  awayGlow.addColorStop(0, 'rgba(239,68,68,0.5)');
-  awayGlow.addColorStop(0.6, 'rgba(239,68,68,0.15)');
+  awayGlow.addColorStop(0, 'rgba(239,68,68,0.4)');
   awayGlow.addColorStop(1, 'transparent');
   ctx.fillStyle = awayGlow;
-  ctx.fillRect(awayX - 40, awayY - 40, logoSize + 80, logoSize + 80);
+  ctx.fillRect(awayX - 30, awayY - 30, logoSize + 60, logoSize + 60);
 
   ctx.beginPath();
-  ctx.arc(awayX + logoSize/2, awayY + logoSize/2, logoSize/2 + 8, 0, Math.PI * 2);
-  ctx.strokeStyle = 'rgba(239,68,68,0.6)';
-  ctx.lineWidth = 3;
+  ctx.arc(awayX + logoSize/2, awayY + logoSize/2, logoSize/2 + 6, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(239,68,68,0.5)';
+  ctx.lineWidth = 2;
   ctx.stroke();
 
-  if (awayLogo) {
-    ctx.drawImage(awayLogo, awayX, awayY, logoSize, logoSize);
-  }
+  if (awayLogo) ctx.drawImage(awayLogo, awayX, awayY, logoSize, logoSize);
 
   // ── Team names ──
-  ctx.font = 'bold 30px Arial, sans-serif';
+  ctx.font = 'bold 24px Arial, sans-serif';
   ctx.fillStyle = '#ffffff';
   ctx.textAlign = 'center';
   ctx.shadowColor = 'rgba(0,0,0,0.8)';
-  ctx.shadowBlur = 10;
-  const homeText = truncateText(ctx, homeTeamName, 280);
-  ctx.fillText(homeText, homeX + logoSize/2, homeY + logoSize + 40);
-
-  const awayText = truncateText(ctx, awayTeamName, 280);
-  ctx.fillText(awayText, awayX + logoSize/2, awayY + logoSize + 40);
+  ctx.shadowBlur = 8;
+  ctx.fillText(truncateText(ctx, homeTeamName, 240), homeX + logoSize/2, homeY + logoSize + 30);
+  ctx.fillText(truncateText(ctx, awayTeamName, 240), awayX + logoSize/2, awayY + logoSize + 30);
   ctx.shadowBlur = 0;
 
-  // ── League info bar ──
-  drawRoundedRect(ctx, 200, 460, 800, 50, 6);
+  // ── League + date bar ──
+  drawRoundedRect(ctx, 150, H - 60, W - 300, 40, 4);
   ctx.fillStyle = 'rgba(0,0,0,0.5)';
   ctx.fill();
 
-  if (leagueImg) {
-    ctx.drawImage(leagueImg, 220, 467, 36, 36);
-  }
+  if (leagueImg) ctx.drawImage(leagueImg, 165, H - 55, 30, 30);
 
-  ctx.font = '18px Arial, sans-serif';
+  ctx.font = '15px Arial, sans-serif';
   ctx.fillStyle = '#e2e8f0';
   ctx.textAlign = 'left';
-  ctx.shadowColor = 'rgba(0,0,0,0.6)';
-  ctx.shadowBlur = 4;
-  ctx.fillText(leagueName || '', leagueImg ? 265 : 220, 492);
+  ctx.shadowColor = 'rgba(0,0,0,0.5)';
+  ctx.shadowBlur = 3;
+  ctx.fillText(leagueName || '', leagueImg ? 202 : 165, H - 34);
 
-  // Match date
   if (matchDate) {
     ctx.textAlign = 'right';
     const d = new Date(matchDate);
     const dateStr = `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()} - ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
-    ctx.fillText(dateStr, 980, 492);
+    ctx.fillText(dateStr, W - 165, H - 34);
   }
   ctx.shadowBlur = 0;
 
   // ── Type badge ──
   const badgeText = type === 'h2h' ? 'ĐỐI ĐẦU' : 'NHẬN ĐỊNH';
-  ctx.font = 'bold 13px Arial, sans-serif';
+  ctx.font = 'bold 11px Arial, sans-serif';
   ctx.textAlign = 'left';
-  const badgeWidth = ctx.measureText(badgeText).width + 24;
-  drawRoundedRect(ctx, 30, 30, badgeWidth, 30, 4);
+  const badgeWidth = ctx.measureText(badgeText).width + 20;
+  drawRoundedRect(ctx, 24, 20, badgeWidth, 24, 3);
   ctx.fillStyle = type === 'h2h' ? '#ef4444' : '#3b82f6';
   ctx.fill();
   ctx.fillStyle = '#ffffff';
-  ctx.fillText(badgeText, 42, 51);
+  ctx.fillText(badgeText, 34, 37);
 
   // ── ScoreLine branding ──
-  ctx.font = 'bold 18px Arial, sans-serif';
-  ctx.fillStyle = 'rgba(255,255,255,0.4)';
+  ctx.font = 'bold 14px Arial, sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
   ctx.textAlign = 'right';
-  ctx.shadowColor = 'rgba(0,0,0,0.5)';
-  ctx.shadowBlur = 4;
-  ctx.fillText('ScoreLine.io', W - 30, H - 20);
-  ctx.shadowBlur = 0;
+  ctx.fillText('ScoreLine.io', W - 24, 36);
 
   // Save
   const filePath = path.join(THUMBNAIL_DIR, filename);
@@ -300,7 +283,7 @@ async function generatePreviewThumbnail({
   filename,
 }) {
   const W = 1200;
-  const H = 630;
+  const H = 400;
   const canvas = createCanvas(W, H);
   const ctx = canvas.getContext('2d');
 
@@ -314,7 +297,7 @@ async function generatePreviewThumbnail({
   drawFieldPattern(ctx, W, H);
 
   // Center glow
-  const glow = ctx.createRadialGradient(600, 300, 0, 600, 300, 250);
+  const glow = ctx.createRadialGradient(600, 200, 0, 600, 200, 200);
   glow.addColorStop(0, 'rgba(229,181,72,0.12)');
   glow.addColorStop(1, 'transparent');
   ctx.fillStyle = glow;
@@ -323,24 +306,27 @@ async function generatePreviewThumbnail({
   // League logo
   const leagueImg = await downloadImage(leagueLogo);
   if (leagueImg) {
-    ctx.drawImage(leagueImg, 510, 120, 180, 180);
+    ctx.drawImage(leagueImg, 530, 50, 140, 140);
   }
 
   // League name
-  ctx.font = 'bold 42px Arial, sans-serif';
+  ctx.font = 'bold 36px Arial, sans-serif';
   ctx.fillStyle = '#ffffff';
   ctx.textAlign = 'center';
-  ctx.fillText(leagueName || 'Preview', 600, 360);
+  ctx.shadowColor = 'rgba(0,0,0,0.6)';
+  ctx.shadowBlur = 6;
+  ctx.fillText(leagueName || 'Preview', 600, 240);
 
   // Round
-  ctx.font = 'bold 24px Arial, sans-serif';
+  ctx.font = 'bold 22px Arial, sans-serif';
   ctx.fillStyle = '#e5b548';
-  ctx.fillText(round || '', 600, 400);
+  ctx.fillText(round || '', 600, 275);
 
   // Season
-  ctx.font = '18px Arial, sans-serif';
+  ctx.font = '16px Arial, sans-serif';
   ctx.fillStyle = '#94a3b8';
-  ctx.fillText(`Mùa giải ${season || 2025}/${(season || 2025) + 1}`, 600, 440);
+  ctx.fillText(`Mùa giải ${season || 2025}/${(season || 2025) + 1}`, 600, 305);
+  ctx.shadowBlur = 0;
 
   // Badge
   ctx.font = 'bold 12px Arial, sans-serif';

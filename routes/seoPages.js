@@ -184,10 +184,19 @@ function renderSoiKeoHtml(article, thumbnailUrl) {
 
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.8; color: #1a1a2e; background: #f8fafc; }
-    .container { max-width: 800px; margin: 0 auto; padding: 20px; }
-    .header { text-align: center; padding: 40px 20px; background: linear-gradient(135deg, #0a1628, #1a2744); color: white; border-radius: 16px; margin-bottom: 30px; }
-    .header h1 { font-size: 28px; font-weight: 800; margin-bottom: 15px; line-height: 1.3; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.8; color: #1a1a2e; background: #f1f5f9; }
+    .container { max-width: 1280px; margin: 0 auto; padding: 16px; }
+    .layout { display: grid; grid-template-columns: 1fr 300px; gap: 16px; align-items: start; }
+    .main { min-width: 0; }
+    .sidebar { display: flex; flex-direction: column; gap: 12px; }
+    .sidebar-card { background: white; border-radius: 6px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+    .sidebar-title { font-size: 13px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+    .sidebar-link { display: block; padding: 6px 0; font-size: 13px; color: #334155; text-decoration: none; border-bottom: 1px solid #f1f5f9; }
+    .sidebar-link:last-child { border-bottom: none; }
+    .sidebar-link:hover { color: #2563eb; }
+    .banner img { width: 100%; height: auto; display: block; border-radius: 6px; }
+    .header { text-align: center; padding: 28px 20px; background: linear-gradient(135deg, #0a1628, #1a2744); color: white; border-radius: 6px; margin-bottom: 16px; }
+    .header h1 { font-size: 24px; font-weight: 800; margin-bottom: 12px; line-height: 1.3; }
     .match-info { display: flex; align-items: center; justify-content: center; gap: 20px; margin: 20px 0; }
     .team { text-align: center; }
     .team img { width: 64px; height: 64px; object-fit: contain; }
@@ -198,13 +207,13 @@ function renderSoiKeoHtml(article, thumbnailUrl) {
     .odds-bar { display: flex; gap: 15px; justify-content: center; margin-top: 20px; flex-wrap: wrap; }
     .odds-item { background: rgba(255,255,255,0.1); padding: 8px 16px; border-radius: 8px; font-size: 13px; }
     .odds-value { font-weight: 700; color: #00D4FF; }
-    .content { background: white; border-radius: 16px; padding: 40px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); }
-    .content h2 { font-size: 22px; font-weight: 800; color: #0a1628; margin: 30px 0 15px; padding-bottom: 10px; border-bottom: 3px solid #00D4FF; }
+    .content { background: white; border-radius: 6px; padding: 28px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+    .content h2 { font-size: 20px; font-weight: 800; color: #0f172a; margin: 24px 0 12px; padding-bottom: 8px; border-bottom: 3px solid #2563eb; }
     .content h2:first-child { margin-top: 0; }
-    .content p { margin-bottom: 15px; color: #334155; }
-    .content ul { margin: 15px 0; padding-left: 20px; }
-    .content li { margin-bottom: 8px; color: #334155; }
-    .content strong { color: #0a1628; }
+    .content p { margin-bottom: 12px; color: #334155; font-size: 15px; }
+    .content ul { margin: 12px 0; padding-left: 20px; }
+    .content li { margin-bottom: 6px; color: #334155; font-size: 15px; }
+    .content strong { color: #0f172a; }
     .tags { margin-top: 30px; display: flex; flex-wrap: wrap; gap: 8px; }
     .tag { background: #f1f5f9; color: #475569; padding: 4px 12px; border-radius: 20px; font-size: 13px; }
     .footer { text-align: center; margin-top: 30px; padding: 20px; color: #94a3b8; font-size: 14px; }
@@ -212,10 +221,12 @@ function renderSoiKeoHtml(article, thumbnailUrl) {
     .breadcrumb { margin-bottom: 20px; font-size: 14px; color: #64748b; }
     .breadcrumb a { color: #3b82f6; text-decoration: none; }
     @media (max-width: 768px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { order: 2; }
       .container { padding: 10px; }
-      .header { padding: 25px 15px; }
-      .header h1 { font-size: 22px; }
-      .content { padding: 20px 15px; }
+      .header { padding: 20px 15px; }
+      .header h1 { font-size: 20px; }
+      .content { padding: 16px 12px; }
       .team img { width: 48px; height: 48px; }
     }
   </style>
@@ -228,9 +239,9 @@ function renderSoiKeoHtml(article, thumbnailUrl) {
       <span>${escapeHtml(matchInfo?.homeTeam?.name)} vs ${escapeHtml(matchInfo?.awayTeam?.name)}</span>
     </nav>
 
-    ${thumbnailUrl ? `<div class="banner"><img src="${escapeHtml(thumbnailUrl)}" alt="${title}" loading="eager" style="width:100%;height:auto;display:block;border-radius:6px 6px 0 0;"></div>` : ''}
+    ${thumbnailUrl ? `<div class="banner"><img src="${escapeHtml(thumbnailUrl)}" alt="${title}" loading="eager"></div>` : ''}
 
-    <div class="header" ${thumbnailUrl ? 'style="border-radius:0 0 6px 6px;"' : ''}>
+    <div class="header">
       <h1>${title}</h1>
       <div class="match-info">
         <div class="team">
@@ -254,31 +265,54 @@ function renderSoiKeoHtml(article, thumbnailUrl) {
       </div>` : ''}
     </div>
 
-    <article class="content">
-      ${content?.introduction ? `<h2>Giới thiệu</h2><p>${markdownToHtml(content.introduction)}</p>` : ''}
-      ${content?.teamAnalysis ? `<h2>Phân tích đội hình</h2><p>${markdownToHtml(content.teamAnalysis)}</p>` : ''}
-      ${content?.h2hHistory ? `<h2>Lịch sử đối đầu</h2><p>${markdownToHtml(content.h2hHistory)}</p>` : ''}
-      ${content?.formAnalysis ? `<h2>Phong độ gần đây</h2><p>${markdownToHtml(content.formAnalysis)}</p>` : ''}
-      ${content?.oddsAnalysis ? `<h2>Phân tích tỷ lệ</h2><p>${markdownToHtml(content.oddsAnalysis)}</p>` : ''}
-      ${content?.prediction ? `<h2>Dự đoán kết quả</h2><p>${markdownToHtml(content.prediction)}</p>` : ''}
-      ${content?.bettingTips ? `<h2>Gợi ý theo dõi</h2><p>${markdownToHtml(content.bettingTips)}</p>` : ''}
+    <div class="layout">
+      <div class="main">
+        <article class="content">
+          ${content?.introduction ? `<h2>Giới thiệu</h2><p>${markdownToHtml(content.introduction)}</p>` : ''}
+          ${content?.teamAnalysis ? `<h2>Phân tích đội hình</h2><p>${markdownToHtml(content.teamAnalysis)}</p>` : ''}
+          ${content?.h2hHistory ? `<h2>Lịch sử đối đầu</h2><p>${markdownToHtml(content.h2hHistory)}</p>` : ''}
+          ${content?.formAnalysis ? `<h2>Phong độ gần đây</h2><p>${markdownToHtml(content.formAnalysis)}</p>` : ''}
+          ${content?.oddsAnalysis ? `<h2>Phân tích tỷ lệ</h2><p>${markdownToHtml(content.oddsAnalysis)}</p>` : ''}
+          ${content?.prediction ? `<h2>Dự đoán kết quả</h2><p>${markdownToHtml(content.prediction)}</p>` : ''}
+          ${content?.bettingTips ? `<h2>Gợi ý theo dõi</h2><p>${markdownToHtml(content.bettingTips)}</p>` : ''}
 
-      ${article.tags?.length ? `
-      <div class="tags">
-        ${article.tags.map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join('')}
-      </div>` : ''}
-    </article>
+          ${article.tags?.length ? `
+          <div class="tags">
+            ${article.tags.map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join('')}
+          </div>` : ''}
+        </article>
 
-    <div class="related-links" style="margin-top:30px;padding:20px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;">
-      <h3 style="font-size:16px;font-weight:700;color:#0f172a;margin-bottom:12px;">Xem thêm</h3>
-      <div style="display:flex;flex-wrap:wrap;gap:8px;">
-        RELATED_LINKS_PLACEHOLDER
+        <div style="margin-top:12px;padding:16px;background:white;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+          <h3 style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:10px;">Xem thêm</h3>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;">
+            RELATED_LINKS_PLACEHOLDER
+          </div>
+        </div>
       </div>
+
+      <aside class="sidebar">
+        <div class="sidebar-card">
+          <div class="sidebar-title">📊 Nhận Định Mới</div>
+          SIDEBAR_SOIKEO_PLACEHOLDER
+        </div>
+        <div class="sidebar-card">
+          <div class="sidebar-title">⚔️ Đối Đầu</div>
+          SIDEBAR_H2H_PLACEHOLDER
+        </div>
+        <div class="sidebar-card">
+          <div class="sidebar-title">🔗 Truy Cập Nhanh</div>
+          <a href="/nhan-dinh" class="sidebar-link">Nhận Định Bóng Đá</a>
+          <a href="/lich-thi-dau" class="sidebar-link">Lịch Thi Đấu</a>
+          <a href="/bang-xep-hang" class="sidebar-link">Bảng Xếp Hạng</a>
+          <a href="/ket-qua-bong-da" class="sidebar-link">Kết Quả</a>
+          <a href="/top-ghi-ban" class="sidebar-link">Top Ghi Bàn</a>
+          <a href="/world-cup-2026" class="sidebar-link">🏆 World Cup 2026</a>
+        </div>
+      </aside>
     </div>
 
     <div class="footer">
-      <p>Bài viết được tạo bởi AI - <a href="${SITE_URL}">ScoreLine.io</a></p>
-      <p>Cập nhật tỷ số trực tiếp, lịch thi đấu và phân tích bóng đá</p>
+      <p><a href="${SITE_URL}">ScoreLine.io</a> - Cập nhật tỷ số trực tiếp, lịch thi đấu và phân tích bóng đá</p>
     </div>
   </div>
 </body>
@@ -348,8 +382,24 @@ router.get('/soi-keo/:slug', async (req, res) => {
       relatedLinks = links.join('\n        ');
     } catch (e) { /* ignore */ }
 
+    // Build sidebar content
+    let sidebarSoiKeo = '';
+    let sidebarH2H = '';
+    try {
+      const [recentSK, recentH2H] = await Promise.all([
+        SoiKeoArticle.find({ status: 'published', slug: { $ne: slug } })
+          .sort({ createdAt: -1 }).limit(5).select('slug title').lean(),
+        AutoArticle.find({ type: 'h2h-analysis', status: 'published' })
+          .sort({ createdAt: -1 }).limit(5).select('slug title').lean(),
+      ]);
+      sidebarSoiKeo = recentSK.map(a => `<a href="/soi-keo/${a.slug}" class="sidebar-link">${escapeHtml(a.title?.substring(0, 45))}...</a>`).join('');
+      sidebarH2H = recentH2H.map(a => `<a href="/doi-dau/${a.slug}" class="sidebar-link">${escapeHtml(a.title?.substring(0, 45))}...</a>`).join('');
+    } catch (e) { /* ignore */ }
+
     let html = renderSoiKeoHtml(article, thumbnailUrl);
     html = html.replace('RELATED_LINKS_PLACEHOLDER', relatedLinks);
+    html = html.replace('SIDEBAR_SOIKEO_PLACEHOLDER', sidebarSoiKeo || '<span style="font-size:13px;color:#94a3b8;">Chưa có bài</span>');
+    html = html.replace('SIDEBAR_H2H_PLACEHOLDER', sidebarH2H || '<span style="font-size:13px;color:#94a3b8;">Chưa có bài</span>');
 
     res.set('Content-Type', 'text/html; charset=utf-8');
     res.set('Cache-Control', 'public, max-age=3600');
