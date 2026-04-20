@@ -2,7 +2,7 @@
  * SEO Pages - Server-side rendered HTML for search engine crawlers
  *
  * Serves full HTML pages with content for:
- * - /soi-keo/:slug → Match analysis article
+ * - /nhan-dinh/:slug → Match analysis article
  * - /tran-dau/:id  → Match detail page
  *
  * Google gets complete HTML with content, meta tags, structured data.
@@ -134,7 +134,7 @@ function renderSoiKeoHtml(article, thumbnailUrl) {
   const { matchInfo, content, oddsData } = article;
   const title = escapeHtml(article.metaTitle || article.title);
   const description = escapeHtml(article.metaDescription || article.excerpt);
-  const url = `${SITE_URL}/soi-keo/${article.slug}`;
+  const url = `${SITE_URL}/nhan-dinh/${article.slug}`;
   const matchDate = formatDate(matchInfo?.matchDate);
   const homeName = escapeHtml(matchInfo?.homeTeam?.name || '');
   const awayName = escapeHtml(matchInfo?.awayTeam?.name || '');
@@ -351,7 +351,7 @@ function renderSoiKeoHtml(article, thumbnailUrl) {
   <div class="container">
     <nav class="breadcrumb">
       <a href="/">Trang chủ</a> &rsaquo;
-      <a href="/soi-keo">Nhận định bóng đá</a> &rsaquo;
+      <a href="/nhan-dinh">Nhận định bóng đá</a> &rsaquo;
       <span>${homeName} vs ${awayName}</span>
     </nav>
 
@@ -376,7 +376,7 @@ function renderSoiKeoHtml(article, thumbnailUrl) {
         ${article.tags?.length ? `
         <div class="section-card" style="border-left-color:#94a3b8;">
           <div class="tags">
-            ${article.tags.map(tag => `<a href="/soi-keo?tag=${encodeURIComponent(tag)}" class="tag">${escapeHtml(tag)}</a>`).join('')}
+            ${article.tags.map(tag => `<a href="/nhan-dinh?tag=${encodeURIComponent(tag)}" class="tag">${escapeHtml(tag)}</a>`).join('')}
           </div>
         </div>` : ''}
 
@@ -426,9 +426,9 @@ function renderSoiKeoHtml(article, thumbnailUrl) {
 }
 
 // ========================================
-// GET /soi-keo/:slug - Serve full HTML page
+// GET /nhan-dinh/:slug - Serve full HTML page
 // ========================================
-router.get('/soi-keo/:slug', async (req, res) => {
+router.get('/nhan-dinh/:slug', async (req, res) => {
   try {
     const { slug } = req.params;
 
@@ -442,7 +442,7 @@ router.get('/soi-keo/:slug', async (req, res) => {
 <html lang="vi">
 <head><meta charset="UTF-8"><title>Không tìm thấy bài viết | ScoreLine</title>
 <meta name="robots" content="noindex"></head>
-<body><h1>Bài viết không tồn tại</h1><p><a href="/soi-keo">Xem tất cả nhận định bóng đá</a></p></body>
+<body><h1>Bài viết không tồn tại</h1><p><a href="/nhan-dinh">Xem tất cả nhận định bóng đá</a></p></body>
 </html>`);
     }
 
@@ -479,7 +479,7 @@ router.get('/soi-keo/:slug', async (req, res) => {
         links.push(`<a href="/doi-dau/${h2hArticle.slug}" style="display:inline-block;padding:6px 12px;background:#eff6ff;color:#2563eb;border-radius:4px;font-size:13px;text-decoration:none;">⚔️ ${escapeHtml(h2hArticle.title)}</a>`);
       }
       recentSoiKeo.forEach(a => {
-        links.push(`<a href="/soi-keo/${a.slug}" style="display:inline-block;padding:6px 12px;background:#f0fdf4;color:#16a34a;border-radius:4px;font-size:13px;text-decoration:none;">📊 ${escapeHtml(a.title?.substring(0, 50))}...</a>`);
+        links.push(`<a href="/nhan-dinh/${a.slug}" style="display:inline-block;padding:6px 12px;background:#f0fdf4;color:#16a34a;border-radius:4px;font-size:13px;text-decoration:none;">📊 ${escapeHtml(a.title?.substring(0, 50))}...</a>`);
       });
       recentPreview.forEach(a => {
         links.push(`<a href="/preview/${a.slug}" style="display:inline-block;padding:6px 12px;background:#fef3c7;color:#d97706;border-radius:4px;font-size:13px;text-decoration:none;">🏆 ${escapeHtml(a.title?.substring(0, 50))}...</a>`);
@@ -504,7 +504,7 @@ router.get('/soi-keo/:slug', async (req, res) => {
           : (a.matchInfo?.homeTeam?.logo && a.matchInfo?.awayTeam?.logo)
             ? `<div class="sidebar-logos"><img src="${escapeHtml(a.matchInfo.homeTeam.logo)}" alt="" loading="lazy"><span style="color:#94a3b8;font-size:10px;">vs</span><img src="${escapeHtml(a.matchInfo.awayTeam.logo)}" alt="" loading="lazy"></div>`
             : '';
-        return `<a href="/soi-keo/${a.slug}" class="sidebar-article">${thumbHtml}<div class="sidebar-info"><span class="sidebar-article-title">${escapeHtml(a.title?.substring(0, 60) || '')}</span></div></a>`;
+        return `<a href="/nhan-dinh/${a.slug}" class="sidebar-article">${thumbHtml}<div class="sidebar-info"><span class="sidebar-article-title">${escapeHtml(a.title?.substring(0, 60) || '')}</span></div></a>`;
       }).join('');
       sidebarH2H = recentH2H.map(a => {
         const thumbHtml = (a.matchInfo?.homeTeam?.logo && a.matchInfo?.awayTeam?.logo)

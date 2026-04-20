@@ -415,7 +415,7 @@ async function buildSidebar(currentSlug, currentType) {
   };
 
   const renderList = (items, type) => items.map(a => {
-    const href = type === 'preview' ? `/preview/${a.slug}` : type === 'h2h' ? `/doi-dau/${a.slug}` : `/soi-keo/${a.slug}`;
+    const href = type === 'preview' ? `/preview/${a.slug}` : type === 'h2h' ? `/doi-dau/${a.slug}` : `/nhan-dinh/${a.slug}`;
     const subtitle = type === 'preview' ? (a.leagueInfo?.name || '') :
       `${a.matchInfo?.homeTeam?.name || ''} vs ${a.matchInfo?.awayTeam?.name || ''}`;
     const thumbHtml = renderThumb(a, type);
@@ -1308,7 +1308,7 @@ router.get('/ket-qua/:dateSlug', async (req, res) => {
         <div class="sidebar-title">Truy cập nhanh</div>
         <a href="/lich-thi-dau" class="quick-link">📅 Lịch thi đấu</a>
         <a href="/bang-xep-hang" class="quick-link">🏆 Bảng xếp hạng</a>
-        <a href="/soi-keo" class="quick-link">📊 Nhận định</a>
+        <a href="/nhan-dinh" class="quick-link">📊 Nhận định</a>
         <a href="/top-ghi-ban" class="quick-link">⚽ Top ghi bàn</a>
       </div>`;
 

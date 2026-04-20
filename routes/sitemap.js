@@ -1,6 +1,6 @@
 /**
  * Dynamic Sitemap Generator
- * Auto-generates sitemap.xml from database (soi-keo articles + static pages)
+ * Auto-generates sitemap.xml from database (nhan-dinh articles + static pages)
  *
  * Cached for 1 hour to reduce DB load.
  */
@@ -24,7 +24,7 @@ const STATIC_PAGES = [
   { path: '/ket-qua-bong-da', priority: '0.9', changefreq: 'hourly' },
   { path: '/bang-xep-hang', priority: '0.8', changefreq: 'daily' },
   { path: '/ty-le-keo', priority: '0.8', changefreq: 'hourly' },
-  { path: '/soi-keo', priority: '0.9', changefreq: 'daily' },
+  { path: '/nhan-dinh', priority: '0.9', changefreq: 'daily' },
   { path: '/giai-dau', priority: '0.7', changefreq: 'weekly' },
   { path: '/top-ghi-ban', priority: '0.7', changefreq: 'daily' },
   { path: '/nhan-dinh', priority: '0.8', changefreq: 'daily' },
@@ -100,12 +100,12 @@ async function generateSitemap() {
       // Upcoming matches change more frequently (odds update); finished are static
       const changefreq = isUpcoming ? 'hourly' : 'monthly';
       const priority = isUpcoming ? '0.8' : '0.5';
-      urls.push(urlEntry(`${SITE_URL}/soi-keo/${article.slug}`, lastmod, changefreq, priority));
+      urls.push(urlEntry(`${SITE_URL}/nhan-dinh/${article.slug}`, lastmod, changefreq, priority));
     }
 
-    console.log(`[Sitemap] ${articles.length} soi-keo articles added`);
+    console.log(`[Sitemap] ${articles.length} nhan-dinh articles added`);
   } catch (err) {
-    console.error('[Sitemap] Failed to load soi-keo articles:', err.message);
+    console.error('[Sitemap] Failed to load nhan-dinh articles:', err.message);
   }
 
   // 4. Auto articles (round previews, h2h)

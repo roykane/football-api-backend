@@ -79,7 +79,7 @@ const SoiKeoArticleSchema = new mongoose.Schema({
   }],
   category: {
     type: String,
-    default: 'soi-keo',
+    default: 'nhan-dinh',
   },
   status: {
     type: String,
@@ -132,7 +132,7 @@ SoiKeoArticleSchema.pre('save', function(next) {
 });
 
 // Instance method: Generate slug from match info
-// Format: soi-keo-[team1]-vs-[team2]-[HH]h[MM]-ngay-[DD]-[MM]-[YYYY]
+// Format: nhan-dinh-[team1]-vs-[team2]-[HH]h[MM]-ngay-[DD]-[MM]-[YYYY]
 SoiKeoArticleSchema.methods.generateSlug = function() {
   const { homeTeam, awayTeam, matchDate } = this.matchInfo;
 
@@ -160,7 +160,7 @@ SoiKeoArticleSchema.methods.generateSlug = function() {
   const month = (date.getMonth() + 1).toString().padStart(2, '0');
   const year = date.getFullYear();
 
-  return `soi-keo-${homeName}-vs-${awayName}-${hours}h${minutes}-ngay-${day}-${month}-${year}`;
+  return `nhan-dinh-${homeName}-vs-${awayName}-${hours}h${minutes}-ngay-${day}-${month}-${year}`;
 };
 
 // Static method: Get latest articles
