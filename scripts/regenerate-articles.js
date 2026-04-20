@@ -115,6 +115,11 @@ async function main() {
         continue;
       }
 
+      // Fix bettingTips if AI returned array instead of string
+      if (Array.isArray(aiContent.bettingTips)) {
+        aiContent.bettingTips = aiContent.bettingTips.join('\n');
+      }
+
       // Update article — keep slug, matchInfo, oddsData, views, createdAt
       await SoiKeoArticle.updateOne(
         { _id: article._id },
