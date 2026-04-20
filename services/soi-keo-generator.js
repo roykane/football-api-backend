@@ -445,71 +445,88 @@ class SoiKeoGenerator {
     const opening = openingStyles[Math.floor(Math.random() * openingStyles.length)];
     const structure = structureVariants[Math.floor(Math.random() * structureVariants.length)];
 
-    return `Bạn là chuyên gia phân tích bóng đá, viết bài nhận định chất lượng cao bằng tiếng Việt.
+    // Title templates — random pick
+    const titleTemplates = [
+      `${teams.home.name} vs ${teams.away.name}: Ai sẽ thắng trận ${league.name} ${matchDateStr}?`,
+      `Phân tích ${teams.home.name} đấu ${teams.away.name} — Dự đoán ${league.name}`,
+      `${teams.home.name} gặp ${teams.away.name}: 3 điều cần biết trước giờ bóng lăn`,
+      `Nhận định ${teams.home.name} vs ${teams.away.name} ${matchDateStr} | ${league.name}`,
+      `${league.name}: ${teams.home.name} có đánh bại được ${teams.away.name}?`,
+      `Trước trận ${teams.home.name} - ${teams.away.name}: Phân tích từ chuyên gia`,
+      `Dự đoán ${teams.home.name} vs ${teams.away.name} — Tỷ số, kèo & phong độ`,
+      `${teams.home.name} vs ${teams.away.name} ${matchTime} ngày ${matchDateStr}: Phân tích chi tiết`,
+    ];
+    const titleSuggestion = titleTemplates[Math.floor(Math.random() * titleTemplates.length)];
 
-**GIỌNG VĂN & PHONG CÁCH:**
+    return `Bạn là chuyên gia phân tích bóng đá, viết bài nhận định bằng tiếng Việt cho website thể thao chuyên nghiệp.
+
+**PHONG CÁCH VIẾT:**
 ${style}
 ${opening}
-
-**CẤU TRÚC BÀI VIẾT:**
 ${structure}
-Quan trọng: KHÔNG viết theo template cố định. Mỗi bài phải có cách tiếp cận riêng, câu mở bài khác nhau, cách phân tích khác nhau. Đọc xong phải cảm thấy đây là bài viết do CON NGƯỜI viết, không phải AI.
 
-**THÔNG TIN TRẬN ĐẤU:**
-- Trận: ${teams.home.name} vs ${teams.away.name}
-- Giải đấu: ${league.name} (${league.country})
-- Thời gian: ${matchTime} ngày ${matchDateStr}
+**DỮ LIỆU TRẬN ĐẤU:**
+- ${teams.home.name} vs ${teams.away.name}
+- ${league.name} (${league.country}) — ${matchTime} ngày ${matchDateStr}
 - Sân: ${fixture.venue?.name || 'Chưa xác định'}
 
-**TỶ LỆ KÈO HIỆN TẠI:**
+**TỶ LỆ KÈO:**
 ${oddsInfo}
 
-**LỊCH SỬ ĐỐI ĐẦU (H2H 10 trận):**
+**H2H (10 trận):**
 ${h2hData}
 
-**PHONG ĐỘ 10 TRẬN GẦN NHẤT:**
+**PHONG ĐỘ:**
 - ${teams.home.name}: ${homeForm}
 - ${teams.away.name}: ${awayForm}
 
-**YÊU CẦU NỘI DUNG:**
-Viết bài 2500-3000 từ, bao gồm 7 phần bắt buộc (nhưng tự do sắp xếp thứ tự, gộp, hoặc đặt tên khác):
+**QUY TẮC VIẾT BÀI — BẮT BUỘC TUÂN THỦ:**
 
-1. **introduction**: Mở bài (200-300 từ) — dùng kiểu mở bài đã chọn ở trên
-2. **teamAnalysis**: Phân tích 2 đội (600-800 từ) — điểm mạnh, điểm yếu, lối chơi, form gần đây
-3. **h2hHistory**: Lịch sử đối đầu (300-400 từ) — xu hướng, trận đáng chú ý, thống kê nổi bật
-4. **formAnalysis**: Phong độ chi tiết (400-500 từ) — 10 trận gần nhất, tấn công/phòng ngự, chuỗi, Tài/Xỉu
-5. **oddsAnalysis**: Phân tích kèo (400-500 từ) — Châu Á, 1X2, Tài/Xỉu, bẫy kèo
-6. **prediction**: Dự đoán (200-300 từ) — tỷ số cụ thể + lý do + kịch bản thay thế
-7. **bettingTips**: Tip theo dõi (150-200 từ) — rõ ràng, có lý do
+1. NGẮN GỌN & SÚC TÍCH — tổng bài 1500-2000 từ (KHÔNG phải 2500-3000). Mỗi câu phải có thông tin mới. Cắt bỏ mọi câu lặp lại ý.
 
-**ĐA DẠNG HÓA — CỰC KỲ QUAN TRỌNG:**
-- KHÔNG bắt đầu bài bằng "Trận đấu giữa X và Y..." — quá template
-- KHÔNG dùng cùng cấu trúc câu cho mọi bài
-- Thay đổi cách dẫn dắt, cách chuyển đoạn, cách kết luận
-- Dùng ví von, so sánh, metaphor khi phù hợp
-- Xen kẽ câu dài và câu ngắn, đoạn dài và đoạn ngắn
-- Tỷ số dự đoán ĐA DẠNG tùy phân tích (không mặc định 2-1)
+2. KHÔNG LẶP DATA — nếu đã nói "Bayern thắng 9/10 trận" ở phần intro thì KHÔNG nhắc lại ở phần formAnalysis. Mỗi section phải có insight MỚI.
 
-Format JSON trả về:
+3. CÂU MỞ BÀI — TUYỆT ĐỐI KHÔNG bắt đầu bằng:
+   × "Trận đấu giữa X và Y..."
+   × "Cuộc chạm trán giữa..."
+   × "Trận X vs Y diễn ra lúc..."
+   Thay vào đó dùng kiểu mở bài đã chọn ở trên.
+
+4. PREDICTION — KHÔNG bắt đầu bằng "Dựa trên phân tích..." hoặc "Dựa trên toàn bộ...". Đi thẳng vào dự đoán.
+
+5. TỶ SỐ DỰ ĐOÁN — phải PHÙ HỢP với data. Nếu H2H trung bình 1.5 bàn → không dự đoán 3-2. Nếu cả 2 đội form tệ → có thể 0-0 hoặc 1-0.
+
+6. KHÔNG DÙNG "soi kèo" — thay bằng "nhận định", "phân tích", "đánh giá". Tuyệt đối không dùng "cược", "nhà cái", "đặt cược" trong title/excerpt.
+
+7. TRÁNH BOLD SPAM — chỉ bold tên đội lần đầu xuất hiện trong mỗi section. Không bold mỗi lần nhắc tên đội.
+
+**7 PHẦN BẮT BUỘC (tự do đặt tên heading):**
+1. introduction (150-200 từ)
+2. teamAnalysis (400-500 từ) — so sánh 2 đội, KHÔNG tách riêng rồi nói giống nhau
+3. h2hHistory (200-250 từ) — chỉ highlight insight quan trọng, không liệt kê từng trận
+4. formAnalysis (200-300 từ) — tóm tắt xu hướng, không lặp lại số liệu đã nêu
+5. oddsAnalysis (200-300 từ) — phân tích kèo ngắn gọn, có quan điểm rõ ràng
+6. prediction (100-150 từ) — tỷ số + 2-3 câu lý do, KHÔNG viết dài dòng
+7. bettingTips (100 từ) — bullet points ngắn
+
+**TITLE GỢI Ý (chọn 1 hoặc tự sáng tạo):**
+"${titleSuggestion}"
+
+Format JSON:
 {
-  "title": "[ĐA DẠNG title - không chỉ dùng 'Nhận định X vs Y HH:MM ngày DD/MM' — thử các format khác như 'X đấu Y: Cuộc chiến...' hoặc 'Phân tích X vs Y - Ai sẽ...']",
-  "excerpt": "[150-160 ký tự - SEO meta, ĐA DẠNG không template]",
-  "introduction": "[text]",
-  "teamAnalysis": "[text]",
-  "h2hHistory": "[text]",
-  "formAnalysis": "[text]",
-  "oddsAnalysis": "[text]",
-  "prediction": "[text]",
-  "bettingTips": "- Kèo Châu Á: [tip]\\n- Kèo 1X2: [tip]\\n- Tài/Xỉu: [tip]\\n- Tỷ số: [X-X]",
+  "title": "[KHÁC NHAU cho mỗi bài, xem gợi ý trên]",
+  "excerpt": "[130-155 ký tự, chứa dự đoán tỷ số cụ thể]",
+  "introduction": "[150-200 từ]",
+  "teamAnalysis": "[400-500 từ]",
+  "h2hHistory": "[200-250 từ]",
+  "formAnalysis": "[200-300 từ]",
+  "oddsAnalysis": "[200-300 từ]",
+  "prediction": "[100-150 từ]",
+  "bettingTips": "[bullet points ngắn]",
   "tags": ["${teams.home.name}", "${teams.away.name}", "${league.name}", "nhận định bóng đá", "phân tích trận đấu"]
 }
 
-LƯU Ý:
-- Title và excerpt: dùng "nhận định", "phân tích", "dự đoán" — KHÔNG dùng "soi kèo", "cược", "nhà cái"
-- Body content: có thể dùng "soi kèo" tự nhiên 1-2 lần
-- Dùng **bold** cho tên đội, sub-heading
-- KHÔNG bịa chấn thương cầu thủ
-- Trả về ĐÚNG JSON format`;
+KHÔNG bịa chấn thương cầu thủ. Trả về ĐÚNG JSON.`;
   }
 
   /**
