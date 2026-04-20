@@ -15,7 +15,7 @@
 require('dotenv').config();
 const mongoose = require('mongoose');
 const SoiKeoArticle = require('../models/SoiKeoArticle');
-const SoiKeoGenerator = require('../services/soi-keo-generator');
+const soiKeoGenerator = require('../services/soi-keo-generator');
 
 const DB_URI = process.env.MONGODB_URI || process.env.DATABASE_URL;
 const args = process.argv.slice(2);
@@ -54,7 +54,7 @@ async function main() {
     process.exit(0);
   }
 
-  const generator = new SoiKeoGenerator();
+  const generator = soiKeoGenerator;
   let success = 0;
   let failed = 0;
 
