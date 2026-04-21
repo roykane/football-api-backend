@@ -204,6 +204,9 @@ app.use('/api/scheduler', schedulerRouter);
 app.use('/api/soi-keo', soiKeoRouter);
 app.use('/api/content', require('./routes/contentApi'));
 app.use('/api/teams', require('./routes/teams'));
+app.use('/api/players', require('./routes/playersApi'));
+app.use('/api/football-knowledge', require('./routes/knowledgeApi'));
+app.use('/api/world-cup-2026', require('./routes/worldCupApi'));
 
 // Legacy endpoints (chỉ giữ lại leagues và fixtures)
 app.get('/api/leagues', async (req, res) => {
