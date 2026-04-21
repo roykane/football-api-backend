@@ -47,11 +47,11 @@ function baseStyles() {
     .card h3{font-size:17px;font-weight:700;margin:18px 0 8px}
     .card p{margin-bottom:12px;color:#334155;font-size:15px}
     .card ul{margin:12px 0;padding-left:22px}.card li{margin-bottom:8px;color:#334155;font-size:15px}
-    .player-hero{text-align:center;background:linear-gradient(135deg,#0f172a,#1e3a8a);color:#fff;padding:36px 24px;border-radius:8px;margin-bottom:16px}
-    .player-hero img{width:140px;height:140px;border-radius:50%;object-fit:cover;background:#fff;margin-bottom:12px;border:4px solid #fff}
-    .player-hero h1{font-size:32px;font-weight:800;margin-bottom:6px}
-    .player-hero .meta{font-size:14px;color:#cbd5e1;margin-bottom:12px}
-    .player-hero .shirt{display:inline-block;background:#ef4444;color:#fff;font-weight:800;font-size:20px;padding:4px 14px;border-radius:4px}
+    .player-hero{background:linear-gradient(135deg,#0f172a,#1e3a8a);color:#fff;padding:18px 20px;border-radius:8px;margin-bottom:16px;display:flex;gap:20px;align-items:center}
+    .player-hero img{width:96px;height:96px;border-radius:50%;object-fit:cover;background:#f1f5f9;flex-shrink:0;border:3px solid rgba(255,255,255,0.2)}
+    .player-hero .info{flex:1;min-width:0}
+    .player-hero h1{font-size:24px;font-weight:800;margin-bottom:4px;line-height:1.2}
+    .player-hero .meta{font-size:13px;color:#cbd5e1}
     .info-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:16px 0}
     .info-box{background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:10px;text-align:center}
     .info-num{font-size:22px;font-weight:800;color:#0066FF;display:block}
@@ -73,7 +73,10 @@ function baseStyles() {
     .footer{text-align:center;margin-top:24px;padding:16px;color:#94a3b8;font-size:13px}
     @media(max-width:768px){
       .layout{grid-template-columns:1fr}.sidebar{order:2}
-      .player-hero h1{font-size:26px}.info-grid{grid-template-columns:repeat(2,1fr)}
+      .player-hero{flex-direction:column;text-align:center;padding:20px 16px;gap:12px}
+      .player-hero img{width:84px;height:84px}
+      .player-hero h1{font-size:20px}
+      .info-grid{grid-template-columns:repeat(2,1fr)}
     }
   `;
 }
@@ -184,10 +187,11 @@ router.get('/cau-thu/:slug', (req, res) => {
     <nav class="breadcrumb"><a href="/">Trang chủ</a> &rsaquo; <a href="/cau-thu">Cầu thủ</a> &rsaquo; <span>${escapeHtml(player.name)}</span></nav>
 
     <div class="player-hero">
-      <img src="${escapeHtml(player.image)}" alt="${escapeHtml(player.name)}" width="140" height="140">
-      <h1>${escapeHtml(player.name)}</h1>
-      <div class="meta">${escapeHtml(player.position)} · ${escapeHtml(player.currentClub)} · ${escapeHtml(player.nationalTeam)}</div>
-      <span class="shirt">#${player.shirtNumber}</span>
+      <img src="${escapeHtml(player.image)}" alt="${escapeHtml(player.name)}" width="96" height="96" loading="eager">
+      <div class="info">
+        <h1>${escapeHtml(player.name)}</h1>
+        <div class="meta">${escapeHtml(player.position)} · ${escapeHtml(player.currentClub)} · ĐT ${escapeHtml(player.nationalTeam)}</div>
+      </div>
     </div>
 
     <div class="layout">

@@ -19,7 +19,7 @@ const players = [
     caps: 59,
     goals: 13,
     foot: 'Phải',
-    image: 'https://media.api-sports.io/football/players/13553.png',
+    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Nguy%E1%BB%85n_Quang_H%E1%BA%A3i.jpg/330px-Nguy%E1%BB%85n_Quang_H%E1%BA%A3i.jpg',
     tags: ['quang hải', 'nguyễn quang hải', 'tiền vệ', 'cầu thủ việt nam'],
     bio: 'Nguyễn Quang Hải là một trong những cầu thủ xuất sắc nhất lịch sử bóng đá Việt Nam. Sinh ngày 12/4/1997 tại Đông Anh, Hà Nội, Hải bắt đầu sự nghiệp chuyên nghiệp tại Hà Nội FC từ năm 2015.',
     highlights: [
@@ -53,7 +53,7 @@ Năm 2022, Quang Hải gia nhập Pau FC của Pháp, trở thành một trong n
     caps: 55,
     goals: 11,
     foot: 'Phải',
-    image: 'https://media.api-sports.io/football/players/13558.png',
+    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Nguy%E1%BB%85n_C%C3%B4ng_Ph%C6%B0%E1%BB%A3ng_20191201_%28cropped%29.jpg/330px-Nguy%E1%BB%85n_C%C3%B4ng_Ph%C6%B0%E1%BB%A3ng_20191201_%28cropped%29.jpg',
     tags: ['công phượng', 'nguyễn công phượng', 'tiền đạo', 'hagl'],
     bio: 'Nguyễn Công Phượng sinh ngày 21/1/1995 tại Đô Lương, Nghệ An. Trưởng thành từ học viện HAGL Arsenal JMG, Công Phượng là một trong những tiền đạo kỹ thuật nhất bóng đá Việt Nam hiện đại.',
     highlights: [
@@ -86,7 +86,7 @@ Công Phượng là cầu thủ Việt Nam hiếm hoi từng thi đấu ở 4 qu
     caps: 37,
     goals: 0,
     foot: 'Phải',
-    image: 'https://media.api-sports.io/football/players/13560.png',
+    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/%C4%90%E1%BA%B7ng_V%C4%83n_L%C3%A2m_20191201_%28cropped%29.jpg/330px-%C4%90%E1%BA%B7ng_V%C4%83n_L%C3%A2m_20191201_%28cropped%29.jpg',
     tags: ['văn lâm', 'đặng văn lâm', 'thủ môn', 'lavkaman'],
     bio: 'Đặng Văn Lâm (Lev Shonin) sinh ngày 13/8/1993 tại Saint Petersburg, Nga. Với chiều cao 1m88 và phản xạ điển hình kiểu Đông Âu, Văn Lâm là thủ môn số 1 của đội tuyển Việt Nam trong nhiều năm qua.',
     highlights: [
@@ -120,7 +120,7 @@ Anh trở thành thủ môn Việt Nam đầu tiên thi đấu chuyên nghiệp 
     caps: 49,
     goals: 23,
     foot: 'Phải',
-    image: 'https://media.api-sports.io/football/players/13556.png',
+    image: 'https://upload.wikimedia.org/wikipedia/commons/7/7e/Nguyen_Tien_Linh_2024_2.png',
     tags: ['tiến linh', 'nguyễn tiến linh', 'tiền đạo', 'bình dương'],
     bio: 'Nguyễn Tiến Linh sinh ngày 20/10/1997 tại Bình Dương, là chân sút chủ lực của đội tuyển Việt Nam từ sau khi Anh Đức giải nghệ. Với lối chơi mạnh mẽ và khả năng không chiến tốt, Tiến Linh là tiền đạo đáng tin cậy nhất hiện nay.',
     highlights: [
@@ -153,7 +153,7 @@ Anh trở thành thủ môn Việt Nam đầu tiên thi đấu chuyên nghiệp 
     caps: 64,
     goals: 2,
     foot: 'Phải',
-    image: 'https://media.api-sports.io/football/players/13555.png',
+    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/%C4%90%E1%BB%97_Duy_M%E1%BA%A1nh_20191201_%28cropped%29.jpg/330px-%C4%90%E1%BB%97_Duy_M%E1%BA%A1nh_20191201_%28cropped%29.jpg',
     tags: ['duy mạnh', 'đỗ duy mạnh', 'trung vệ', 'hà nội fc'],
     bio: 'Đỗ Duy Mạnh là trung vệ thép của đội tuyển Việt Nam, sinh ngày 29/9/1996 tại Đông Anh, Hà Nội. Cùng với Quế Ngọc Hải, Duy Mạnh tạo thành cặp trung vệ ổn định nhất bóng đá Việt Nam một thập kỷ qua.',
     highlights: [
@@ -186,7 +186,7 @@ Anh trở thành thủ môn Việt Nam đầu tiên thi đấu chuyên nghiệp 
     caps: 41,
     goals: 4,
     foot: 'Phải',
-    image: 'https://media.api-sports.io/football/players/13557.png',
+    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b3/Nguyen_Hoang_Duc_in_2025.png/330px-Nguyen_Hoang_Duc_in_2025.png',
     tags: ['hoàng đức', 'nguyễn hoàng đức', 'tiền vệ', 'viettel'],
     bio: 'Nguyễn Hoàng Đức sinh ngày 11/1/1998 tại Hải Dương, là tiền vệ kiến thiết hiện đại nhất bóng đá Việt Nam. Với chiều cao 1m84 và kỹ thuật điêu luyện, Hoàng Đức là "nhạc trưởng" không thể thay thế của tuyến giữa ĐTQG.',
     highlights: [
