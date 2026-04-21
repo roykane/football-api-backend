@@ -9,6 +9,9 @@ const express = require('express');
 const router = express.Router();
 const SoiKeoArticle = require('../models/SoiKeoArticle');
 const AutoArticle = require('../models/AutoArticle');
+const { players: VN_PLAYERS } = require('../data/vietnamesePlayers');
+const { sections: WC_SECTIONS } = require('../data/worldCup2026');
+const { articles: KNOWLEDGE_ARTICLES } = require('../data/footballKnowledge');
 
 const SITE_URL = process.env.SITE_URL || 'https://scoreline.io';
 const CACHE_TTL = 15 * 60 * 1000; // 15 minutes
@@ -76,16 +79,35 @@ function urlEntry(loc, lastmod, changefreq, priority) {
 async function generateSitemap() {
   const today = new Date().toISOString().split('T')[0];
   const urls = [];
+  const seen = new Set();
+  const addUrl = (loc, lastmod, changefreq, priority) => {
+    if (seen.has(loc)) return;
+    seen.add(loc);
+    urls.push(urlEntry(loc, lastmod, changefreq, priority));
+  };
 
   // 1. Static pages
   for (const page of STATIC_PAGES) {
-    urls.push(urlEntry(`${SITE_URL}${page.path}`, today, page.changefreq, page.priority));
+    addUrl(`${SITE_URL}${page.path}`, today, page.changefreq, page.priority);
+  }
+
+  // 1b. New SEO content hubs
+  addUrl(`${SITE_URL}/cau-thu`, today, 'weekly', '0.8');
+  addUrl(`${SITE_URL}/kien-thuc-bong-da`, today, 'weekly', '0.8');
+  for (const player of VN_PLAYERS) {
+    addUrl(`${SITE_URL}/cau-thu/${player.slug}`, today, 'weekly', '0.7');
+  }
+  for (const slug of Object.keys(WC_SECTIONS)) {
+    addUrl(`${SITE_URL}/world-cup-2026/${slug}`, today, 'weekly', '0.8');
+  }
+  for (const article of KNOWLEDGE_ARTICLES) {
+    addUrl(`${SITE_URL}/kien-thuc-bong-da/${article.slug}`, today, 'monthly', '0.7');
   }
 
   // 2. League hub pages
   for (const league of LEAGUES) {
-    urls.push(urlEntry(`${SITE_URL}/giai-dau/${league.slug}`, today, 'daily', league.priority));
-    urls.push(urlEntry(`${SITE_URL}/top-ghi-ban/${league.slug}`, today, 'daily', '0.7'));
+    addUrl(`${SITE_URL}/giai-dau/${league.slug}`, today, 'daily', league.priority);
+    addUrl(`${SITE_URL}/top-ghi-ban/${league.slug}`, today, 'daily', '0.7');
   }
 
   // 3. Soi-keo articles from DB (latest 500 published)
@@ -104,7 +126,7 @@ async function generateSitemap() {
       // Upcoming matches change more frequently (odds update); finished are static
       const changefreq = isUpcoming ? 'hourly' : 'monthly';
       const priority = isUpcoming ? '0.8' : '0.5';
-      urls.push(urlEntry(`${SITE_URL}/nhan-dinh/${article.slug}`, lastmod, changefreq, priority));
+      addUrl(`${SITE_URL}/nhan-dinh/${article.slug}`, lastmod, changefreq, priority);
     }
 
     console.log(`[Sitemap] ${articles.length} nhan-dinh articles added`);
@@ -125,7 +147,7 @@ async function generateSitemap() {
       const lastmod = (article.updatedAt || article.createdAt || new Date()).toISOString().split('T')[0];
       const prefix = article.type === 'round-preview' ? 'preview' : 'doi-dau';
       const isUpcoming = article.matchInfo?.matchDate && new Date(article.matchInfo.matchDate) > new Date();
-      urls.push(urlEntry(`${SITE_URL}/${prefix}/${article.slug}`, lastmod, isUpcoming ? 'daily' : 'monthly', isUpcoming ? '0.7' : '0.4'));
+      addUrl(`${SITE_URL}/${prefix}/${article.slug}`, lastmod, isUpcoming ? 'daily' : 'monthly', isUpcoming ? '0.7' : '0.4');
     }
     console.log(`[Sitemap] ${autoArticles.length} auto articles added`);
   } catch (err) {
@@ -134,14 +156,14 @@ async function generateSitemap() {
 
   // 5. Data-driven pages (schedule, standings, top scorers per league)
   for (const league of LEAGUES) {
-    urls.push(urlEntry(`${SITE_URL}/lich-thi-dau/${league.slug}`, today, 'daily', '0.7'));
-    urls.push(urlEntry(`${SITE_URL}/bang-xep-hang/${league.slug}`, today, 'daily', '0.7'));
-    urls.push(urlEntry(`${SITE_URL}/top-ghi-ban/${league.slug}`, today, 'daily', '0.6'));
+    addUrl(`${SITE_URL}/lich-thi-dau/${league.slug}`, today, 'daily', '0.7');
+    addUrl(`${SITE_URL}/bang-xep-hang/${league.slug}`, today, 'daily', '0.7');
+    addUrl(`${SITE_URL}/top-ghi-ban/${league.slug}`, today, 'daily', '0.6');
   }
 
   // 6. Results pages
   for (const dateSlug of RESULT_DATES) {
-    urls.push(urlEntry(`${SITE_URL}/ket-qua/${dateSlug}`, today, 'daily', '0.7'));
+    addUrl(`${SITE_URL}/ket-qua/${dateSlug}`, today, 'daily', '0.7');
   }
 
   // 7. Team pages
@@ -152,7 +174,7 @@ async function generateSitemap() {
       .lean();
     for (const team of teams) {
       const lastmod = (team.updatedAt || new Date()).toISOString().split('T')[0];
-      urls.push(urlEntry(`${SITE_URL}/doi-bong/${team.slug}`, lastmod, 'weekly', '0.7'));
+      addUrl(`${SITE_URL}/doi-bong/${team.slug}`, lastmod, 'weekly', '0.7');
     }
     console.log(`[Sitemap] ${teams.length} team pages added`);
   } catch (err) {

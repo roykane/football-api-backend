@@ -186,6 +186,9 @@ app.use('/', require('./routes/sitemap'));
 // SEO: Server-rendered HTML pages for search engine crawlers
 app.use('/', require('./routes/seoPages'));
 app.use('/', require('./routes/seoContentPages'));
+app.use('/', require('./routes/vietnamesePlayers'));
+app.use('/', require('./routes/worldCup2026Pages'));
+app.use('/', require('./routes/footballKnowledge'));
 
 // Mount routers - ✅ Thứ tự quan trọng!
 app.use('/api/competitions', competitionsRouter);
