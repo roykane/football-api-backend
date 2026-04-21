@@ -530,9 +530,9 @@ router.get('/nhan-dinh/:slug', async (req, res) => {
     try {
       const [recentSK, recentH2H] = await Promise.all([
         SoiKeoArticle.find({ status: 'published', slug: { $ne: slug } })
-          .sort({ createdAt: -1 }).limit(5).select('slug title thumbnail matchInfo.homeTeam.logo matchInfo.awayTeam.logo').lean(),
+          .sort({ createdAt: -1 }).limit(5).select('slug title thumbnail matchInfo.homeTeam.logo matchInfo.homeTeam.name matchInfo.awayTeam.logo matchInfo.awayTeam.name').lean(),
         AutoArticle.find({ type: 'h2h-analysis', status: 'published' })
-          .sort({ createdAt: -1 }).limit(5).select('slug title matchInfo.homeTeam.logo matchInfo.awayTeam.logo').lean(),
+          .sort({ createdAt: -1 }).limit(5).select('slug title matchInfo.homeTeam.logo matchInfo.homeTeam.name matchInfo.awayTeam.logo matchInfo.awayTeam.name').lean(),
       ]);
       sidebarSoiKeo = recentSK.map(a => {
         const titleSafe = escapeHtml(a.title || 'Nhận định bóng đá');
