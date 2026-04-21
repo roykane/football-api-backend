@@ -11,30 +11,11 @@ const siteHeader = require('../utils/siteHeader');
 const { articles } = require('../data/footballKnowledge');
 
 const SITE_URL = process.env.SITE_URL || 'https://scoreline.io';
+const { markdownToHtml, splitBySections } = require('../utils/markdown');
 
 function escapeHtml(str) {
   if (!str) return '';
   return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
-
-function markdownToHtml(text) {
-  if (!text) return '';
-  const blocks = text.split(/\n\n+/);
-  return blocks.map(block => {
-    const trimmed = block.trim();
-    if (!trimmed) return '';
-    if (/^###\s+/.test(trimmed)) return trimmed.replace(/^###\s+(.+)$/gm, '<h3>$1</h3>');
-    if (/^##\s+/.test(trimmed)) return trimmed.replace(/^##\s+(.+)$/gm, '<h2>$1</h2>');
-    if (/^- /.test(trimmed)) {
-      const items = trimmed.replace(/^- (.+)$/gm, '<li>$1</li>');
-      return '<ul>' + items + '</ul>';
-    }
-    let html = trimmed
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>')
-      .replace(/\n/g, '<br>');
-    return '<p>' + html + '</p>';
-  }).join('\n');
 }
 
 function baseStyles() {
@@ -53,16 +34,21 @@ function baseStyles() {
     .article-card h2{color:#0f172a;font-size:19px;margin-bottom:6px}
     .article-card .cat{display:inline-block;font-size:11px;color:#0369a1;background:#e0f2fe;padding:2px 8px;border-radius:3px;margin-bottom:6px}
     .article-card p{color:#475569;font-size:14px;margin:0}
-    .card{background:#fff;border-radius:8px;padding:28px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
-    .card h1{font-size:26px;font-weight:800;color:#0f172a;margin-bottom:12px;line-height:1.3}
-    .card h2{font-size:22px;font-weight:800;color:#0f172a;margin:22px 0 12px;padding-bottom:6px;border-bottom:2px solid #e0f2fe}
-    .card h3{font-size:18px;font-weight:700;color:#1e293b;margin:16px 0 8px}
-    .card p{margin-bottom:12px;color:#334155;font-size:15.5px}
-    .card ul{margin:10px 0;padding-left:22px}
-    .card li{margin-bottom:6px;color:#334155;font-size:15px}
-    .card strong{color:#0f172a}
-    .card a{color:#0ea5e9;font-weight:500}
-    .article-meta{font-size:13px;color:#94a3b8;padding-bottom:12px;border-bottom:1px solid #e2e8f0;margin-bottom:16px}
+    .header-card{background:#fff;border-radius:8px;padding:24px 28px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);border-left:4px solid #0ea5e9}
+    .header-card h1{font-size:26px;font-weight:800;color:#0f172a;margin-bottom:8px;line-height:1.3}
+    .intro-box{background:#fff;border-radius:8px;padding:18px 20px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);border-left:4px solid #e0f2fe}
+    .intro-box p{color:#475569;font-size:15px;line-height:1.7;margin:0}
+    .section-card{background:#fff;border-radius:8px;padding:24px 28px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+    .section-card h2{font-size:20px;font-weight:800;color:#0f172a;margin:0 0 14px;padding-bottom:8px;border-bottom:2px solid #e0f2fe;display:flex;align-items:center;gap:8px}
+    .section-card h3{font-size:17px;font-weight:700;color:#1e293b;margin:18px 0 8px}
+    .section-card p{margin-bottom:12px;color:#334155;font-size:15.5px;line-height:1.8}
+    .section-card ul,.section-card ol{margin:10px 0;padding-left:24px}
+    .section-card li{margin-bottom:6px;color:#334155;font-size:15px;line-height:1.6}
+    .section-card li::marker{color:#0ea5e9;font-weight:700}
+    .section-card strong{color:#0f172a;font-weight:700}
+    .section-card a{color:#0ea5e9;font-weight:500}
+    .section-card a:hover{text-decoration:underline}
+    .article-meta{font-size:13px;color:#94a3b8}
     .faq-item{background:#f8fafc;border-radius:6px;padding:14px 16px;margin-bottom:10px;border-left:3px solid #0ea5e9}
     .faq-item .q{font-weight:700;color:#0f172a;margin-bottom:6px;font-size:15px}
     .faq-item .a{color:#475569;font-size:14px}
@@ -72,7 +58,7 @@ function baseStyles() {
     .sidebar-link{display:block;padding:7px 0;font-size:14px;color:#475569;border-bottom:1px solid #f1f5f9}
     .sidebar-link:last-child{border-bottom:none}
     .footer{text-align:center;margin-top:24px;padding:16px;color:#94a3b8;font-size:13px}
-    @media(max-width:768px){.layout{grid-template-columns:1fr}.sidebar{order:2}.card{padding:18px 16px}.card h1{font-size:22px}}
+    @media(max-width:768px){.layout{grid-template-columns:1fr}.sidebar{order:2}.section-card,.header-card{padding:18px 16px}.header-card h1{font-size:22px}}
   `;
 }
 
@@ -112,10 +98,18 @@ router.get('/kien-thuc-bong-da/:slug', (req, res) => {
   const sidebarLinks = otherArticles.map(a => `<a href="/kien-thuc-bong-da/${a.slug}" class="sidebar-link">${a.icon} ${escapeHtml(a.title.split(' - ')[0])}</a>`).join('');
 
   const faqsHtml = article.faqs?.length ? `
-    <div class="card">
+    <div class="section-card">
       <h2>❓ Câu hỏi thường gặp</h2>
       ${article.faqs.map(f => `<div class="faq-item"><div class="q">${escapeHtml(f.q)}</div><div class="a">${escapeHtml(f.a)}</div></div>`).join('')}
     </div>` : '';
+
+  const sectionCardsHtml = splitBySections(article.body).map(sec => {
+    if (!sec.title && !sec.body.trim()) return '';
+    return `<div class="section-card">
+      ${sec.title ? `<h2>${escapeHtml(sec.title)}</h2>` : ''}
+      ${markdownToHtml(sec.body)}
+    </div>`;
+  }).join('\n');
 
   const html = `<!DOCTYPE html>
 <html lang="vi">
@@ -156,13 +150,14 @@ router.get('/kien-thuc-bong-da/:slug', (req, res) => {
     <nav class="breadcrumb"><a href="/">Trang chủ</a> &rsaquo; <a href="/kien-thuc-bong-da">Kiến thức bóng đá</a> &rsaquo; <span>${escapeHtml(article.title.split(' - ')[0])}</span></nav>
     <div class="layout">
       <main class="main">
-        <div class="card">
+        <div class="header-card">
           <h1>${article.icon} ${escapeHtml(article.title.split(' - ')[0])}</h1>
           <div class="article-meta">📂 ${escapeHtml(article.category)} · ⏱ Cập nhật 2026-04-21</div>
-          ${markdownToHtml(article.body)}
         </div>
+        <div class="intro-box"><p>${escapeHtml(article.metaDesc)}</p></div>
+        ${sectionCardsHtml}
         ${faqsHtml}
-        <div class="card">
+        <div class="section-card">
           <h2>🔗 Bài viết liên quan</h2>
           <p>
             ${otherArticles.slice(0, 4).map(a => `<a href="/kien-thuc-bong-da/${a.slug}">${a.icon} ${escapeHtml(a.title.split(' - ')[0])}</a>`).join(' · ')}
