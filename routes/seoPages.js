@@ -160,7 +160,12 @@ function renderSoiKeoHtml(article, thumbnailUrl) {
         "url": `${SITE_URL}/og-image.jpg`
       }
     },
-    "image": thumbnailUrl || article.thumbnail || `${SITE_URL}/og-image.jpg`,
+    "image": {
+      "@type": "ImageObject",
+      "url": thumbnailUrl || article.thumbnail || `${SITE_URL}/og-image.jpg`,
+      "width": 1200,
+      "height": 630
+    },
     "mainEntityOfPage": url
   };
 
@@ -265,6 +270,8 @@ function renderSoiKeoHtml(article, thumbnailUrl) {
   <meta name="description" content="${description}">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="${escapeHtml(url)}">
+  <link rel="alternate" hreflang="vi" href="${escapeHtml(url)}">
+  <link rel="alternate" hreflang="x-default" href="${escapeHtml(url)}">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 
   <meta property="og:type" content="article">
@@ -272,6 +279,10 @@ function renderSoiKeoHtml(article, thumbnailUrl) {
   <meta property="og:title" content="${title}">
   <meta property="og:description" content="${description}">
   <meta property="og:image" content="${escapeHtml(thumbnailUrl || SITE_URL + '/og-image.jpg')}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:type" content="image/jpeg">
+  <meta property="og:image:alt" content="${title}">
   <meta property="og:locale" content="vi_VN">
   <meta property="og:site_name" content="ScoreLine">
 
@@ -279,6 +290,7 @@ function renderSoiKeoHtml(article, thumbnailUrl) {
   <meta name="twitter:title" content="${title}">
   <meta name="twitter:description" content="${description}">
   <meta name="twitter:image" content="${escapeHtml(thumbnailUrl || SITE_URL + '/og-image.jpg')}">
+  <meta name="twitter:image:alt" content="${title}">
 
   <script type="application/ld+json">${JSON.stringify(structuredData)}</script>
   <script type="application/ld+json">${JSON.stringify(sportsEventData)}</script>
@@ -412,10 +424,10 @@ function renderSoiKeoHtml(article, thumbnailUrl) {
         </div>
 
         <div class="author-box">
-          <div class="author-avatar">🤖</div>
+          <div class="author-avatar">📊</div>
           <div>
-            <div class="author-name"><a href="/about">Scoreline AI</a></div>
-            <div class="author-bio">Hệ thống AI phân tích 500+ trận đấu mỗi tuần, kết hợp dữ liệu phong độ và lịch sử đối đầu.</div>
+            <div class="author-name"><a href="/about">Ban Biên Tập ScoreLine</a></div>
+            <div class="author-bio">Hệ thống phân tích 500+ trận đấu mỗi tuần, kết hợp dữ liệu phong độ và lịch sử đối đầu.</div>
           </div>
         </div>
       </main>
@@ -523,16 +535,21 @@ router.get('/nhan-dinh/:slug', async (req, res) => {
           .sort({ createdAt: -1 }).limit(5).select('slug title matchInfo.homeTeam.logo matchInfo.awayTeam.logo').lean(),
       ]);
       sidebarSoiKeo = recentSK.map(a => {
+        const titleSafe = escapeHtml(a.title || 'Nhận định bóng đá');
+        const homeLogoAlt = escapeHtml(a.matchInfo?.homeTeam?.name || 'Đội nhà');
+        const awayLogoAlt = escapeHtml(a.matchInfo?.awayTeam?.name || 'Đội khách');
         const thumbHtml = a.thumbnail
-          ? `<img src="${escapeHtml(a.thumbnail)}" alt="" class="sidebar-thumb" loading="lazy">`
+          ? `<img src="${escapeHtml(a.thumbnail)}" alt="${titleSafe}" class="sidebar-thumb" loading="lazy">`
           : (a.matchInfo?.homeTeam?.logo && a.matchInfo?.awayTeam?.logo)
-            ? `<div class="sidebar-logos"><img src="${escapeHtml(a.matchInfo.homeTeam.logo)}" alt="" loading="lazy"><span style="color:#94a3b8;font-size:10px;">vs</span><img src="${escapeHtml(a.matchInfo.awayTeam.logo)}" alt="" loading="lazy"></div>`
+            ? `<div class="sidebar-logos"><img src="${escapeHtml(a.matchInfo.homeTeam.logo)}" alt="${homeLogoAlt}" loading="lazy"><span style="color:#94a3b8;font-size:10px;">vs</span><img src="${escapeHtml(a.matchInfo.awayTeam.logo)}" alt="${awayLogoAlt}" loading="lazy"></div>`
             : '';
         return `<a href="/nhan-dinh/${a.slug}" class="sidebar-article">${thumbHtml}<div class="sidebar-info"><span class="sidebar-article-title">${escapeHtml(a.title?.substring(0, 60) || '')}</span></div></a>`;
       }).join('');
       sidebarH2H = recentH2H.map(a => {
+        const homeLogoAlt = escapeHtml(a.matchInfo?.homeTeam?.name || 'Đội nhà');
+        const awayLogoAlt = escapeHtml(a.matchInfo?.awayTeam?.name || 'Đội khách');
         const thumbHtml = (a.matchInfo?.homeTeam?.logo && a.matchInfo?.awayTeam?.logo)
-          ? `<div class="sidebar-logos"><img src="${escapeHtml(a.matchInfo.homeTeam.logo)}" alt="" loading="lazy"><span style="color:#94a3b8;font-size:10px;">vs</span><img src="${escapeHtml(a.matchInfo.awayTeam.logo)}" alt="" loading="lazy"></div>`
+          ? `<div class="sidebar-logos"><img src="${escapeHtml(a.matchInfo.homeTeam.logo)}" alt="${homeLogoAlt}" loading="lazy"><span style="color:#94a3b8;font-size:10px;">vs</span><img src="${escapeHtml(a.matchInfo.awayTeam.logo)}" alt="${awayLogoAlt}" loading="lazy"></div>`
           : '';
         return `<a href="/doi-dau/${a.slug}" class="sidebar-article">${thumbHtml}<div class="sidebar-info"><span class="sidebar-article-title">${escapeHtml(a.title?.substring(0, 60) || '')}</span></div></a>`;
       }).join('');
@@ -622,14 +639,24 @@ router.get('/doi-bong/:slug', async (req, res) => {
   <meta name="description" content="${description}">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="${escapeHtml(url)}">
+  <link rel="alternate" hreflang="vi" href="${escapeHtml(url)}">
+  <link rel="alternate" hreflang="x-default" href="${escapeHtml(url)}">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <meta property="og:type" content="website">
   <meta property="og:url" content="${escapeHtml(url)}">
   <meta property="og:title" content="${title}">
   <meta property="og:description" content="${description}">
   <meta property="og:image" content="${escapeHtml(team.logo || SITE_URL_LOCAL + '/og-image.jpg')}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:type" content="image/jpeg">
+  <meta property="og:image:alt" content="${escapeHtml(team.name)}">
   <meta property="og:locale" content="vi_VN">
   <meta property="og:site_name" content="ScoreLine">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="${title}">
+  <meta name="twitter:description" content="${description}">
+  <meta name="twitter:image" content="${escapeHtml(team.logo || SITE_URL_LOCAL + '/og-image.jpg')}">
   <script type="application/ld+json">${JSON.stringify(structuredData)}</script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -718,7 +745,7 @@ router.get('/doi-bong/:slug', async (req, res) => {
           ${upcomingHtml}
         </div>` : ''}
 
-        <!-- AI Content -->
+        <!-- Editorial Content -->
         ${team.aiContent ? `
         <div class="section-card">
           <h2>📝 Phân tích ${escapeHtml(team.name)}</h2>
@@ -729,7 +756,7 @@ router.get('/doi-bong/:slug', async (req, res) => {
         <div style="background:#fff;border-radius:8px;padding:16px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);display:flex;gap:12px;align-items:center;">
           <div style="width:48px;height:48px;background:#eff6ff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;">🤖</div>
           <div>
-            <div style="font-size:14px;font-weight:700;color:#0f172a;"><a href="/about">Scoreline AI</a></div>
+            <div style="font-size:14px;font-weight:700;color:#0f172a;"><a href="/about">Ban Biên Tập ScoreLine</a></div>
             <div style="font-size:13px;color:#64748b;">Phân tích tự động dựa trên dữ liệu thống kê mùa giải.</div>
           </div>
         </div>

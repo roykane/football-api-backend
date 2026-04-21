@@ -2,7 +2,7 @@
  * Dynamic Sitemap Generator
  * Auto-generates sitemap.xml from database (nhan-dinh articles + static pages)
  *
- * Cached for 1 hour to reduce DB load.
+ * Cached for 15 minutes to balance DB load and crawl freshness for new articles.
  */
 
 const express = require('express');
@@ -11,10 +11,15 @@ const SoiKeoArticle = require('../models/SoiKeoArticle');
 const AutoArticle = require('../models/AutoArticle');
 
 const SITE_URL = process.env.SITE_URL || 'https://scoreline.io';
-const CACHE_TTL = 60 * 60 * 1000; // 1 hour
+const CACHE_TTL = 15 * 60 * 1000; // 15 minutes
 
 let cachedXml = null;
 let cachedAt = 0;
+
+function invalidateSitemapCache() {
+  cachedXml = null;
+  cachedAt = 0;
+}
 
 // Static pages with their config
 const STATIC_PAGES = [
@@ -27,7 +32,6 @@ const STATIC_PAGES = [
   { path: '/nhan-dinh', priority: '0.9', changefreq: 'daily' },
   { path: '/giai-dau', priority: '0.7', changefreq: 'weekly' },
   { path: '/top-ghi-ban', priority: '0.7', changefreq: 'daily' },
-  { path: '/nhan-dinh', priority: '0.8', changefreq: 'daily' },
   { path: '/world-cup-2026', priority: '0.9', changefreq: 'daily' },
   { path: '/lich-thi-dau/world-cup', priority: '0.9', changefreq: 'daily' },
   { path: '/giai-dau/world-cup', priority: '0.8', changefreq: 'weekly' },
@@ -168,7 +172,7 @@ router.get('/sitemap.xml', async (req, res) => {
 
     if (cachedXml && now - cachedAt < CACHE_TTL) {
       res.set('Content-Type', 'application/xml; charset=utf-8');
-      res.set('Cache-Control', 'public, max-age=3600');
+      res.set('Cache-Control', 'public, max-age=900');
       return res.send(cachedXml);
     }
 
@@ -176,7 +180,7 @@ router.get('/sitemap.xml', async (req, res) => {
     cachedAt = now;
 
     res.set('Content-Type', 'application/xml; charset=utf-8');
-    res.set('Cache-Control', 'public, max-age=3600');
+    res.set('Cache-Control', 'public, max-age=900');
     res.send(cachedXml);
   } catch (err) {
     console.error('[Sitemap] Generation error:', err);
@@ -200,3 +204,4 @@ Disallow: /api/
 });
 
 module.exports = router;
+module.exports.invalidateSitemapCache = invalidateSitemapCache;

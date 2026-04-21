@@ -302,6 +302,8 @@ function renderPage({ title, description, url, robots, breadcrumbHtml, headerHtm
   <meta name="description" content="${safeDesc}">
   <meta name="robots" content="${robotsMeta}">
   <link rel="canonical" href="${safeUrl}">
+  <link rel="alternate" hreflang="vi" href="${safeUrl}">
+  <link rel="alternate" hreflang="x-default" href="${safeUrl}">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 
   <meta property="og:type" content="${ogType || 'website'}">
@@ -309,6 +311,10 @@ function renderPage({ title, description, url, robots, breadcrumbHtml, headerHtm
   <meta property="og:title" content="${safeTitle}">
   <meta property="og:description" content="${safeDesc}">
   <meta property="og:image" content="${escapeHtml(image)}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:type" content="image/jpeg">
+  <meta property="og:image:alt" content="${safeTitle}">
   <meta property="og:locale" content="vi_VN">
   <meta property="og:site_name" content="ScoreLine">
 
@@ -316,6 +322,7 @@ function renderPage({ title, description, url, robots, breadcrumbHtml, headerHtm
   <meta name="twitter:title" content="${safeTitle}">
   <meta name="twitter:description" content="${safeDesc}">
   <meta name="twitter:image" content="${escapeHtml(image)}">
+  <meta name="twitter:image:alt" content="${safeTitle}">
 
   ${ldScripts}
 
@@ -476,18 +483,25 @@ function renderArticlePage({ title, description, url, breadcrumbItems, bannerHtm
   <meta name="description" content="${safeDesc}">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="${escapeHtml(url)}">
+  <link rel="alternate" hreflang="vi" href="${escapeHtml(url)}">
+  <link rel="alternate" hreflang="x-default" href="${escapeHtml(url)}">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <meta property="og:type" content="article">
   <meta property="og:url" content="${escapeHtml(url)}">
   <meta property="og:title" content="${safeTitle}">
   <meta property="og:description" content="${safeDesc}">
   <meta property="og:image" content="${escapeHtml(image)}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:type" content="image/jpeg">
+  <meta property="og:image:alt" content="${safeTitle}">
   <meta property="og:locale" content="vi_VN">
   <meta property="og:site_name" content="ScoreLine">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="${safeTitle}">
   <meta name="twitter:description" content="${safeDesc}">
   <meta name="twitter:image" content="${escapeHtml(image)}">
+  <meta name="twitter:image:alt" content="${safeTitle}">
   ${ldScripts}
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -599,10 +613,10 @@ function renderArticlePage({ title, description, url, breadcrumbItems, bannerHtm
       <main class="main">
         ${bodyHtml}
         <div class="author-box">
-          <div class="author-avatar">🤖</div>
+          <div class="author-avatar">📊</div>
           <div>
-            <div class="author-name"><a href="/about">Scoreline AI</a></div>
-            <div class="author-bio">Hệ thống AI phân tích 500+ trận đấu mỗi tuần, kết hợp dữ liệu phong độ và lịch sử đối đầu.</div>
+            <div class="author-name"><a href="/about">Ban Biên Tập ScoreLine</a></div>
+            <div class="author-bio">Hệ thống phân tích 500+ trận đấu mỗi tuần, kết hợp dữ liệu phong độ và lịch sử đối đầu.</div>
           </div>
         </div>
       </main>
@@ -658,8 +672,8 @@ router.get('/preview/:slug', async (req, res) => {
       datePublished: article.createdAt,
       dateModified: article.updatedAt || article.createdAt,
       author: { '@type': 'Organization', name: 'ScoreLine', url: SITE_URL },
-      publisher: { '@type': 'Organization', name: 'ScoreLine', logo: { '@type': 'ImageObject', url: `${SITE_URL}/og-image.jpg` } },
-      image: thumbUrl,
+      publisher: { '@type': 'Organization', name: 'ScoreLine', logo: { '@type': 'ImageObject', url: `${SITE_URL}/og-image.jpg`, width: 1200, height: 630 } },
+      image: { '@type': 'ImageObject', url: thumbUrl, width: 1200, height: 630 },
       mainEntityOfPage: url,
     };
 
@@ -744,8 +758,8 @@ router.get('/doi-dau/:slug', async (req, res) => {
       headline: article.title, description, url,
       datePublished: article.createdAt, dateModified: article.updatedAt || article.createdAt,
       author: { '@type': 'Organization', name: 'ScoreLine', url: SITE_URL },
-      publisher: { '@type': 'Organization', name: 'ScoreLine', logo: { '@type': 'ImageObject', url: `${SITE_URL}/og-image.jpg` } },
-      image: thumbUrl, mainEntityOfPage: url,
+      publisher: { '@type': 'Organization', name: 'ScoreLine', logo: { '@type': 'ImageObject', url: `${SITE_URL}/og-image.jpg`, width: 1200, height: 630 } },
+      image: { '@type': 'ImageObject', url: thumbUrl, width: 1200, height: 630 }, mainEntityOfPage: url,
     };
 
     const leagueNameSe = matchInfo?.league?.name || '';
@@ -1434,18 +1448,25 @@ router.get('/ket-qua/:dateSlug', async (req, res) => {
   <meta name="description" content="${escapeHtml(description)}">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="${escapeHtml(url)}">
+  <link rel="alternate" hreflang="vi" href="${escapeHtml(url)}">
+  <link rel="alternate" hreflang="x-default" href="${escapeHtml(url)}">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <meta property="og:type" content="website">
   <meta property="og:url" content="${escapeHtml(url)}">
   <meta property="og:title" content="${escapeHtml(title)}">
   <meta property="og:description" content="${escapeHtml(description)}">
   <meta property="og:image" content="${SITE_URL}/og-image.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:type" content="image/jpeg">
+  <meta property="og:image:alt" content="${escapeHtml(title)}">
   <meta property="og:locale" content="vi_VN">
   <meta property="og:site_name" content="ScoreLine">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="${escapeHtml(title)}">
   <meta name="twitter:description" content="${escapeHtml(description)}">
   <meta name="twitter:image" content="${SITE_URL}/og-image.jpg">
+  <meta name="twitter:image:alt" content="${escapeHtml(title)}">
   ${ldScripts}
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
