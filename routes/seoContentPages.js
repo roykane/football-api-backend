@@ -748,10 +748,39 @@ router.get('/doi-dau/:slug', async (req, res) => {
       image: thumbUrl, mainEntityOfPage: url,
     };
 
+    const leagueNameSe = matchInfo?.league?.name || '';
+    const countrySe = matchInfo?.league?.country || 'International';
     const sportsEventSchema = {
       '@context': 'https://schema.org', '@type': 'SportsEvent',
-      name: `${homeName} vs ${awayName}`, sport: 'Soccer',
+      name: `${homeName} vs ${awayName}`,
+      description: `Đối đầu lịch sử ${homeName} vs ${awayName}${leagueNameSe ? ` tại giải ${leagueNameSe}` : ''}. Phân tích phong độ, thống kê H2H và dự đoán kết quả trên Scoreline.io.`,
+      image: homeLogo || thumbUrl || `${SITE_URL}/og-image.jpg`,
+      sport: 'Soccer',
       startDate: matchInfo?.matchDate,
+      eventStatus: 'https://schema.org/EventScheduled',
+      eventAttendanceMode: 'https://schema.org/MixedEventAttendanceMode',
+      location: {
+        '@type': 'Place',
+        name: leagueNameSe || 'Stadium',
+        address: {
+          '@type': 'PostalAddress',
+          addressLocality: countrySe,
+          addressCountry: countrySe,
+        },
+      },
+      organizer: {
+        '@type': 'SportsOrganization',
+        name: leagueNameSe || 'Scoreline.io',
+        url: SITE_URL,
+      },
+      offers: {
+        '@type': 'Offer',
+        url: url,
+        price: '0',
+        priceCurrency: 'VND',
+        availability: 'https://schema.org/InStock',
+        validFrom: matchInfo?.matchDate,
+      },
       homeTeam: { '@type': 'SportsTeam', name: homeName, image: homeLogo },
       awayTeam: { '@type': 'SportsTeam', name: awayName, image: awayLogo },
     };
@@ -878,16 +907,50 @@ router.get('/lich-thi-dau/:leagueSlug', async (req, res) => {
     const title = `Lịch Thi Đấu ${league.name} 2025/2026 - Cập Nhật Mới Nhất`;
     const description = `Xem lịch thi đấu ${league.name} mùa giải 2025/2026. Cập nhật thời gian, đội hình và thông tin trận đấu mới nhất.`;
 
-    const sportsEvents = fixtures.map(f => ({
-      '@context': 'https://schema.org',
-      '@type': 'SportsEvent',
-      name: `${f.teams?.home?.name || ''} vs ${f.teams?.away?.name || ''}`,
-      sport: 'Soccer',
-      startDate: f.fixture?.date,
-      homeTeam: { '@type': 'SportsTeam', name: f.teams?.home?.name, image: f.teams?.home?.logo },
-      awayTeam: { '@type': 'SportsTeam', name: f.teams?.away?.name, image: f.teams?.away?.logo },
-      location: { '@type': 'Place', name: f.fixture?.venue?.name || league.name },
-    }));
+    const sportsEvents = fixtures.map(f => {
+      const hName = f.teams?.home?.name || '';
+      const aName = f.teams?.away?.name || '';
+      const hLogo = f.teams?.home?.logo;
+      const aLogo = f.teams?.away?.logo;
+      const fCountry = f.fixture?.venue?.city || league.country || 'International';
+      const fDate = f.fixture?.date;
+      const matchUrl = `${SITE_URL}/tran-dau/${f.fixture?.id || ''}`;
+      return {
+        '@context': 'https://schema.org',
+        '@type': 'SportsEvent',
+        name: `${hName} vs ${aName}`,
+        description: `${hName} vs ${aName} tại giải ${league.name}. Xem lịch thi đấu, tỷ lệ kèo và livescore trên Scoreline.io.`,
+        image: hLogo || `${SITE_URL}/og-image.jpg`,
+        sport: 'Soccer',
+        startDate: fDate,
+        eventStatus: 'https://schema.org/EventScheduled',
+        eventAttendanceMode: 'https://schema.org/MixedEventAttendanceMode',
+        homeTeam: { '@type': 'SportsTeam', name: hName, image: hLogo },
+        awayTeam: { '@type': 'SportsTeam', name: aName, image: aLogo },
+        location: {
+          '@type': 'Place',
+          name: f.fixture?.venue?.name || league.name,
+          address: {
+            '@type': 'PostalAddress',
+            addressLocality: fCountry,
+            addressCountry: league.country || 'International',
+          },
+        },
+        organizer: {
+          '@type': 'SportsOrganization',
+          name: league.name,
+          url: SITE_URL,
+        },
+        offers: {
+          '@type': 'Offer',
+          url: matchUrl,
+          price: '0',
+          priceCurrency: 'VND',
+          availability: 'https://schema.org/InStock',
+          validFrom: fDate,
+        },
+      };
+    });
 
     const breadcrumbHtml = `
       <a href="/">Trang chủ</a> &rsaquo;
@@ -1312,15 +1375,53 @@ router.get('/ket-qua/:dateSlug', async (req, res) => {
         <a href="/top-ghi-ban" class="quick-link">⚽ Top ghi bàn</a>
       </div>`;
 
-    const sportsEvents = fixtures.slice(0, 10).map(f => ({
-      '@context': 'https://schema.org',
-      '@type': 'SportsEvent',
-      name: `${f.teams?.home?.name || ''} vs ${f.teams?.away?.name || ''}`,
-      sport: 'Soccer',
-      startDate: f.fixture?.date,
-      homeTeam: { '@type': 'SportsTeam', name: f.teams?.home?.name },
-      awayTeam: { '@type': 'SportsTeam', name: f.teams?.away?.name },
-    }));
+    const sportsEvents = fixtures.slice(0, 10).map(f => {
+      const hName = f.teams?.home?.name || '';
+      const aName = f.teams?.away?.name || '';
+      const hLogo = f.teams?.home?.logo;
+      const aLogo = f.teams?.away?.logo;
+      const lName = f.league?.name || '';
+      const lCountry = f.league?.country || 'International';
+      const fDate = f.fixture?.date;
+      const matchUrl = `${SITE_URL}/tran-dau/${f.fixture?.id || ''}`;
+      return {
+        '@context': 'https://schema.org',
+        '@type': 'SportsEvent',
+        name: `${hName} vs ${aName}`,
+        description: `Kết quả trận đấu ${hName} vs ${aName}${lName ? ` tại giải ${lName}` : ''}. Xem tỷ số, thống kê và nhận định trên Scoreline.io.`,
+        image: hLogo || `${SITE_URL}/og-image.jpg`,
+        sport: 'Soccer',
+        startDate: fDate,
+        eventStatus: 'https://schema.org/EventScheduled',
+        eventAttendanceMode: 'https://schema.org/MixedEventAttendanceMode',
+        homeTeam: { '@type': 'SportsTeam', name: hName, image: hLogo },
+        awayTeam: { '@type': 'SportsTeam', name: aName, image: aLogo },
+        location: {
+          '@type': 'Place',
+          name: lName || 'Stadium',
+          address: {
+            '@type': 'PostalAddress',
+            addressLocality: lCountry,
+            addressCountry: lCountry,
+          },
+        },
+        ...(lName && {
+          organizer: {
+            '@type': 'SportsOrganization',
+            name: lName,
+            url: SITE_URL,
+          },
+        }),
+        offers: {
+          '@type': 'Offer',
+          url: matchUrl,
+          price: '0',
+          priceCurrency: 'VND',
+          availability: 'https://schema.org/InStock',
+          validFrom: fDate,
+        },
+      };
+    });
 
     const ldScripts = sportsEvents.map(sd => `<script type="application/ld+json">${JSON.stringify(sd)}</script>`).join('\n  ');
 

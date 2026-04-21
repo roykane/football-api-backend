@@ -164,12 +164,18 @@ function renderSoiKeoHtml(article, thumbnailUrl) {
     "mainEntityOfPage": url
   };
 
+  const leagueNameRaw = matchInfo?.league?.name || '';
+  const countryRaw = matchInfo?.league?.country || 'International';
   const sportsEventData = {
     "@context": "https://schema.org",
     "@type": "SportsEvent",
     "name": `${matchInfo?.homeTeam?.name} vs ${matchInfo?.awayTeam?.name}`,
+    "description": `Nhận định trận đấu ${matchInfo?.homeTeam?.name} vs ${matchInfo?.awayTeam?.name}${leagueNameRaw ? ` tại giải ${leagueNameRaw}` : ''}. Phân tích phong độ, lịch sử đối đầu và dự đoán kết quả trên Scoreline.io.`,
+    "image": matchInfo?.homeTeam?.logo || thumbnailUrl || `${SITE_URL}/og-image.jpg`,
     "sport": "Soccer",
     "startDate": matchInfo?.matchDate,
+    "eventStatus": "https://schema.org/EventScheduled",
+    "eventAttendanceMode": "https://schema.org/MixedEventAttendanceMode",
     "homeTeam": {
       "@type": "SportsTeam",
       "name": matchInfo?.homeTeam?.name,
@@ -182,7 +188,25 @@ function renderSoiKeoHtml(article, thumbnailUrl) {
     },
     "location": {
       "@type": "Place",
-      "name": matchInfo?.venue || matchInfo?.league?.name
+      "name": matchInfo?.venue || leagueNameRaw || 'Stadium',
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": countryRaw,
+        "addressCountry": countryRaw
+      }
+    },
+    "organizer": {
+      "@type": "SportsOrganization",
+      "name": leagueNameRaw || 'Scoreline.io',
+      "url": SITE_URL
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": url,
+      "price": "0",
+      "priceCurrency": "VND",
+      "availability": "https://schema.org/InStock",
+      "validFrom": matchInfo?.matchDate
     }
   };
 
