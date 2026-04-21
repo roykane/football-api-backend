@@ -646,7 +646,7 @@ router.get('/doi-bong/:slug', async (req, res) => {
   <meta property="og:url" content="${escapeHtml(url)}">
   <meta property="og:title" content="${title}">
   <meta property="og:description" content="${description}">
-  <meta property="og:image" content="${escapeHtml(team.logo || SITE_URL_LOCAL + '/og-image.jpg')}">
+  <meta property="og:image" content="${SITE_URL_LOCAL}/og-image.jpg">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:image:type" content="image/jpeg">
@@ -656,7 +656,8 @@ router.get('/doi-bong/:slug', async (req, res) => {
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="${title}">
   <meta name="twitter:description" content="${description}">
-  <meta name="twitter:image" content="${escapeHtml(team.logo || SITE_URL_LOCAL + '/og-image.jpg')}">
+  <meta name="twitter:image" content="${SITE_URL_LOCAL}/og-image.jpg">
+  <meta name="twitter:image:alt" content="${escapeHtml(team.name)}">
   <script type="application/ld+json">${JSON.stringify(structuredData)}</script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
