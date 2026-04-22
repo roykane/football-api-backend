@@ -1,39 +1,29 @@
 const mongoose = require('mongoose');
 require('dotenv').config();
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/football_news';
-
-let isConnected = false;
-
+/**
+ * Articles DB connector.
+ *
+ * Historically this forced a separate `football_news` DB, which caused
+ * confusion: nhan-dinh (SoiKeoArticle), teams, etc. lived in the main
+ * `football-odds` DB while news (Article) lived in a sibling DB. Scripts
+ * and the runtime would read/write different DBs and diverge silently.
+ *
+ * Simplified: reuse the main mongoose connection. Everything lives in
+ * the DB pointed to by MONGODB_URI, same as SoiKeoArticle.
+ */
 async function connectDB() {
-  if (isConnected) {
-    console.log('✅ MongoDB: Using existing connection');
+  if (mongoose.connection.readyState === 1) {
+    // Main connection is already up (via server.js connectMongoDB).
     return;
   }
-
-  try {
-    await mongoose.connect(MONGODB_URI, {
-      dbName: 'football_news',
-    });
-
-    isConnected = true;
-    console.log('✅ MongoDB: Connected successfully');
-    console.log(`📦 Database: ${mongoose.connection.name}`);
-  } catch (error) {
-    console.error('❌ MongoDB connection error:', error);
-    throw error;
-  }
+  const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/football-odds';
+  await mongoose.connect(MONGODB_URI);
+  console.log(`✅ MongoDB (articles): connected to ${mongoose.connection.name}`);
 }
-
-// Handle connection events
-mongoose.connection.on('disconnected', () => {
-  console.log('⚠️  MongoDB: Disconnected');
-  isConnected = false;
-});
 
 mongoose.connection.on('error', (err) => {
   console.error('❌ MongoDB connection error:', err);
-  isConnected = false;
 });
 
 module.exports = connectDB;
