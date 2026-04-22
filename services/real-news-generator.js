@@ -38,6 +38,36 @@ const LEAGUES = [
   { id: 340, slug: 'v-league-1', name: 'V.League 1', country: 'Vietnam', season: 2025, vnName: 'V-League' },
 ];
 
+// Free football photos from Unsplash — royalty-free, no attribution required.
+// Picked randomly as hero when league standings data doesn't include a logo.
+const FOOTBALL_IMAGES = [
+  'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=1200&q=80',
+  'https://images.unsplash.com/photo-1522778119026-d647f0596c20?w=1200&q=80',
+  'https://images.unsplash.com/photo-1560272564-c83b66b1ad12?w=1200&q=80',
+  'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=1200&q=80',
+  'https://images.unsplash.com/photo-1606925797300-0b35e9d1794e?w=1200&q=80',
+  'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=1200&q=80',
+  'https://images.unsplash.com/photo-1511886929837-354d827aae26?w=1200&q=80',
+  'https://images.unsplash.com/photo-1553778263-73a83bab9b0c?w=1200&q=80',
+  'https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?w=1200&q=80',
+  'https://images.unsplash.com/photo-1589487391730-58f20eb2c308?w=1200&q=80',
+  'https://images.unsplash.com/photo-1575361204480-aadea25e6e68?w=1200&q=80',
+  'https://images.unsplash.com/photo-1551958219-acbc608c6377?w=1200&q=80',
+  'https://images.unsplash.com/photo-1459865264687-595d652de67e?w=1200&q=80',
+  'https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=1200&q=80',
+  'https://images.unsplash.com/photo-1486286701208-1d58e9338013?w=1200&q=80',
+];
+
+function pickHeroImage(data) {
+  // Prefer a real team logo from a top-6 standing if the API returned it.
+  // Falls back to a random Unsplash football photo, then to the site OG image.
+  try {
+    const standingsWithLogo = (data?.standingsRaw || []).find(s => s?.team?.logo);
+    if (standingsWithLogo?.team?.logo) return standingsWithLogo.team.logo;
+  } catch (e) { /* ignore */ }
+  return FOOTBALL_IMAGES[Math.floor(Math.random() * FOOTBALL_IMAGES.length)];
+}
+
 const footballApi = axios.create({
   baseURL: API_SPORTS_URL,
   headers: {
@@ -277,8 +307,8 @@ async function generateRoundupForLeague(leagueInput, { maxRetries = 2, autoPubli
     return { success: false, issues };
   }
 
-  // Use first fixture image as hero if available, else category-based fallback
-  const heroImage = `${process.env.SITE_URL || 'https://scoreline.io'}/og-image.jpg`;
+  // Hero image: random Unsplash football photo (nice visual, no attribution needed)
+  const heroImage = pickHeroImage(data);
 
   const status = autoPublish ? 'published' : 'draft';
   const article = new Article({
