@@ -520,7 +520,11 @@ router.get('/nhan-dinh/:slug', async (req, res) => {
     // Find related articles for internal linking
     let relatedLinks = '';
     try {
-      const [h2hArticle, recentSoiKeo, recentPreview] = await Promise.all([
+      const Team = require('../models/Team');
+      const homeId = article.matchInfo?.homeTeam?.id;
+      const awayId = article.matchInfo?.awayTeam?.id;
+
+      const [h2hArticle, recentSoiKeo, recentPreview, homeTeam, awayTeam] = await Promise.all([
         AutoArticle.findOne({
           type: 'h2h-analysis',
           'matchInfo.homeTeam.name': article.matchInfo?.homeTeam?.name,
@@ -531,9 +535,17 @@ router.get('/nhan-dinh/:slug', async (req, res) => {
           .sort({ createdAt: -1 }).limit(3).select('slug title').lean(),
         AutoArticle.find({ type: 'round-preview', status: 'published' })
           .sort({ createdAt: -1 }).limit(2).select('slug title').lean(),
+        homeId ? Team.findOne({ teamId: homeId }).select('slug name').lean() : null,
+        awayId ? Team.findOne({ teamId: awayId }).select('slug name').lean() : null,
       ]);
 
       const links = [];
+      if (homeTeam?.slug) {
+        links.push(`<a href="/doi-bong/${homeTeam.slug}" style="display:inline-block;padding:6px 12px;background:#fef2f2;color:#dc2626;border-radius:4px;font-size:13px;text-decoration:none;">🏟️ Trang ${escapeHtml(homeTeam.name)}</a>`);
+      }
+      if (awayTeam?.slug) {
+        links.push(`<a href="/doi-bong/${awayTeam.slug}" style="display:inline-block;padding:6px 12px;background:#fef2f2;color:#dc2626;border-radius:4px;font-size:13px;text-decoration:none;">🏟️ Trang ${escapeHtml(awayTeam.name)}</a>`);
+      }
       if (h2hArticle) {
         links.push(`<a href="/doi-dau/${h2hArticle.slug}" style="display:inline-block;padding:6px 12px;background:#eff6ff;color:#2563eb;border-radius:4px;font-size:13px;text-decoration:none;">⚔️ ${escapeHtml(h2hArticle.title)}</a>`);
       }
@@ -584,7 +596,7 @@ router.get('/nhan-dinh/:slug', async (req, res) => {
     html = html.replace('SIDEBAR_H2H_PLACEHOLDER', sidebarH2H || '<span style="font-size:13px;color:#94a3b8;">Chưa có bài</span>');
 
     res.set('Content-Type', 'text/html; charset=utf-8');
-    res.set('Cache-Control', 'public, max-age=3600');
+    res.set('Cache-Control', 'public, max-age=300, s-maxage=86400, stale-while-revalidate=604800');
     res.send(html);
 
   } catch (error) {
@@ -817,7 +829,7 @@ router.get('/doi-bong/:slug', async (req, res) => {
 </html>`;
 
     res.set('Content-Type', 'text/html; charset=utf-8');
-    res.set('Cache-Control', 'public, max-age=86400');
+    res.set('Cache-Control', 'public, max-age=600, s-maxage=86400, stale-while-revalidate=604800');
     res.send(html);
 
   } catch (error) {

@@ -725,7 +725,7 @@ router.get('/preview/:slug', async (req, res) => {
     });
 
     res.set('Content-Type', 'text/html; charset=utf-8');
-    res.set('Cache-Control', 'public, max-age=3600');
+    res.set('Cache-Control', 'public, max-age=300, s-maxage=86400, stale-while-revalidate=604800');
     res.send(html);
   } catch (error) {
     console.error('[SEO Content] Error rendering preview:', error);
@@ -764,7 +764,16 @@ router.get('/doi-dau/:slug', async (req, res) => {
     const awayName = matchInfo?.awayTeam?.name || '';
     const homeLogo = matchInfo?.homeTeam?.logo || '';
     const awayLogo = matchInfo?.awayTeam?.logo || '';
+    const homeId = matchInfo?.homeTeam?.id;
+    const awayId = matchInfo?.awayTeam?.id;
     const url = `${SITE_URL}/doi-dau/${article.slug}`;
+
+    // Look up team slugs for internal linking
+    const Team = require('../models/Team');
+    const [homeTeam, awayTeam] = await Promise.all([
+      homeId ? Team.findOne({ teamId: homeId }).select('slug').lean() : null,
+      awayId ? Team.findOne({ teamId: awayId }).select('slug').lean() : null,
+    ]);
     const title = article.metaTitle || article.title;
     const description = article.metaDescription || article.excerpt || '';
 
@@ -879,10 +888,20 @@ router.get('/doi-dau/:slug', async (req, res) => {
         <h1>${escapeHtml(title)}</h1>
       </div>`;
 
+    const teamLinksHtml = (homeTeam?.slug || awayTeam?.slug) ? `
+      <div class="section-card" style="border-left-color:#dc2626;">
+        <h3 style="margin-bottom:10px;font-size:15px;color:#0f172a;">Trang chi tiết đội bóng</h3>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;">
+          ${homeTeam?.slug ? `<a href="/doi-bong/${homeTeam.slug}" style="display:inline-block;padding:8px 14px;background:#fef2f2;color:#dc2626;border-radius:4px;font-size:14px;text-decoration:none;font-weight:600;">🏟️ ${escapeHtml(homeName)}</a>` : ''}
+          ${awayTeam?.slug ? `<a href="/doi-bong/${awayTeam.slug}" style="display:inline-block;padding:8px 14px;background:#fef2f2;color:#dc2626;border-radius:4px;font-size:14px;text-decoration:none;font-weight:600;">🏟️ ${escapeHtml(awayName)}</a>` : ''}
+        </div>
+      </div>` : '';
+
     const bodyHtml = `
       <div class="section-card">
         ${article.content ? markdownToHtml(article.content) : ''}
       </div>
+      ${teamLinksHtml}
       ${article.tags?.length ? `<div class="section-card" style="border-left-color:#94a3b8;"><div class="tags">${article.tags.map(t => `<a href="/nhan-dinh?tag=${encodeURIComponent(t)}" class="tag">${escapeHtml(t)}</a>`).join('')}</div></div>` : ''}`;
 
     const sidebarHtml = await buildSidebar(article.slug, 'h2h-analysis');
@@ -914,7 +933,7 @@ router.get('/doi-dau/:slug', async (req, res) => {
     });
 
     res.set('Content-Type', 'text/html; charset=utf-8');
-    res.set('Cache-Control', 'public, max-age=3600');
+    res.set('Cache-Control', 'public, max-age=300, s-maxage=86400, stale-while-revalidate=604800');
     res.send(html);
   } catch (error) {
     console.error('[SEO Content] Error rendering doi-dau:', error);
@@ -1049,7 +1068,7 @@ router.get('/lich-thi-dau/:leagueSlug', async (req, res) => {
     });
 
     res.set('Content-Type', 'text/html; charset=utf-8');
-    res.set('Cache-Control', 'public, max-age=3600');
+    res.set('Cache-Control', 'public, max-age=60, s-maxage=600, stale-while-revalidate=86400');
     res.send(html);
   } catch (error) {
     console.error('[SEO Content] Error rendering lich-thi-dau:', error);
@@ -1166,7 +1185,7 @@ router.get('/bang-xep-hang/:leagueSlug', async (req, res) => {
     });
 
     res.set('Content-Type', 'text/html; charset=utf-8');
-    res.set('Cache-Control', 'public, max-age=3600');
+    res.set('Cache-Control', 'public, max-age=300, s-maxage=3600, stale-while-revalidate=86400');
     res.send(html);
   } catch (error) {
     console.error('[SEO Content] Error rendering bang-xep-hang:', error);
@@ -1267,7 +1286,7 @@ router.get('/top-ghi-ban/:leagueSlug', async (req, res) => {
     });
 
     res.set('Content-Type', 'text/html; charset=utf-8');
-    res.set('Cache-Control', 'public, max-age=3600');
+    res.set('Cache-Control', 'public, max-age=300, s-maxage=3600, stale-while-revalidate=86400');
     res.send(html);
   } catch (error) {
     console.error('[SEO Content] Error rendering top-ghi-ban:', error);
@@ -1602,7 +1621,7 @@ router.get('/ket-qua/:dateSlug', async (req, res) => {
 </html>`;
 
     res.set('Content-Type', 'text/html; charset=utf-8');
-    res.set('Cache-Control', 'public, max-age=1800');
+    res.set('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=86400');
     res.send(html);
   } catch (error) {
     console.error('[SEO Content] Error rendering ket-qua:', error);
