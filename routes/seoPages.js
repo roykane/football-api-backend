@@ -138,6 +138,9 @@ function renderSoiKeoHtml(article, thumbnailUrl) {
   const matchDate = formatDate(matchInfo?.matchDate);
   const homeName = escapeHtml(matchInfo?.homeTeam?.name || '');
   const awayName = escapeHtml(matchInfo?.awayTeam?.name || '');
+  const publishedIso = new Date(article.createdAt || Date.now()).toISOString();
+  const updatedIso = new Date(article.updatedAt || article.createdAt || Date.now()).toISOString();
+  const updatedShort = new Date(article.updatedAt || article.createdAt || Date.now()).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
   const structuredData = {
     "@context": "https://schema.org",
@@ -149,15 +152,19 @@ function renderSoiKeoHtml(article, thumbnailUrl) {
     "dateModified": article.updatedAt || article.createdAt,
     "author": {
       "@type": "Organization",
-      "name": "ScoreLine",
-      "url": SITE_URL
+      "name": "Ban Biên Tập ScoreLine",
+      "url": `${SITE_URL}/about`,
+      "sameAs": [SITE_URL],
     },
     "publisher": {
       "@type": "Organization",
       "name": "ScoreLine",
+      "url": SITE_URL,
       "logo": {
         "@type": "ImageObject",
-        "url": `${SITE_URL}/og-image.jpg`
+        "url": `${SITE_URL}/og-image.jpg`,
+        "width": 1200,
+        "height": 630
       }
     },
     "image": {
@@ -213,6 +220,16 @@ function renderSoiKeoHtml(article, thumbnailUrl) {
       "availability": "https://schema.org/InStock",
       "validFrom": matchInfo?.matchDate
     }
+  };
+
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Trang chủ", "item": SITE_URL },
+      { "@type": "ListItem", "position": 2, "name": "Nhận định bóng đá", "item": `${SITE_URL}/nhan-dinh` },
+      { "@type": "ListItem", "position": 3, "name": `${matchInfo?.homeTeam?.name} vs ${matchInfo?.awayTeam?.name}`, "item": url },
+    ],
   };
 
   // Build content sections
@@ -292,6 +309,7 @@ function renderSoiKeoHtml(article, thumbnailUrl) {
   <meta name="twitter:image" content="${escapeHtml(thumbnailUrl || SITE_URL + '/og-image.jpg')}">
   <meta name="twitter:image:alt" content="${title}">
 
+  <script type="application/ld+json">${JSON.stringify(breadcrumbSchema)}</script>
   <script type="application/ld+json">${JSON.stringify(structuredData)}</script>
   <script type="application/ld+json">${JSON.stringify(sportsEventData)}</script>
   <script type="application/ld+json">${JSON.stringify(generateFaqSchema(matchInfo, content, oddsData))}</script>
@@ -396,11 +414,12 @@ function renderSoiKeoHtml(article, thumbnailUrl) {
       <h1>${title}</h1>
       <div class="article-meta">
         <span>📅 ${escapeHtml(matchDate)}</span>
+        <span>🕒 Cập nhật: <time datetime="${updatedIso}">${updatedShort}</time></span>
         <span>👁 ${article.views?.toLocaleString() || 0} lượt xem</span>
       </div>
     </div>
 
-    ${thumbnailUrl ? `<div style="margin-bottom:16px;"><img src="${escapeHtml(thumbnailUrl)}" alt="${title}" style="width:100%;height:auto;display:block;border-radius:8px;" loading="eager"></div>` : ''}
+    ${thumbnailUrl ? `<div style="margin-bottom:16px;aspect-ratio:1200/630;"><img src="${escapeHtml(thumbnailUrl)}" alt="${title}" width="1200" height="630" style="width:100%;height:auto;display:block;border-radius:8px;" loading="eager" decoding="async" fetchpriority="high"></div>` : ''}
 
     <!-- Excerpt -->
     ${article.excerpt ? `<div class="excerpt"><p>${escapeHtml(article.excerpt)}</p></div>` : ''}
@@ -427,7 +446,11 @@ function renderSoiKeoHtml(article, thumbnailUrl) {
           <div class="author-avatar">📊</div>
           <div>
             <div class="author-name"><a href="/about">Ban Biên Tập ScoreLine</a></div>
-            <div class="author-bio">Hệ thống phân tích 500+ trận đấu mỗi tuần, kết hợp dữ liệu phong độ và lịch sử đối đầu.</div>
+            <div class="author-bio">Đội ngũ biên tập ScoreLine phân tích 500+ trận/tuần dựa trên dữ liệu phong độ, H2H và tỷ lệ từ các giải đấu hàng đầu. Quy trình kiểm định và cập nhật được mô tả tại <a href="/about">trang giới thiệu</a>.</div>
+            <div style="font-size:12px;color:#94a3b8;margin-top:6px;">
+              Đăng: <time datetime="${publishedIso}">${new Date(article.createdAt || Date.now()).toLocaleDateString('vi-VN')}</time>
+              · Cập nhật: <time datetime="${updatedIso}">${updatedShort}</time>
+            </div>
           </div>
         </div>
       </main>
@@ -605,6 +628,16 @@ router.get('/doi-bong/:slug', async (req, res) => {
       } : undefined,
     };
 
+    const breadcrumbSchema = {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Trang chủ", "item": SITE_URL_LOCAL },
+        { "@type": "ListItem", "position": 2, "name": "Đội bóng", "item": `${SITE_URL_LOCAL}/doi-bong` },
+        { "@type": "ListItem", "position": 3, "name": team.name, "item": url },
+      ],
+    };
+
     // Build recent matches HTML
     const recentHtml = (team.recentMatches || []).map(m => {
       const date = new Date(m.date).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
@@ -658,6 +691,7 @@ router.get('/doi-bong/:slug', async (req, res) => {
   <meta name="twitter:description" content="${description}">
   <meta name="twitter:image" content="${SITE_URL_LOCAL}/og-image.jpg">
   <meta name="twitter:image:alt" content="${escapeHtml(team.name)}">
+  <script type="application/ld+json">${JSON.stringify(breadcrumbSchema)}</script>
   <script type="application/ld+json">${JSON.stringify(structuredData)}</script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }

@@ -117,18 +117,18 @@ function generateMatchBanner({ homeName, homeLogo, awayName, awayLogo, leagueNam
     <div class="match-card-content">
       <div class="mc-team mc-home">
         <div class="mc-logo-wrap home-accent">
-          ${homeLogo ? `<img src="${escapeHtml(homeLogo)}" alt="${escapeHtml(homeName)}">` : '<div class="mc-logo-placeholder">⚽</div>'}
+          ${homeLogo ? `<img src="${escapeHtml(homeLogo)}" alt="${escapeHtml(homeName)}" width="72" height="72" decoding="async">` : '<div class="mc-logo-placeholder">⚽</div>'}
         </div>
         <div class="mc-name">${escapeHtml(homeName)}</div>
       </div>
       <div class="mc-center">
         <div class="mc-vs">VS</div>
         <div class="mc-date">${escapeHtml(dateStr)}</div>
-        ${leagueName ? `<div class="mc-league">${leagueLogo ? `<img src="${escapeHtml(leagueLogo)}" alt="">` : ''}${escapeHtml(leagueName)}</div>` : ''}
+        ${leagueName ? `<div class="mc-league">${leagueLogo ? `<img src="${escapeHtml(leagueLogo)}" alt="" width="20" height="20" decoding="async" loading="lazy">` : ''}${escapeHtml(leagueName)}</div>` : ''}
       </div>
       <div class="mc-team mc-away">
         <div class="mc-logo-wrap away-accent">
-          ${awayLogo ? `<img src="${escapeHtml(awayLogo)}" alt="${escapeHtml(awayName)}">` : '<div class="mc-logo-placeholder">⚽</div>'}
+          ${awayLogo ? `<img src="${escapeHtml(awayLogo)}" alt="${escapeHtml(awayName)}" width="72" height="72" decoding="async">` : '<div class="mc-logo-placeholder">⚽</div>'}
         </div>
         <div class="mc-name">${escapeHtml(awayName)}</div>
       </div>
@@ -467,7 +467,20 @@ function renderArticlePage({ title, description, url, canonicalUrl, breadcrumbIt
   const safeDesc = escapeHtml(description);
   const image = ogImage || `${SITE_URL}/og-image.jpg`;
   const canonical = canonicalUrl || url;
-  const ldScripts = (Array.isArray(structuredData) ? structuredData : [structuredData])
+
+  const breadcrumbSchema = breadcrumbItems?.length ? {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: breadcrumbItems.map((b, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: b.name,
+      item: b.url?.startsWith('http') ? b.url : `${SITE_URL}${b.url}`,
+    })),
+  } : null;
+
+  const allSchemas = [breadcrumbSchema, ...(Array.isArray(structuredData) ? structuredData : [structuredData])];
+  const ldScripts = allSchemas
     .filter(Boolean).map(sd => `<script type="application/ld+json">${JSON.stringify(sd)}</script>`).join('\n  ');
 
   const breadcrumb = breadcrumbItems.map((b, i) =>
@@ -673,7 +686,7 @@ router.get('/preview/:slug', async (req, res) => {
       url,
       datePublished: article.createdAt,
       dateModified: article.updatedAt || article.createdAt,
-      author: { '@type': 'Organization', name: 'ScoreLine', url: SITE_URL },
+      author: { '@type': 'Organization', name: 'Ban Biên Tập ScoreLine', url: `${SITE_URL}/about` },
       publisher: { '@type': 'Organization', name: 'ScoreLine', logo: { '@type': 'ImageObject', url: `${SITE_URL}/og-image.jpg`, width: 1200, height: 630 } },
       image: { '@type': 'ImageObject', url: thumbUrl, width: 1200, height: 630 },
       mainEntityOfPage: url,
@@ -697,7 +710,7 @@ router.get('/preview/:slug', async (req, res) => {
     const sidebarHtml = await buildSidebar(article.slug, 'round-preview');
 
     const bannerImgHtml = thumbUrl !== `${SITE_URL}/og-image.jpg`
-      ? `<img src="${escapeHtml(thumbUrl)}" alt="${escapeHtml(title)}" style="width:100%;height:auto;display:block;border-radius:6px;margin-bottom:16px;" loading="eager">`
+      ? `<img src="${escapeHtml(thumbUrl)}" alt="${escapeHtml(title)}" width="1200" height="630" style="width:100%;height:auto;aspect-ratio:1200/630;display:block;border-radius:6px;margin-bottom:16px;" loading="eager" decoding="async" fetchpriority="high">`
       : '';
 
     const html = renderArticlePage({
@@ -772,7 +785,7 @@ router.get('/doi-dau/:slug', async (req, res) => {
       '@context': 'https://schema.org', '@type': 'Article',
       headline: article.title, description, url: canonicalUrl,
       datePublished: article.createdAt, dateModified: article.updatedAt || article.createdAt,
-      author: { '@type': 'Organization', name: 'ScoreLine', url: SITE_URL },
+      author: { '@type': 'Organization', name: 'Ban Biên Tập ScoreLine', url: `${SITE_URL}/about` },
       publisher: { '@type': 'Organization', name: 'ScoreLine', logo: { '@type': 'ImageObject', url: `${SITE_URL}/og-image.jpg`, width: 1200, height: 630 } },
       image: { '@type': 'ImageObject', url: thumbUrl, width: 1200, height: 630 }, mainEntityOfPage: canonicalUrl,
     };
@@ -835,13 +848,13 @@ router.get('/doi-dau/:slug', async (req, res) => {
 
     const headerHtml = `
       <div class="league-bar">
-        ${leagueLogo ? `<img src="${leagueLogo}" alt="">` : ''}
+        ${leagueLogo ? `<img src="${leagueLogo}" alt="" width="24" height="24" decoding="async" loading="lazy">` : ''}
         <span>${leagueName2}</span>
       </div>
       <div class="match-card">
         <div class="match-teams">
           <div class="match-team">
-            ${homeLogo ? `<img src="${escapeHtml(homeLogo)}" alt="${escapeHtml(homeName)}" loading="lazy">` : ''}
+            ${homeLogo ? `<img src="${escapeHtml(homeLogo)}" alt="${escapeHtml(homeName)}" width="64" height="64" decoding="async">` : ''}
             <div class="team-name">${escapeHtml(homeName)}</div>
           </div>
           <div class="match-vs">
@@ -849,7 +862,7 @@ router.get('/doi-dau/:slug', async (req, res) => {
             <div class="match-date">${matchInfo?.matchDate ? new Date(matchInfo.matchDate).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : ''}</div>
           </div>
           <div class="match-team">
-            ${awayLogo ? `<img src="${escapeHtml(awayLogo)}" alt="${escapeHtml(awayName)}" loading="lazy">` : ''}
+            ${awayLogo ? `<img src="${escapeHtml(awayLogo)}" alt="${escapeHtml(awayName)}" width="64" height="64" decoding="async">` : ''}
             <div class="team-name">${escapeHtml(awayName)}</div>
           </div>
         </div>
@@ -875,7 +888,7 @@ router.get('/doi-dau/:slug', async (req, res) => {
     const sidebarHtml = await buildSidebar(article.slug, 'h2h-analysis');
 
     const h2hBannerHtml = thumbUrl !== `${SITE_URL}/og-image.jpg`
-      ? `<img src="${escapeHtml(thumbUrl)}" alt="${escapeHtml(title)}" style="width:100%;height:auto;display:block;border-radius:8px;margin-bottom:16px;" loading="eager">`
+      ? `<img src="${escapeHtml(thumbUrl)}" alt="${escapeHtml(title)}" width="1200" height="630" style="width:100%;height:auto;aspect-ratio:1200/630;display:block;border-radius:8px;margin-bottom:16px;" loading="eager" decoding="async" fetchpriority="high">`
       : '';
 
     const html = renderArticlePage({
