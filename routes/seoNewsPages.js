@@ -208,7 +208,21 @@ router.get('/tin-bong-da', async (req, res) => {
           </div>
         </div>
       </a>
-    `).join('') : '<div class="news-card"><div class="body"><h2>Chưa có bài viết</h2><p>Quay lại sau để xem tin mới nhất.</p></div></div>';
+    `).join('') : `
+      <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:40px 28px;text-align:center">
+        <div style="font-size:42px;margin-bottom:12px">📝</div>
+        <h2 style="color:#0f172a;font-size:20px;margin-bottom:8px">Chuyên mục tin bóng đá đang được làm mới</h2>
+        <p style="color:#64748b;font-size:14px;max-width:480px;margin:0 auto 16px">
+          ScoreLine đang xây dựng lại hệ thống tin tức với nội dung chất lượng cao hơn. Trong lúc chờ, mời bạn xem các chuyên mục khác:
+        </p>
+        <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+          <a href="/nhan-dinh" style="padding:8px 16px;background:#2563eb;color:#fff;border-radius:6px;font-weight:600;font-size:14px">📊 Nhận định trận đấu</a>
+          <a href="/lich-thi-dau" style="padding:8px 16px;background:#fff;color:#2563eb;border:1px solid #bfdbfe;border-radius:6px;font-weight:600;font-size:14px">📅 Lịch thi đấu</a>
+          <a href="/ket-qua-bong-da" style="padding:8px 16px;background:#fff;color:#2563eb;border:1px solid #bfdbfe;border-radius:6px;font-weight:600;font-size:14px">🏁 Kết quả</a>
+          <a href="/kien-thuc-bong-da" style="padding:8px 16px;background:#fff;color:#2563eb;border:1px solid #bfdbfe;border-radius:6px;font-weight:600;font-size:14px">📚 Kiến thức bóng đá</a>
+        </div>
+      </div>
+    `;
 
     const paginationHtml = (() => {
       if (totalPages <= 1) return '';
