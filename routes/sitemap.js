@@ -186,6 +186,35 @@ async function generateSitemap() {
     console.error('[Sitemap] Failed to load teams:', err.message);
   }
 
+  // 8. News hub + articles (/tin-bong-da)
+  try {
+    const Article = require('../models/Article');
+    addUrl(`${SITE_URL}/tin-bong-da`, today, 'hourly', '0.8');
+    for (const cat of ['general', 'analysis', 'transfer', 'interview']) {
+      addUrl(`${SITE_URL}/tin-bong-da?cat=${cat}`, today, 'daily', '0.6');
+    }
+    const news = await Article.find({ status: 'published' })
+      .sort({ pubDate: -1 })
+      .limit(500)
+      .select('slug title pubDate updatedAt _id')
+      .lean();
+    let newsAdded = 0;
+    for (const a of news) {
+      const slug = a.slug || Article.slugifyFromTitle(a.title, String(a._id));
+      if (!slug) continue;
+      const lastmod = (a.updatedAt || a.pubDate || new Date()).toISOString().split('T')[0];
+      // Newer articles get hourly changefreq for Google News discovery; older settle to weekly
+      const ageHours = (Date.now() - new Date(a.pubDate).getTime()) / 3_600_000;
+      const changefreq = ageHours < 24 ? 'hourly' : ageHours < 168 ? 'daily' : 'weekly';
+      const priority = ageHours < 24 ? '0.8' : ageHours < 168 ? '0.6' : '0.4';
+      addUrl(`${SITE_URL}/tin-bong-da/${slug}`, lastmod, changefreq, priority);
+      newsAdded++;
+    }
+    console.log(`[Sitemap] ${newsAdded} news articles added`);
+  } catch (err) {
+    console.error('[Sitemap] Failed to load news:', err.message);
+  }
+
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${urls.join('\n')}

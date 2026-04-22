@@ -18,6 +18,14 @@ const ArticleSchema = new mongoose.Schema({
     index: true,
   },
 
+  // SEO-friendly URL slug (e.g. "liverpool-thang-3-0-nguoc-dong-vs-arsenal-abc123")
+  slug: {
+    type: String,
+    unique: true,
+    sparse: true,
+    index: true,
+  },
+
   // AI-generated content
   title: {
     type: String,
@@ -93,6 +101,38 @@ ArticleSchema.index({ title: 'text', content: 'text' }); // Full-text search
 ArticleSchema.virtual('id').get(function() {
   return this._id.toHexString();
 });
+
+// Slugify title: remove diacritics, non-alnum, collapse hyphens, cap 80 chars, append _id tail
+function slugifyFromTitle(title, idStr) {
+  const base = String(title || 'tin-bong-da')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    .substring(0, 80)
+    .replace(/-$/, '');
+  const tail = idStr ? idStr.slice(-6) : Math.random().toString(36).slice(-6);
+  return `${base}-${tail}`;
+}
+
+ArticleSchema.statics.slugifyFromTitle = slugifyFromTitle;
+
+// Auto-generate slug on save if missing
+ArticleSchema.pre('save', function(next) {
+  if (!this.slug) {
+    this.slug = slugifyFromTitle(this.title, this._id?.toHexString?.());
+  }
+  next();
+});
+
+// Static method: Get by slug
+ArticleSchema.statics.getBySlug = function(slug) {
+  return this.findOne({ slug, status: 'published' }).lean();
+};
 
 // Static method: Get latest articles
 ArticleSchema.statics.getLatest = function(limit = 20, category = null) {

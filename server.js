@@ -190,6 +190,7 @@ app.use('/', require('./routes/vietnamesePlayers'));
 app.use('/', require('./routes/worldCup2026Pages'));
 app.use('/', require('./routes/footballKnowledge'));
 app.use('/', require('./routes/coachesSsr'));
+app.use('/', require('./routes/seoNewsPages'));
 
 // Mount routers - ✅ Thứ tự quan trọng!
 app.use('/api/competitions', competitionsRouter);

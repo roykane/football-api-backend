@@ -2,18 +2,19 @@
  * Re-generate old soi-keo articles with improved prompt
  *
  * Usage:
- *   node scripts/regenerate-articles.js --count             # just count pending
+ *   node scripts/regenerate-articles.js --count                   # just count pending
  *   node scripts/regenerate-articles.js --limit=10 --dry-run
- *   node scripts/regenerate-articles.js --limit=10          # regenerate 10
- *   node scripts/regenerate-articles.js --limit=999         # regenerate all remaining
+ *   node scripts/regenerate-articles.js --limit=10                # regenerate → draft (default)
+ *   node scripts/regenerate-articles.js --limit=10 --auto-publish # skip editor gate (dev only)
  *
- * This script:
- * 1. Finds published articles with old-style content (template patterns)
- * 2. Re-generates content using the updated prompt
- * 3. Updates the article in MongoDB
+ * Flow:
+ * 1. Find published articles matching old-style template patterns
+ * 2. Re-generate content with updated prompt
+ * 3. Validate output against banned-phrase list; retry up to 2x if violated
+ * 4. Save as status='draft' by default → forces editor to review before going live
  *
  * It does NOT change: slug, matchInfo, oddsData, fixtureId, views, createdAt
- * It DOES change: title, excerpt, content.*, metaTitle, metaDescription, tags
+ * It DOES change: title, excerpt, content.*, metaTitle, metaDescription, tags, status
  */
 
 require('dotenv').config();
@@ -26,6 +27,49 @@ const args = process.argv.slice(2);
 const limit = parseInt(args.find(a => a.startsWith('--limit='))?.split('=')[1] || '10');
 const dryRun = args.includes('--dry-run');
 const countOnly = args.includes('--count');
+const autoPublish = args.includes('--auto-publish');
+const MAX_RETRIES = 2;
+
+// Banned phrase patterns — AI output that matches these is template-heavy junk.
+// If any match → retry generation. Claude often slips these back in despite the prompt.
+const BANNED_INTRO = [
+  /^trận đấu giữa /i,
+  /^cuộc chạm trán giữa/i,
+  /^trận .+ vs .+ diễn ra lúc/i,
+  /^trong khuôn khổ/i,
+];
+const BANNED_PREDICTION = [
+  /^dựa trên (toàn bộ )?phân tích/i,
+  /^dự đoán tỷ số chi tiết/i,
+  /^\*\*dự đoán/i,
+];
+const MIN_WORDS = { introduction: 100, teamAnalysis: 300, prediction: 60 };
+
+function countWords(str) {
+  if (!str) return 0;
+  return String(str).trim().split(/\s+/).length;
+}
+
+function validateContent(aiContent) {
+  const issues = [];
+  if (!aiContent?.introduction) return ['missing introduction'];
+
+  for (const pat of BANNED_INTRO) {
+    if (pat.test(aiContent.introduction.trim())) {
+      issues.push(`intro matches banned pattern: ${pat}`);
+    }
+  }
+  for (const pat of BANNED_PREDICTION) {
+    if (aiContent.prediction && pat.test(aiContent.prediction.trim())) {
+      issues.push(`prediction matches banned pattern: ${pat}`);
+    }
+  }
+  for (const [field, min] of Object.entries(MIN_WORDS)) {
+    const w = countWords(aiContent[field]);
+    if (w < min) issues.push(`${field} too short: ${w} words (min ${min})`);
+  }
+  return issues;
+}
 
 async function findOldStyleArticles(limit) {
   // Find articles with template patterns
@@ -61,9 +105,11 @@ async function main() {
       ],
     });
     const totalPublished = await SoiKeoArticle.countDocuments({ status: 'published' });
-    console.log(`Total published articles: ${totalPublished}`);
-    console.log(`Old-style articles remaining: ${totalOld}`);
-    console.log(`Already refreshed: ${totalPublished - totalOld}`);
+    const totalDraft = await SoiKeoArticle.countDocuments({ status: 'draft' });
+    console.log(`Total published:           ${totalPublished}`);
+    console.log(`Total draft (editor TODO): ${totalDraft}`);
+    console.log(`Old-style still published: ${totalOld}`);
+    console.log(`Already refreshed:         ${totalPublished - totalOld}`);
     process.exit(0);
   }
 
@@ -128,10 +174,31 @@ async function main() {
       } catch (e) { /* use default */ }
 
       const prompt = generator.buildPrompt(matchData, article.oddsData, h2hData, homeForm, awayForm);
-      const aiContent = await generator.generateAIContent(prompt);
 
-      if (!aiContent || !aiContent.introduction) {
-        console.log('  ❌ AI returned invalid content\n');
+      // Generate with retry loop if validator fails
+      let aiContent = null;
+      let validationIssues = [];
+      for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+        aiContent = await generator.generateAIContent(prompt);
+        if (!aiContent || !aiContent.introduction) {
+          validationIssues = ['AI returned invalid/empty content'];
+          if (attempt < MAX_RETRIES) {
+            console.log(`  ↻ Retry ${attempt + 1}/${MAX_RETRIES}: empty content`);
+            await new Promise(r => setTimeout(r, 2000));
+            continue;
+          }
+          break;
+        }
+        validationIssues = validateContent(aiContent);
+        if (validationIssues.length === 0) break;
+        if (attempt < MAX_RETRIES) {
+          console.log(`  ↻ Retry ${attempt + 1}/${MAX_RETRIES}: ${validationIssues[0]}`);
+          await new Promise(r => setTimeout(r, 2000));
+        }
+      }
+
+      if (!aiContent || validationIssues.length > 0) {
+        console.log(`  ❌ Rejected after ${MAX_RETRIES + 1} attempts: ${validationIssues.join('; ')}\n`);
         failed++;
         continue;
       }
@@ -141,7 +208,10 @@ async function main() {
         aiContent.bettingTips = aiContent.bettingTips.join('\n');
       }
 
-      // Update article — keep slug, matchInfo, oddsData, views, createdAt
+      // Editor-pass gate: default to 'draft' so a human must approve before go-live.
+      // Pass --auto-publish to skip (dev/test only).
+      const newStatus = autoPublish ? 'published' : 'draft';
+
       await SoiKeoArticle.updateOne(
         { _id: article._id },
         {
@@ -158,12 +228,14 @@ async function main() {
             metaTitle: aiContent.title || article.metaTitle,
             metaDescription: aiContent.excerpt || article.metaDescription,
             tags: aiContent.tags || article.tags,
+            status: newStatus,
             updatedAt: new Date(),
           },
         }
       );
 
-      console.log(`  ✅ Re-generated: "${aiContent.title?.substring(0, 60)}..."\n`);
+      const statusLabel = newStatus === 'draft' ? '📝 DRAFT (needs editor)' : '✅ PUBLISHED';
+      console.log(`  ${statusLabel}: "${aiContent.title?.substring(0, 60)}..."\n`);
       success++;
 
       // Delay 3s between API calls
@@ -177,6 +249,11 @@ async function main() {
 
   console.log(`\n========================================`);
   console.log(`Done: ${success} success, ${failed} failed, ${articles.length} total`);
+  if (!autoPublish && success > 0) {
+    console.log(`\n⚠️  ${success} bài đang ở status='draft'. Editor cần:`);
+    console.log(`    1. Vào admin/Mongo xem bài, chỉnh 1-2 câu thêm quan điểm riêng`);
+    console.log(`    2. Set status='published' để go-live`);
+  }
   console.log(`========================================\n`);
 
   process.exit(0);
