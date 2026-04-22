@@ -18,17 +18,16 @@
  */
 
 require('dotenv').config();
-const mongoose = require('mongoose');
+const connectArticlesDB = require('../config/database');
 const Article = require('../models/Article');
 
-const DB_URI = process.env.MONGODB_URI || process.env.DATABASE_URL;
 const args = process.argv.slice(2);
 const execute = args.includes('--execute');
 const keepRecentArg = args.find(a => a.startsWith('--keep-recent='));
 const keepRecentDays = keepRecentArg ? parseInt(keepRecentArg.split('=')[1]) : 0;
 
 async function main() {
-  await mongoose.connect(DB_URI);
+  await connectArticlesDB();
   console.log(`Connected. Mode: ${execute ? 'HARD DELETE' : 'DRY-RUN'}`);
   if (keepRecentDays > 0) console.log(`Keep-recent filter: last ${keepRecentDays} days\n`);
   else console.log('');

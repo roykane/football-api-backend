@@ -17,10 +17,9 @@
  */
 
 require('dotenv').config();
-const mongoose = require('mongoose');
+const connectArticlesDB = require('../config/database');
 const { LEAGUES, generateRoundupForLeague } = require('../services/real-news-generator');
 
-const DB_URI = process.env.MONGODB_URI || process.env.DATABASE_URL;
 const args = process.argv.slice(2);
 const leagueArg = args.find(a => a.startsWith('--league='))?.split('=')[1];
 const allFlag = args.includes('--all');
@@ -40,7 +39,7 @@ async function main() {
     process.exit(0);
   }
 
-  await mongoose.connect(DB_URI);
+  await connectArticlesDB();
   console.log(`Mode: ${dryRun ? 'DRY-RUN' : (autoPublish ? 'AUTO-PUBLISH' : 'DRAFT')}\n`);
 
   const targets = allFlag ? LEAGUES : [LEAGUES.find(l => l.slug === leagueArg)].filter(Boolean);

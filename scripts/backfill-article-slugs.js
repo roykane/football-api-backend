@@ -8,14 +8,13 @@
  */
 
 require('dotenv').config();
-const mongoose = require('mongoose');
+const connectArticlesDB = require('../config/database');
 const Article = require('../models/Article');
 
-const DB_URI = process.env.MONGODB_URI || process.env.DATABASE_URL;
 const dryRun = process.argv.includes('--dry-run');
 
 async function main() {
-  await mongoose.connect(DB_URI);
+  await connectArticlesDB();
   console.log(`Connected. Mode: ${dryRun ? 'DRY-RUN' : 'WRITE'}`);
 
   const missing = await Article.find({ $or: [{ slug: null }, { slug: { $exists: false } }] })
