@@ -494,14 +494,19 @@ router.get('/:countrySlug/:leagueSlug', async (req, res) => {
     } else {
       console.log('🔄 Loading competitions from API-Sports for slug search...');
 
-      // Fetch all leagues from API-Sports
-      const response = await footballApi.get('/leagues', {
-        params: {
-          season: currentYear
-        }
-      });
-
-      const apiLeagues = response.data.response || [];
+      // Fetch leagues across multiple seasons. European football seasons span
+      // two calendar years — e.g. UCL 2025/26 is season=2025 in api-sports,
+      // but V-League 2026 is season=2026. Querying only currentYear misses one
+      // side. We merge both seasons and dedupe by league id.
+      const [resCur, resPrev] = await Promise.all([
+        footballApi.get('/leagues', { params: { season: currentYear } }),
+        footballApi.get('/leagues', { params: { season: currentYear - 1 } }),
+      ]);
+      const merged = new Map();
+      for (const item of [...(resCur.data.response || []), ...(resPrev.data.response || [])]) {
+        if (!merged.has(item.league.id)) merged.set(item.league.id, item);
+      }
+      const apiLeagues = Array.from(merged.values());
 
       // Quick transform to searchable format
       competitions = apiLeagues.map(item => ({
