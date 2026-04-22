@@ -326,7 +326,11 @@ router.get('/tin-bong-da/:slug', async (req, res) => {
   try {
     const article = await Article.findOne({ slug: req.params.slug, status: 'published' }).lean();
     if (!article) {
-      return res.status(404).send(render404());
+      // 410 Gone tells Google the URL is permanently removed (faster de-index
+      // than 404). Safe here because we control the slug namespace — if a slug
+      // doesn't resolve, it's a stale/deleted article, not a typo.
+      res.set('X-Robots-Tag', 'noindex');
+      return res.status(410).send(render404('Bài viết đã được gỡ hoặc không còn tồn tại.'));
     }
 
     // Increment views (fire-and-forget)
