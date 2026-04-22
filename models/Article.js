@@ -102,9 +102,10 @@ ArticleSchema.virtual('id').get(function() {
   return this._id.toHexString();
 });
 
-// Slugify title: remove diacritics, non-alnum, collapse hyphens, cap 80 chars, append _id tail
-function slugifyFromTitle(title, idStr) {
-  const base = String(title || 'tin-bong-da')
+// Clean-slug from title: remove diacritics, non-alnum, collapse hyphens, cap 100 chars.
+// No random tail — collision handling happens in the pre-save hook below.
+function slugifyFromTitle(title) {
+  return String(title || 'tin-bong-da')
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
@@ -113,20 +114,43 @@ function slugifyFromTitle(title, idStr) {
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-')
     .replace(/^-|-$/g, '')
-    .substring(0, 80)
+    .substring(0, 100)
     .replace(/-$/, '');
-  const tail = idStr ? idStr.slice(-6) : Math.random().toString(36).slice(-6);
-  return `${base}-${tail}`;
 }
 
 ArticleSchema.statics.slugifyFromTitle = slugifyFromTitle;
 
-// Auto-generate slug on save if missing
-ArticleSchema.pre('save', function(next) {
-  if (!this.slug) {
-    this.slug = slugifyFromTitle(this.title, this._id?.toHexString?.());
+// Auto-generate slug on save if missing. Three-tier collision handling:
+//   1. Clean slug from title  (vd: "ngoai-hang-anh-tuan-11-...")
+//   2. +YYYY-MM-DD on collision
+//   3. +YYYY-MM-DD-xxxx (random 4-char) if still colliding — extremely rare
+ArticleSchema.pre('save', async function(next) {
+  try {
+    if (this.slug) return next();
+    const base = slugifyFromTitle(this.title);
+    const Model = this.constructor;
+
+    // Tier 1: clean slug
+    if (!(await Model.exists({ slug: base }))) {
+      this.slug = base;
+      return next();
+    }
+
+    // Tier 2: clean + date
+    const d = new Date(this.pubDate || Date.now());
+    const datePart = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const withDate = `${base}-${datePart}`;
+    if (!(await Model.exists({ slug: withDate }))) {
+      this.slug = withDate;
+      return next();
+    }
+
+    // Tier 3: clean + date + random (last resort)
+    this.slug = `${withDate}-${Math.random().toString(36).slice(2, 6)}`;
+    next();
+  } catch (err) {
+    next(err);
   }
-  next();
 });
 
 // Static method: Get by slug

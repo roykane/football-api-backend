@@ -200,7 +200,7 @@ async function generateSitemap() {
       .lean();
     let newsAdded = 0;
     for (const a of news) {
-      const slug = a.slug || Article.slugifyFromTitle(a.title, String(a._id));
+      const slug = a.slug || Article.slugifyFromTitle(a.title);
       if (!slug) continue;
       const lastmod = (a.updatedAt || a.pubDate || new Date()).toISOString().split('T')[0];
       // Newer articles get hourly changefreq for Google News discovery; older settle to weekly

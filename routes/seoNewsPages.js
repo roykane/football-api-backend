@@ -159,7 +159,7 @@ router.get('/tin-bong-da', async (req, res) => {
     // Backfill slug if any article was saved before the pre-save hook existed
     for (const a of items) {
       if (!a.slug) {
-        a.slug = Article.slugifyFromTitle(a.title, String(a._id));
+        a.slug = Article.slugifyFromTitle(a.title);
       }
     }
 
