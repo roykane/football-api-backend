@@ -12,6 +12,7 @@ const AutoArticle = require('../models/AutoArticle');
 const { players: VN_PLAYERS } = require('../data/vietnamesePlayers');
 const { sections: WC_SECTIONS } = require('../data/worldCup2026');
 const { articles: KNOWLEDGE_ARTICLES } = require('../data/footballKnowledge');
+const { coaches: COACHES } = require('../data/coaches');
 
 const SITE_URL = process.env.SITE_URL || 'https://scoreline.io';
 const CACHE_TTL = 15 * 60 * 1000; // 15 minutes
@@ -94,8 +95,12 @@ async function generateSitemap() {
   // 1b. New SEO content hubs
   addUrl(`${SITE_URL}/cau-thu`, today, 'weekly', '0.8');
   addUrl(`${SITE_URL}/kien-thuc-bong-da`, today, 'weekly', '0.8');
+  addUrl(`${SITE_URL}/huan-luyen-vien`, today, 'weekly', '0.8');
   for (const player of VN_PLAYERS) {
     addUrl(`${SITE_URL}/cau-thu/${player.slug}`, today, 'weekly', '0.7');
+  }
+  for (const coach of COACHES) {
+    addUrl(`${SITE_URL}/huan-luyen-vien/${coach.slug}`, today, 'weekly', '0.7');
   }
   for (const slug of Object.keys(WC_SECTIONS)) {
     addUrl(`${SITE_URL}/world-cup-2026/${slug}`, today, 'weekly', '0.8');

@@ -189,6 +189,7 @@ app.use('/', require('./routes/seoContentPages'));
 app.use('/', require('./routes/vietnamesePlayers'));
 app.use('/', require('./routes/worldCup2026Pages'));
 app.use('/', require('./routes/footballKnowledge'));
+app.use('/', require('./routes/coachesSsr'));
 
 // Mount routers - ✅ Thứ tự quan trọng!
 app.use('/api/competitions', competitionsRouter);
@@ -207,6 +208,7 @@ app.use('/api/teams', require('./routes/teams'));
 app.use('/api/players', require('./routes/playersApi'));
 app.use('/api/football-knowledge', require('./routes/knowledgeApi'));
 app.use('/api/world-cup-2026', require('./routes/worldCupApi'));
+app.use('/api/coaches', require('./routes/coachesApi'));
 
 // Legacy endpoints (chỉ giữ lại leagues và fixtures)
 app.get('/api/leagues', async (req, res) => {
