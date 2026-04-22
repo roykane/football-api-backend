@@ -1,7 +1,11 @@
 /**
  * Re-generate old soi-keo articles with improved prompt
  *
- * Usage: node scripts/regenerate-articles.js [--limit=10] [--dry-run]
+ * Usage:
+ *   node scripts/regenerate-articles.js --count             # just count pending
+ *   node scripts/regenerate-articles.js --limit=10 --dry-run
+ *   node scripts/regenerate-articles.js --limit=10          # regenerate 10
+ *   node scripts/regenerate-articles.js --limit=999         # regenerate all remaining
  *
  * This script:
  * 1. Finds published articles with old-style content (template patterns)
@@ -21,6 +25,7 @@ const DB_URI = process.env.MONGODB_URI || process.env.DATABASE_URL;
 const args = process.argv.slice(2);
 const limit = parseInt(args.find(a => a.startsWith('--limit='))?.split('=')[1] || '10');
 const dryRun = args.includes('--dry-run');
+const countOnly = args.includes('--count');
 
 async function findOldStyleArticles(limit) {
   // Find articles with template patterns
@@ -41,10 +46,26 @@ async function findOldStyleArticles(limit) {
 }
 
 async function main() {
-  console.log(`\n🔄 Re-generate old articles (limit: ${limit}, dry-run: ${dryRun})\n`);
+  console.log(`\n🔄 Re-generate old articles (limit: ${limit}, dry-run: ${dryRun}, count-only: ${countOnly})\n`);
 
   await mongoose.connect(DB_URI);
   console.log('✅ Connected to MongoDB\n');
+
+  if (countOnly) {
+    const totalOld = await SoiKeoArticle.countDocuments({
+      status: 'published',
+      $or: [
+        { title: /^Nhận định .+ vs .+ \d{2}:\d{2} ngày/ },
+        { 'content.introduction': /^Trận đấu giữa/ },
+        { 'content.prediction': /^(\*\*)?Dự Đoán Tỷ Số Chi Tiết|^Dựa trên (toàn bộ )?phân tích/ },
+      ],
+    });
+    const totalPublished = await SoiKeoArticle.countDocuments({ status: 'published' });
+    console.log(`Total published articles: ${totalPublished}`);
+    console.log(`Old-style articles remaining: ${totalOld}`);
+    console.log(`Already refreshed: ${totalPublished - totalOld}`);
+    process.exit(0);
+  }
 
   const articles = await findOldStyleArticles(limit);
   console.log(`Found ${articles.length} articles with old-style content\n`);

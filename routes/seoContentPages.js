@@ -17,6 +17,7 @@ const express = require('express');
 const router = express.Router();
 const axios = require('axios');
 const AutoArticle = require('../models/AutoArticle');
+const SoiKeoArticle = require('../models/SoiKeoArticle');
 let thumbnailGenerator;
 try { thumbnailGenerator = require('../services/thumbnail-generator'); } catch (e) { /* canvas not installed */ }
 
@@ -461,10 +462,11 @@ async function buildSidebar(currentSlug, currentType) {
 // Shared layout for article pages (preview + h2h)
 // Same layout as soi-keo SSR for consistency
 // ============================================================
-function renderArticlePage({ title, description, url, breadcrumbItems, bannerHtml, headerHtml, bodyHtml, sidebarHtml, structuredData, ogImage }) {
+function renderArticlePage({ title, description, url, canonicalUrl, breadcrumbItems, bannerHtml, headerHtml, bodyHtml, sidebarHtml, structuredData, ogImage }) {
   const safeTitle = escapeHtml(title);
   const safeDesc = escapeHtml(description);
   const image = ogImage || `${SITE_URL}/og-image.jpg`;
+  const canonical = canonicalUrl || url;
   const ldScripts = (Array.isArray(structuredData) ? structuredData : [structuredData])
     .filter(Boolean).map(sd => `<script type="application/ld+json">${JSON.stringify(sd)}</script>`).join('\n  ');
 
@@ -482,12 +484,12 @@ function renderArticlePage({ title, description, url, breadcrumbItems, bannerHtm
   <title>${safeTitle} | ScoreLine</title>
   <meta name="description" content="${safeDesc}">
   <meta name="robots" content="index, follow">
-  <link rel="canonical" href="${escapeHtml(url)}">
-  <link rel="alternate" hreflang="vi" href="${escapeHtml(url)}">
-  <link rel="alternate" hreflang="x-default" href="${escapeHtml(url)}">
+  <link rel="canonical" href="${escapeHtml(canonical)}">
+  <link rel="alternate" hreflang="vi" href="${escapeHtml(canonical)}">
+  <link rel="alternate" hreflang="x-default" href="${escapeHtml(canonical)}">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <meta property="og:type" content="article">
-  <meta property="og:url" content="${escapeHtml(url)}">
+  <meta property="og:url" content="${escapeHtml(canonical)}">
   <meta property="og:title" content="${safeTitle}">
   <meta property="og:description" content="${safeDesc}">
   <meta property="og:image" content="${escapeHtml(image)}">
@@ -753,13 +755,26 @@ router.get('/doi-dau/:slug', async (req, res) => {
     const title = article.metaTitle || article.title;
     const description = article.metaDescription || article.excerpt || '';
 
+    // If a /nhan-dinh article exists for the same fixture, point canonical there
+    // to avoid duplicate content (both pages discuss the same match).
+    let canonicalUrl = url;
+    if (article.fixtureId) {
+      const soiKeoSibling = await SoiKeoArticle.findOne({
+        fixtureId: article.fixtureId,
+        status: 'published',
+      }).select('slug').lean();
+      if (soiKeoSibling?.slug) {
+        canonicalUrl = `${SITE_URL}/nhan-dinh/${soiKeoSibling.slug}`;
+      }
+    }
+
     const articleSchema = {
       '@context': 'https://schema.org', '@type': 'Article',
-      headline: article.title, description, url,
+      headline: article.title, description, url: canonicalUrl,
       datePublished: article.createdAt, dateModified: article.updatedAt || article.createdAt,
       author: { '@type': 'Organization', name: 'ScoreLine', url: SITE_URL },
       publisher: { '@type': 'Organization', name: 'ScoreLine', logo: { '@type': 'ImageObject', url: `${SITE_URL}/og-image.jpg`, width: 1200, height: 630 } },
-      image: { '@type': 'ImageObject', url: thumbUrl, width: 1200, height: 630 }, mainEntityOfPage: url,
+      image: { '@type': 'ImageObject', url: thumbUrl, width: 1200, height: 630 }, mainEntityOfPage: canonicalUrl,
     };
 
     const leagueNameSe = matchInfo?.league?.name || '';
@@ -864,7 +879,7 @@ router.get('/doi-dau/:slug', async (req, res) => {
       : '';
 
     const html = renderArticlePage({
-      title, description, url,
+      title, description, url, canonicalUrl,
       breadcrumbItems: [
         { name: 'Trang chủ', url: '/' },
         { name: 'Đối đầu', url: '/nhan-dinh' },
