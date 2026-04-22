@@ -84,41 +84,30 @@ router.get('/search', async (req, res) => {
 /**
  * GET /api/articles/:id - Get article by ID
  */
-router.get('/:id', async (req, res) => {
+router.get('/:idOrSlug', async (req, res) => {
   try {
-    const { id } = req.params;
+    const { idOrSlug } = req.params;
+    console.log(`[Articles API] GET article: ${idOrSlug}`);
 
-    console.log(`[Articles API] GET article: ${id}`);
-
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
-        success: false,
-        error: 'Invalid article ID'
-      });
+    // Support both ObjectId (legacy) and slug (preferred)
+    let article;
+    if (mongoose.Types.ObjectId.isValid(idOrSlug)) {
+      article = await Article.findById(idOrSlug).lean();
     }
-
-    const article = await Article.getById(id);
+    if (!article) {
+      article = await Article.findOne({ slug: idOrSlug, status: 'published' }).lean();
+    }
 
     if (!article) {
-      return res.status(404).json({
-        success: false,
-        error: 'Article not found'
-      });
+      return res.status(404).json({ success: false, error: 'Article not found' });
     }
 
-    // Increment views
-    await Article.findByIdAndUpdate(id, { $inc: { views: 1 } });
+    Article.updateOne({ _id: article._id }, { $inc: { views: 1 } }).catch(() => {});
 
-    res.json({
-      success: true,
-      data: article
-    });
+    res.json({ success: true, data: article });
   } catch (error) {
     console.error('[Articles API] Error:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message || 'Internal server error'
-    });
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
   }
 });
 
