@@ -520,9 +520,20 @@ router.get('/:countrySlug/:leagueSlug', async (req, res) => {
       }));
     }
 
+    // UEFA club competitions live under country "World" in api-sports but the
+    // frontend groups them under "europe". Treat both as the same region.
+    const isEuropeanRegional = (c) =>
+      /^UEFA\s/i.test(c.name || '') || ['Champions League', 'Europa League', 'Conference League'].some(n => (c.name || '').includes(n));
+
+    const matchesCountry = (c, slug) => {
+      if (c.country.slug === slug) return true;
+      if (slug === 'europe' && isEuropeanRegional(c) && c.country.slug === 'world') return true;
+      return false;
+    };
+
     // Find league by slug
     const competition = competitions.find(c =>
-      c.slug === leagueSlug && c.country.slug === countrySlug
+      c.slug === leagueSlug && matchesCountry(c, countrySlug)
     );
 
     if (!competition) {
