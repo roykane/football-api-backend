@@ -47,30 +47,176 @@ function formatRelative(date) {
 }
 
 // Very light markdown → HTML for news content (paragraphs + lists + bold + links).
+const BOX_META = {
+  info:    { emoji: 'ℹ️', label: 'Thông tin' },
+  tip:     { emoji: '💡', label: 'Mẹo' },
+  warning: { emoji: '⚠️', label: 'Lưu ý' },
+  example: { emoji: '🔍', label: 'Ví dụ' },
+  stats:   { emoji: '📊', label: 'Thống kê' },
+  quote:   { emoji: '❝',  label: '' },
+};
+
 function toHtml(text) {
   if (!text) return '';
-  const blocks = String(text).split(/\n\n+/);
-  return blocks.map(block => {
-    const trimmed = block.trim();
-    if (!trimmed) return '';
-    if (/^- /.test(trimmed)) {
-      const items = trimmed.split('\n').map(l => l.replace(/^- /, '').trim()).filter(Boolean);
-      return '<ul>' + items.map(i => `<li>${inlineFmt(i)}</li>`).join('') + '</ul>';
-    }
-    if (/^#{2,3}\s+/.test(trimmed)) {
-      const level = trimmed.match(/^(#{2,3})/)[1].length;
-      const tag = `h${level}`;
-      const content = trimmed.replace(/^#{2,3}\s+/, '');
-      return `<${tag}>${inlineFmt(content)}</${tag}>`;
-    }
-    return `<p>${inlineFmt(trimmed.replace(/\n/g, '<br>'))}</p>`;
-  }).join('\n');
+  const lines = String(text).split('\n');
+  return renderLines(lines, 0, lines.length).html;
 }
+
+function renderLines(lines, start, end) {
+  const out = [];
+  let paraBuf = [];
+  let listBuf = [];
+  let listKind = null;
+
+  const flushPara = () => {
+    if (paraBuf.length) {
+      out.push(`<p>${inlineFmt(paraBuf.join(' ').trim())}</p>`);
+      paraBuf = [];
+    }
+  };
+  const flushList = () => {
+    if (listBuf.length && listKind) {
+      const tag = listKind;
+      out.push(`<${tag}>${listBuf.map(i => `<li>${inlineFmt(i)}</li>`).join('')}</${tag}>`);
+      listBuf = [];
+      listKind = null;
+    }
+  };
+  const flushAll = () => { flushPara(); flushList(); };
+
+  let i = start;
+  while (i < end) {
+    const raw = lines[i];
+    const trimmed = raw.trim();
+    if (!trimmed) { flushAll(); i++; continue; }
+
+    // Directive box start
+    const boxStart = trimmed.match(/^:::\s*(\w+)\s*(.*)$/);
+    if (boxStart && BOX_META[boxStart[1]]) {
+      flushAll();
+      const variant = boxStart[1];
+      const customTitle = boxStart[2].trim();
+      const meta = BOX_META[variant];
+      const title = customTitle || meta.label;
+      // Find matching :::
+      let j = i + 1;
+      while (j < end && lines[j].trim() !== ':::') j++;
+      const innerHtml = renderLines(lines, i + 1, j).html;
+      const header = title
+        ? `<div class="sm-box-header"><span class="sm-box-emoji">${meta.emoji}</span><span class="sm-box-title">${escapeHtml(title)}</span></div>`
+        : '';
+      out.push(`<aside class="sm-box sm-box-${variant}">${header}<div class="sm-box-body">${innerHtml}</div></aside>`);
+      i = j + 1;
+      continue;
+    }
+
+    // Image on own line
+    const imgMatch = trimmed.match(/^!\[([^\]]*)\]\(([^)]+)\)$/);
+    if (imgMatch) {
+      flushAll();
+      const alt = escapeHtml(imgMatch[1] || '');
+      const src = escapeHtml(imgMatch[2]);
+      const caption = alt ? `<figcaption>${alt}</figcaption>` : '';
+      out.push(`<figure class="sm-figure"><img src="${src}" alt="${alt}" loading="lazy" decoding="async">${caption}</figure>`);
+      i++;
+      continue;
+    }
+
+    const h3 = trimmed.match(/^###\s+(.+)$/);
+    const h2 = trimmed.match(/^##\s+(.+)$/);
+    const h1 = trimmed.match(/^#\s+(.+)$/);
+    const ul = trimmed.match(/^-\s+(.+)$/);
+    const ol = trimmed.match(/^\d+\.\s+(.+)$/);
+
+    if (h3) { flushAll(); out.push(`<h3>${inlineFmt(h3[1])}</h3>`); i++; continue; }
+    if (h2) { flushAll(); out.push(`<h2>${inlineFmt(h2[1])}</h2>`); i++; continue; }
+    if (h1) { flushAll(); out.push(`<h1>${inlineFmt(h1[1])}</h1>`); i++; continue; }
+
+    if (ul) {
+      flushPara();
+      if (listKind && listKind !== 'ul') flushList();
+      listKind = 'ul'; listBuf.push(ul[1]); i++; continue;
+    }
+    if (ol) {
+      flushPara();
+      if (listKind && listKind !== 'ol') flushList();
+      listKind = 'ol'; listBuf.push(ol[1]); i++; continue;
+    }
+
+    flushList();
+    paraBuf.push(trimmed);
+    i++;
+  }
+  flushAll();
+  return { html: out.join('\n') };
+}
+
 function inlineFmt(s) {
   return s
+    .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_, alt, src) => `<img src="${escapeHtml(src)}" alt="${escapeHtml(alt)}" class="sm-inline-img" loading="lazy">`)
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>')
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+    .replace(/\*(.+?)\*/g, '<em>$1</em>');
+}
+
+/**
+ * Extract FAQ Q&A from markdown — used for FAQPage schema injection in SSR.
+ */
+function extractFAQ(content) {
+  if (!content) return [];
+  const faqLabelRegex = /(câu hỏi thường gặp|faq|câu hỏi phổ biến|hỏi đáp)/i;
+  const lines = String(content).split('\n');
+  let inFAQ = false;
+  let currentQ = null;
+  const currentABuf = [];
+  const out = [];
+
+  const clean = (s) => s
+    .replace(/\*\*(.+?)\*\*/g, '$1')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/!\[[^\]]*\]\([^)]+\)/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  const flushCurrent = () => {
+    if (currentQ) {
+      const answer = clean(currentABuf.join(' '));
+      if (answer) out.push({ question: currentQ, answer });
+      currentQ = null;
+      currentABuf.length = 0;
+    }
+  };
+
+  for (const raw of lines) {
+    const trimmed = raw.trim();
+    const h2 = trimmed.match(/^##\s+(.+)$/);
+    const h3 = trimmed.match(/^###\s+(.+)$/);
+    const h1 = trimmed.match(/^#\s+(.+)$/);
+
+    if (h1 || (h2 && !faqLabelRegex.test(h2[1]))) {
+      flushCurrent();
+      inFAQ = h2 ? faqLabelRegex.test(h2[1]) : false;
+      continue;
+    }
+    if (h2 && faqLabelRegex.test(h2[1])) {
+      flushCurrent();
+      inFAQ = true;
+      continue;
+    }
+    if (!inFAQ) continue;
+
+    if (h3) {
+      flushCurrent();
+      currentQ = clean(h3[1]);
+      continue;
+    }
+    if (currentQ && trimmed) {
+      if (trimmed.startsWith(':::')) continue;
+      currentABuf.push(trimmed);
+    }
+  }
+  flushCurrent();
+  return out;
 }
 
 function baseStyles() {
@@ -127,6 +273,28 @@ function baseStyles() {
     .tag-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:16px}
     .tag{background:#f1f5f9;color:#475569;padding:4px 10px;border-radius:3px;font-size:12px}
     .footer{text-align:center;margin-top:24px;padding:16px;color:#94a3b8;font-size:13px}
+    /* Markdown figures + directive boxes */
+    .sm-figure{margin:24px 0;text-align:center}
+    .sm-figure img{width:100%;max-width:720px;height:auto;border-radius:10px;box-shadow:0 6px 18px rgba(15,23,42,.1);display:block;margin:0 auto}
+    .sm-figure figcaption{margin-top:8px;font-size:13px;color:#64748b;font-style:italic}
+    .sm-inline-img{max-width:100%;height:auto;border-radius:4px;vertical-align:middle}
+    .sm-box{margin:22px 0;padding:16px 20px;border-radius:10px;border-left:4px solid}
+    .sm-box-header{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-weight:800;font-size:13.5px;text-transform:uppercase;letter-spacing:0.4px}
+    .sm-box-emoji{font-size:18px}
+    .sm-box-body p{margin:0 0 8px;font-size:15px;line-height:1.65}
+    .sm-box-body p:last-child{margin:0}
+    .sm-box-body ul,.sm-box-body ol{margin:6px 0 0;padding-left:20px}
+    .sm-box-body li{margin-bottom:4px}
+    .sm-box-info{background:linear-gradient(135deg,#eff6ff,#dbeafe);border-left-color:#2563eb;color:#1e3a8a}
+    .sm-box-tip{background:linear-gradient(135deg,#f0fdf4,#dcfce7);border-left-color:#16a34a;color:#14532d}
+    .sm-box-warning{background:linear-gradient(135deg,#fffbeb,#fef3c7);border-left-color:#d97706;color:#78350f}
+    .sm-box-example{background:linear-gradient(135deg,#faf5ff,#f3e8ff);border-left-color:#9333ea;color:#581c87}
+    .sm-box-stats{background:linear-gradient(135deg,#0f172a,#1e3a8a);border-left-color:#60a5fa;color:#dbeafe}
+    .sm-box-stats .sm-box-header{color:#fff}
+    .sm-box-stats .sm-box-body p,.sm-box-stats .sm-box-body li{color:#e2e8f0}
+    .sm-box-stats .sm-box-body strong{color:#fbbf24}
+    .sm-box-stats .sm-box-body a{color:#93c5fd}
+    .sm-box-quote{background:#f8fafc;border-left-color:#64748b;font-style:italic;color:#475569}
     @media(max-width:768px){
       .layout{grid-template-columns:1fr}
       .sidebar{order:2}
@@ -446,6 +614,20 @@ router.get('/tin-bong-da/:slug', async (req, res) => {
   <meta name="twitter:image" content="${escapeHtml(image)}">
   <script type="application/ld+json">${JSON.stringify(breadcrumbSchema)}</script>
   <script type="application/ld+json">${JSON.stringify(newsSchema)}</script>
+  ${(() => {
+    const faq = extractFAQ(article.content);
+    if (!faq.length) return '';
+    const faqSchema = {
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: faq.map(f => ({
+        '@type': 'Question',
+        name: f.question,
+        acceptedAnswer: { '@type': 'Answer', text: f.answer },
+      })),
+    };
+    return `<script type="application/ld+json">${JSON.stringify(faqSchema)}</script>`;
+  })()}
   <style>${baseStyles()}</style>
 </head>
 <body>

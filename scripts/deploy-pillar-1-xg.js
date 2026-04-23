@@ -13,9 +13,9 @@ const DESCRIPTION = 'xG (Expected Goals) ước tính xác suất cú sút thàn
 const HERO_IMAGE = 'https://images.unsplash.com/photo-1551958219-acbc608c6377?w=1200&h=630&fit=crop';
 
 const IMG_PITCH = 'https://images.unsplash.com/photo-1577223625816-7546f13df25d?w=1000&h=560&fit=crop';
-const IMG_ACTION = 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=1000&h=560&fit=crop';
+const IMG_ACTION = 'https://images.unsplash.com/photo-1522778119026-d647f0596c20?w=1000&h=560&fit=crop';
 const IMG_STATS = 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1000&h=560&fit=crop';
-const IMG_CELEB = 'https://images.unsplash.com/photo-1610234834630-0dc866f64b42?w=1000&h=560&fit=crop';
+const IMG_CELEB = 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=1000&h=560&fit=crop';
 
 const CONTENT = `:::info Tóm tắt nhanh
 **xG (Expected Goals)** là chỉ số thống kê ước tính xác suất một cú sút trở thành bàn thắng, dựa trên các yếu tố như vị trí sút, góc sút, loại cơ hội và tình huống phòng ngự. Được phát triển từ 2012, xG hiện là tiêu chuẩn vàng trong bóng đá hiện đại để đánh giá chất lượng cơ hội, hiệu quả tấn công và phòng ngự — vượt xa thống kê bàn thắng đơn thuần.
@@ -32,6 +32,8 @@ Trong 100 năm lịch sử bóng đá, chúng ta quen đánh giá một đội/c
 :::
 
 Cần một chỉ số **bỏ qua kết quả thực tế** và đo **chất lượng hiệu suất**. Đó chính là xG.
+
+Trước khi xem giải thích kỹ thuật, bạn có thể xem [bảng xếp hạng Premier League](/bang-xep-hang/premier-league) để liên hệ với các đội bóng thường được nhắc trong bài này.
 
 ![Bóng đá hiện đại đánh giá qua dữ liệu, không chỉ tỷ số](${IMG_STATS})
 
@@ -166,7 +168,7 @@ Thay vì nhìn thắng-hòa-thua, nhìn **xGD tích lũy**. Nếu một đội 6
 - Cầu thủ ghi 10 bàn từ xG 15 → **finisher tiềm ẩn**, mua giá rẻ, sẽ bùng nổ
 
 :::tip Ứng dụng trong Fantasy Premier League
-Top FPL managers dùng xG để chọn **differentials** — tìm cầu thủ underperforming xG để captain trước khi regression kéo giá lên.
+Top FPL managers dùng xG để chọn **differentials** — tìm cầu thủ underperforming xG để captain trước khi regression kéo giá lên. Xem thêm [chuyên mục nhận định](/nhan-dinh) để biết cầu thủ nào đang form tốt.
 :::
 
 ### 3. Dự đoán tỷ số trận đấu
@@ -237,7 +239,7 @@ xG mạnh nhưng **không phải silver bullet**. Các hạn chế cần biết:
 - **LiveScore** — xG basic
 
 :::tip Xem xG trên ScoreLine
-Mỗi trang chi tiết trận đấu trên ScoreLine hiển thị **xG real-time** cùng các chỉ số thống kê khác. Truy cập qua menu **Lịch thi đấu** hoặc **Kết quả** và click vào trận bất kỳ.
+Mỗi trang chi tiết trận đấu trên ScoreLine hiển thị **xG real-time** cùng các chỉ số thống kê khác. Truy cập qua [Lịch thi đấu](/lich-thi-dau) hoặc [Kết quả bóng đá](/ket-qua-bong-da) và click vào trận bất kỳ để xem.
 :::
 
 ## Câu hỏi thường gặp
@@ -277,6 +279,15 @@ xG đã thay đổi cách bóng đá hiện đại phân tích hiệu quả — 
 :::tip Lời khuyên thực tế
 Lần sau xem trận đấu, đừng chỉ nhìn tỷ số. Check xG sau trận — bạn sẽ phát hiện nhiều trận **có thể đã khác hẳn** nếu may mắn nghiêng về phía khác.
 :::
+
+## Bài viết liên quan trên ScoreLine
+
+- [Nhận định bóng đá các trận đấu hôm nay](/nhan-dinh) — áp dụng xG vào dự đoán kết quả
+- [Lịch thi đấu Premier League](/lich-thi-dau/premier-league) — check fixture difficulty trước trận
+- [Bảng xếp hạng Premier League](/bang-xep-hang/premier-league) — xGD của top đội
+- [Kết quả bóng đá hôm nay](/ket-qua-bong-da) — xem xG thật của từng trận
+- [Top ghi bàn Premier League](/top-ghi-ban/premier-league) — kiểm tra xG của vua phá lưới
+- [Tin chuyển nhượng](/tin-bong-da?cat=transfer) — cầu thủ chuyển nhượng có xG thế nào
 
 ## Nguồn tham khảo
 
