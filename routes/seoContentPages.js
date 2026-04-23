@@ -1057,6 +1057,24 @@ router.get('/lich-thi-dau/:leagueSlug', async (req, res) => {
         </table>
       </div>`;
 
+    const nextFixture = fixtures[0];
+    const nextMatchText = nextFixture
+      ? `${nextFixture.teams?.home?.name || ''} vs ${nextFixture.teams?.away?.name || ''} (${formatShortDate(nextFixture.fixture?.date)} ${formatTime(nextFixture.fixture?.date)})`
+      : 'Lịch đang được cập nhật';
+
+    const scheduleFaq = {
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: [
+        { '@type': 'Question', name: `${league.name} sắp đá trận nào?`,
+          acceptedAnswer: { '@type': 'Answer', text: `Trận kế tiếp của ${league.name}: ${nextMatchText}. Xem đầy đủ lịch thi đấu 15 trận tiếp theo ngay trên trang này.` } },
+        { '@type': 'Question', name: `${league.name} đá mấy trận mỗi tuần?`,
+          acceptedAnswer: { '@type': 'Answer', text: `${league.name} mùa giải 2025/2026 thường có ${fixtures.length >= 10 ? 'nhiều vòng' : 'các vòng đấu'} diễn ra theo tuần. Lịch chi tiết cập nhật liên tục tại ScoreLine.` } },
+        { '@type': 'Question', name: `Xem trực tiếp ${league.name} ở đâu?`,
+          acceptedAnswer: { '@type': 'Answer', text: `Theo dõi tỷ số LIVE các trận ${league.name} miễn phí tại ScoreLine.io. Click vào từng trận trong bảng bên dưới để xem chi tiết diễn biến, lineup và thống kê.` } },
+      ],
+    };
+
     const html = renderPage({
       title,
       description,
@@ -1064,7 +1082,7 @@ router.get('/lich-thi-dau/:leagueSlug', async (req, res) => {
       breadcrumbHtml,
       headerHtml,
       bodyHtml,
-      structuredData: sportsEvents.slice(0, 10), // Limit to 10 structured events
+      structuredData: [...sportsEvents.slice(0, 10), scheduleFaq],
     });
 
     res.set('Content-Type', 'text/html; charset=utf-8');
@@ -1174,6 +1192,28 @@ router.get('/bang-xep-hang/:leagueSlug', async (req, res) => {
       tablesHtml += '</tbody></table></div>';
     });
 
+    const flatTeams = groups.flat();
+    const leader = flatTeams[0];
+    const totalTeams = flatTeams.length;
+    const avgMatches = totalTeams > 0 ? Math.round(flatTeams.reduce((s, t) => s + (t.all?.played || 0), 0) / totalTeams) : 0;
+
+    const standingsFaq = {
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: [
+        { '@type': 'Question', name: `Đội nào đang dẫn đầu ${league.name}?`,
+          acceptedAnswer: { '@type': 'Answer', text: leader
+            ? `${leader.team?.name || 'Đội dẫn đầu'} đang dẫn đầu bảng xếp hạng ${league.name} 2025/2026 với ${leader.points || 0} điểm sau ${leader.all?.played || 0} trận.`
+            : `Bảng xếp hạng ${league.name} mùa giải 2025/2026 đang được cập nhật. Xem BXH đầy đủ ngay trên trang.` } },
+        { '@type': 'Question', name: `${league.name} mùa này có bao nhiêu đội?`,
+          acceptedAnswer: { '@type': 'Answer', text: `${league.name} mùa giải 2025/2026 có ${totalTeams} đội tham dự${avgMatches ? `, trung bình mỗi đội đã thi đấu ${avgMatches} trận` : ''}.` } },
+        { '@type': 'Question', name: `Bảng xếp hạng ${league.name} cập nhật khi nào?`,
+          acceptedAnswer: { '@type': 'Answer', text: `BXH ${league.name} trên ScoreLine được cập nhật ngay sau khi mỗi trận kết thúc, đảm bảo điểm số, hiệu số và thứ hạng luôn mới nhất.` } },
+        { '@type': 'Question', name: `Xem điểm số và hiệu số ${league.name} ở đâu?`,
+          acceptedAnswer: { '@type': 'Answer', text: `Bảng xếp hạng chi tiết trên trang này bao gồm số trận, thắng (T), hòa (H), bại (B), bàn thắng (BT), bàn bại (BB), hiệu số (HS) và tổng điểm (Đ) của tất cả các đội ${league.name}.` } },
+      ],
+    };
+
     const html = renderPage({
       title,
       description,
@@ -1181,7 +1221,7 @@ router.get('/bang-xep-hang/:leagueSlug', async (req, res) => {
       breadcrumbHtml,
       headerHtml,
       bodyHtml: tablesHtml,
-      structuredData: tableSchema,
+      structuredData: [tableSchema, standingsFaq],
     });
 
     res.set('Content-Type', 'text/html; charset=utf-8');
@@ -1271,6 +1311,26 @@ router.get('/top-ghi-ban/:leagueSlug', async (req, res) => {
         </table>
       </div>`;
 
+    const topScorer = players[0];
+    const topScorerName = topScorer?.player?.name;
+    const topScorerGoals = topScorer?.statistics?.[0]?.goals?.total;
+    const topScorerTeam = topScorer?.statistics?.[0]?.team?.name;
+
+    const topScorersFaq = {
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: [
+        { '@type': 'Question', name: `Ai là vua phá lưới ${league.name} 2025/2026?`,
+          acceptedAnswer: { '@type': 'Answer', text: topScorerName
+            ? `${topScorerName}${topScorerTeam ? ` (${topScorerTeam})` : ''} đang dẫn đầu danh sách ghi bàn ${league.name} 2025/2026 với ${topScorerGoals} bàn thắng.`
+            : `Danh sách vua phá lưới ${league.name} 2025/2026 đang được cập nhật theo từng vòng đấu.` } },
+        { '@type': 'Question', name: `Top ghi bàn ${league.name} hiển thị bao nhiêu cầu thủ?`,
+          acceptedAnswer: { '@type': 'Answer', text: `Trang này hiển thị top ${players.length} cầu thủ ghi nhiều bàn nhất ${league.name} mùa giải 2025/2026, kèm số kiến tạo và số trận ra sân.` } },
+        { '@type': 'Question', name: `Cầu thủ ghi bàn vào lưới nhà có tính không?`,
+          acceptedAnswer: { '@type': 'Answer', text: `Thống kê top ghi bàn không tính bàn phản lưới nhà. Chỉ tính các bàn thắng ghi vào lưới đối thủ theo chuẩn của ${league.name}.` } },
+      ],
+    };
+
     const html = renderPage({
       title,
       description,
@@ -1278,11 +1338,10 @@ router.get('/top-ghi-ban/:leagueSlug', async (req, res) => {
       breadcrumbHtml,
       headerHtml,
       bodyHtml,
-      structuredData: {
-        '@context': 'https://schema.org',
-        '@type': 'Table',
-        about: `Top ghi bàn ${league.name} 2025/2026`,
-      },
+      structuredData: [
+        { '@context': 'https://schema.org', '@type': 'Table', about: `Top ghi bàn ${league.name} 2025/2026` },
+        topScorersFaq,
+      ],
     });
 
     res.set('Content-Type', 'text/html; charset=utf-8');
@@ -1484,7 +1543,36 @@ router.get('/ket-qua/:dateSlug', async (req, res) => {
       };
     });
 
-    const ldScripts = sportsEvents.map(sd => `<script type="application/ld+json">${JSON.stringify(sd)}</script>`).join('\n  ');
+    const biggestWin = fixtures.reduce((best, f) => {
+      const h = f.goals?.home ?? 0;
+      const a = f.goals?.away ?? 0;
+      const diff = Math.abs(h - a);
+      return diff > (best?.diff || 0) ? { diff, fixture: f } : best;
+    }, null);
+    const biggestWinText = biggestWin?.fixture
+      ? `${biggestWin.fixture.teams?.home?.name || ''} ${biggestWin.fixture.goals?.home ?? 0} - ${biggestWin.fixture.goals?.away ?? 0} ${biggestWin.fixture.teams?.away?.name || ''}`
+      : '';
+
+    const resultsFaq = {
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: [
+        { '@type': 'Question', name: `Có bao nhiêu trận đấu ${label}?`,
+          acceptedAnswer: { '@type': 'Answer', text: matchCount > 0
+            ? `Ngày ${label} có ${matchCount} trận đấu đã kết thúc từ ${leagueCount} giải đấu khác nhau. Xem tỷ số đầy đủ ngay trên trang.`
+            : `Chưa có kết quả trận đấu nào được cập nhật cho ngày ${label}. Vui lòng quay lại sau khi các trận diễn ra.` } },
+        ...(biggestWinText ? [{
+          '@type': 'Question', name: `Trận nào thắng đậm nhất ${label}?`,
+          acceptedAnswer: { '@type': 'Answer', text: `Trận đậm nhất ngày ${label}: ${biggestWinText} (chênh lệch ${biggestWin.diff} bàn).` },
+        }] : []),
+        { '@type': 'Question', name: `Kết quả bóng đá ${label} cập nhật khi nào?`,
+          acceptedAnswer: { '@type': 'Answer', text: `Tỷ số các trận được cập nhật ngay sau khi trọng tài thổi còi kết thúc. ScoreLine làm mới dữ liệu mỗi 30 phút để đảm bảo chính xác.` } },
+        { '@type': 'Question', name: `Xem kết quả ngày khác ở đâu?`,
+          acceptedAnswer: { '@type': 'Answer', text: `Dùng bảng điều hướng ngày trong sidebar để chuyển sang hôm qua, ngày mai hoặc chọn ngày cụ thể theo định dạng dd-mm-yyyy (ví dụ /ket-qua/15-10-2025).` } },
+      ],
+    };
+
+    const ldScripts = [...sportsEvents, resultsFaq].map(sd => `<script type="application/ld+json">${JSON.stringify(sd)}</script>`).join('\n  ');
 
     const html = `<!DOCTYPE html>
 <html lang="vi">
