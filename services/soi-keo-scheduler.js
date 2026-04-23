@@ -1,5 +1,6 @@
 const cron = require('node-cron');
 const soiKeoGenerator = require('./soi-keo-generator');
+const { invalidateSitemapCache } = require('../routes/sitemap');
 
 const MAX_ARTICLES_PER_DAY = 50;
 const MAX_ARTICLES_PER_RUN = 12;
@@ -44,6 +45,11 @@ async function runGenerationJob() {
     stats.totalGenerated += result.generated || 0;
     stats.lastError = null;
     lastRun = new Date();
+
+    if (result.generated > 0) {
+      invalidateSitemapCache();
+      console.log('[SoiKeoScheduler] Sitemap cache invalidated');
+    }
 
     console.log(`✅ [SoiKeoScheduler] Job completed: ${result.generated} articles generated`);
 
@@ -116,6 +122,8 @@ async function triggerManualRun(maxArticles = MAX_ARTICLES_PER_RUN) {
     stats.totalRuns++;
     stats.totalGenerated += result.generated || 0;
     lastRun = new Date();
+
+    if (result.generated > 0) invalidateSitemapCache();
 
     return {
       success: true,

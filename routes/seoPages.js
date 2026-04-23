@@ -188,6 +188,7 @@ function renderSoiKeoHtml(article, thumbnailUrl) {
     "startDate": matchInfo?.matchDate,
     "eventStatus": "https://schema.org/EventScheduled",
     "eventAttendanceMode": "https://schema.org/MixedEventAttendanceMode",
+    "inLanguage": "vi-VN",
     "homeTeam": {
       "@type": "SportsTeam",
       "name": matchInfo?.homeTeam?.name,

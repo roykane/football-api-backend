@@ -2,6 +2,7 @@ const cron = require('node-cron');
 const { runAutoNewsGeneration } = require('./auto-news-generator');
 const connectDB = require('../config/database');
 const Article = require('../models/Article');
+const { invalidateSitemapCache } = require('../routes/sitemap');
 
 // Cron schedule patterns:
 // */30 * * * * - Every 30 minutes
@@ -85,6 +86,9 @@ function startNewsScheduler() {
       lastRunResult = result;
 
       if (result.success) {
+        if ((result.generated || result.articlesGenerated || 0) > 0) {
+          invalidateSitemapCache();
+        }
         console.log(`✅ Scheduled generation completed successfully`);
       } else {
         console.log(`❌ Scheduled generation failed: ${result.error}`);
@@ -110,6 +114,7 @@ function startNewsScheduler() {
       lastCleanupResult = result;
 
       if (result.success) {
+        if (result.deletedCount > 0) invalidateSitemapCache();
         console.log(`✅ Cleanup completed: ${result.deletedCount} articles deleted`);
       } else {
         console.log(`❌ Cleanup failed: ${result.error}`);

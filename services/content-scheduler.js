@@ -2,6 +2,7 @@ const cron = require('node-cron');
 const roundPreviewGenerator = require('./round-preview-generator');
 const h2hGenerator = require('./h2h-generator');
 const AutoArticle = require('../models/AutoArticle');
+const { invalidateSitemapCache } = require('../routes/sitemap');
 
 // Start the unified content scheduler for auto-generating articles
 // Schedule:
@@ -14,6 +15,7 @@ function startContentScheduler() {
     console.log('[ContentScheduler] Running round preview generation...');
     try {
       const result = await roundPreviewGenerator.run(3);
+      if (result.generated > 0) invalidateSitemapCache();
       console.log(`[ContentScheduler] Round previews done: ${result.generated} generated (${result.duration || 0}s)`);
     } catch (error) {
       console.error('[ContentScheduler] Round preview generation failed:', error.message);
@@ -25,6 +27,7 @@ function startContentScheduler() {
     console.log('[ContentScheduler] Running H2H analysis generation...');
     try {
       const result = await h2hGenerator.run(8);
+      if (result.generated > 0) invalidateSitemapCache();
       console.log(`[ContentScheduler] H2H analysis done: ${result.generated} generated (${result.duration || 0}s)`);
     } catch (error) {
       console.error('[ContentScheduler] H2H analysis generation failed:', error.message);
@@ -36,6 +39,7 @@ function startContentScheduler() {
     console.log('[ContentScheduler] Running article cleanup...');
     try {
       const result = await AutoArticle.cleanupOldArticles(7);
+      if (result.deleted > 0) invalidateSitemapCache();
       console.log(`[ContentScheduler] Cleanup done: ${result.deleted} deleted (h2h: ${result.h2hDeleted}, previews: ${result.previewDeleted})`);
     } catch (error) {
       console.error('[ContentScheduler] Cleanup failed:', error.message);

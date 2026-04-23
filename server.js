@@ -138,6 +138,36 @@ app.use((req, res, next) => {
   next();
 });
 
+// Cache-Control middleware for GET /api/* — reduces repeat backend load
+// and improves Core Web Vitals (faster repeated requests from same client).
+app.use('/api/', (req, res, next) => {
+  if (req.method !== 'GET') return next();
+  const url = req.originalUrl;
+  // Live/real-time endpoints — never cache in browser
+  if (/\/live|\/hot-live|\/odds\/live|\/scheduler\//.test(url)) {
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    return next();
+  }
+  // Fixture/match data — short cache (30s browser, 60s CDN)
+  if (/\/matches|\/fixtures|\/standings|\/events/.test(url)) {
+    res.set('Cache-Control', 'public, max-age=30, s-maxage=60, stale-while-revalidate=30');
+    return next();
+  }
+  // Articles/content — medium cache (5 min browser, 10 min CDN)
+  if (/\/articles|\/news|\/nhan-dinh|\/soi-keo|\/tin-bong-da/.test(url)) {
+    res.set('Cache-Control', 'public, max-age=300, s-maxage=600, stale-while-revalidate=300');
+    return next();
+  }
+  // Reference data (leagues, teams, countries) — longer cache (10 min / 30 min)
+  if (/\/leagues|\/competitions|\/teams|\/countries|\/coaches|\/players/.test(url)) {
+    res.set('Cache-Control', 'public, max-age=600, s-maxage=1800, stale-while-revalidate=600');
+    return next();
+  }
+  // Default — 1 min browser, 5 min CDN
+  res.set('Cache-Control', 'public, max-age=60, s-maxage=300');
+  next();
+});
+
 // ============================================
 // API FOOTBALL CONFIG
 // ============================================

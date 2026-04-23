@@ -19,10 +19,20 @@ const CACHE_TTL = 15 * 60 * 1000; // 15 minutes
 
 let cachedXml = null;
 let cachedAt = 0;
+let cachedNewsXml = null;
+let cachedNewsAt = 0;
+let cachedImagesXml = null;
+let cachedImagesAt = 0;
+const NEWS_CACHE_TTL = 5 * 60 * 1000; // 5 min — news sitemap needs fresh updates
+const IMAGES_CACHE_TTL = 30 * 60 * 1000; // 30 min
 
 function invalidateSitemapCache() {
   cachedXml = null;
   cachedAt = 0;
+  cachedNewsXml = null;
+  cachedNewsAt = 0;
+  cachedImagesXml = null;
+  cachedImagesAt = 0;
 }
 
 // Static pages with their config
@@ -244,13 +254,187 @@ router.get('/sitemap.xml', async (req, res) => {
   }
 });
 
+// Google News sitemap — articles published in last 48h
+async function generateNewsSitemap() {
+  const Article = require('../models/Article');
+  const SoiKeoArticle = require('../models/SoiKeoArticle');
+  const cutoff = new Date(Date.now() - 48 * 3600 * 1000);
+  const urls = [];
+
+  const pushNewsEntry = (loc, pubDate, title) => {
+    urls.push(`  <url>
+    <loc>${escapeXml(loc)}</loc>
+    <news:news>
+      <news:publication>
+        <news:name>ScoreLine</news:name>
+        <news:language>vi</news:language>
+      </news:publication>
+      <news:publication_date>${new Date(pubDate).toISOString()}</news:publication_date>
+      <news:title>${escapeXml(title)}</news:title>
+    </news:news>
+  </url>`);
+  };
+
+  try {
+    const news = await Article.find({ status: 'published', pubDate: { $gte: cutoff } })
+      .sort({ pubDate: -1 })
+      .limit(1000)
+      .select('slug title pubDate')
+      .lean();
+    for (const a of news) {
+      const slug = a.slug || Article.slugifyFromTitle(a.title);
+      if (!slug) continue;
+      pushNewsEntry(`${SITE_URL}/tin-bong-da/${slug}`, a.pubDate, a.title);
+    }
+  } catch (err) {
+    console.error('[SitemapNews] Article load failed:', err.message);
+  }
+
+  try {
+    const soiKeo = await SoiKeoArticle.find({ status: 'published', createdAt: { $gte: cutoff } })
+      .sort({ createdAt: -1 })
+      .limit(500)
+      .select('slug title createdAt')
+      .lean();
+    for (const a of soiKeo) {
+      if (!a.slug) continue;
+      pushNewsEntry(`${SITE_URL}/nhan-dinh/${a.slug}`, a.createdAt, a.title);
+    }
+  } catch (err) {
+    console.error('[SitemapNews] SoiKeo load failed:', err.message);
+  }
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">
+${urls.join('\n')}
+</urlset>`;
+}
+
+router.get('/sitemap-news.xml', async (req, res) => {
+  try {
+    const now = Date.now();
+    if (cachedNewsXml && now - cachedNewsAt < NEWS_CACHE_TTL) {
+      res.set('Content-Type', 'application/xml; charset=utf-8');
+      res.set('Cache-Control', 'public, max-age=300');
+      return res.send(cachedNewsXml);
+    }
+    cachedNewsXml = await generateNewsSitemap();
+    cachedNewsAt = now;
+    res.set('Content-Type', 'application/xml; charset=utf-8');
+    res.set('Cache-Control', 'public, max-age=300');
+    res.send(cachedNewsXml);
+  } catch (err) {
+    console.error('[SitemapNews] Error:', err);
+    res.status(500).send('<?xml version="1.0"?><error>Failed</error>');
+  }
+});
+
+// Image sitemap — article thumbnails for Google Images
+async function generateImagesSitemap() {
+  const Article = require('../models/Article');
+  const SoiKeoArticle = require('../models/SoiKeoArticle');
+  const urls = [];
+
+  const pushImageEntry = (loc, imageUrl, caption) => {
+    urls.push(`  <url>
+    <loc>${escapeXml(loc)}</loc>
+    <image:image>
+      <image:loc>${escapeXml(imageUrl)}</image:loc>
+      <image:caption>${escapeXml(caption)}</image:caption>
+    </image:image>
+  </url>`);
+  };
+
+  try {
+    const news = await Article.find({ status: 'published', image: { $exists: true, $ne: '' } })
+      .sort({ pubDate: -1 })
+      .limit(500)
+      .select('slug title image')
+      .lean();
+    for (const a of news) {
+      const slug = a.slug || Article.slugifyFromTitle(a.title);
+      if (!slug || !a.image) continue;
+      pushImageEntry(`${SITE_URL}/tin-bong-da/${slug}`, a.image, a.title);
+    }
+  } catch (err) {
+    console.error('[SitemapImages] Article load failed:', err.message);
+  }
+
+  try {
+    const soiKeo = await SoiKeoArticle.find({ status: 'published', thumbnail: { $exists: true, $ne: '' } })
+      .sort({ createdAt: -1 })
+      .limit(500)
+      .select('slug title thumbnail')
+      .lean();
+    for (const a of soiKeo) {
+      if (!a.slug || !a.thumbnail) continue;
+      const imageUrl = a.thumbnail.startsWith('http') ? a.thumbnail : `${SITE_URL}${a.thumbnail}`;
+      pushImageEntry(`${SITE_URL}/nhan-dinh/${a.slug}`, imageUrl, a.title);
+    }
+  } catch (err) {
+    console.error('[SitemapImages] SoiKeo load failed:', err.message);
+  }
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+${urls.join('\n')}
+</urlset>`;
+}
+
+router.get('/sitemap-images.xml', async (req, res) => {
+  try {
+    const now = Date.now();
+    if (cachedImagesXml && now - cachedImagesAt < IMAGES_CACHE_TTL) {
+      res.set('Content-Type', 'application/xml; charset=utf-8');
+      res.set('Cache-Control', 'public, max-age=1800');
+      return res.send(cachedImagesXml);
+    }
+    cachedImagesXml = await generateImagesSitemap();
+    cachedImagesAt = now;
+    res.set('Content-Type', 'application/xml; charset=utf-8');
+    res.set('Cache-Control', 'public, max-age=1800');
+    res.send(cachedImagesXml);
+  } catch (err) {
+    console.error('[SitemapImages] Error:', err);
+    res.status(500).send('<?xml version="1.0"?><error>Failed</error>');
+  }
+});
+
+// Sitemap index — lists all sub-sitemaps
+router.get('/sitemap-index.xml', (req, res) => {
+  const today = new Date().toISOString().split('T')[0];
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <sitemap>
+    <loc>${SITE_URL}/sitemap.xml</loc>
+    <lastmod>${today}</lastmod>
+  </sitemap>
+  <sitemap>
+    <loc>${SITE_URL}/sitemap-news.xml</loc>
+    <lastmod>${today}</lastmod>
+  </sitemap>
+  <sitemap>
+    <loc>${SITE_URL}/sitemap-images.xml</loc>
+    <lastmod>${today}</lastmod>
+  </sitemap>
+</sitemapindex>`;
+  res.set('Content-Type', 'application/xml; charset=utf-8');
+  res.set('Cache-Control', 'public, max-age=3600');
+  res.send(xml);
+});
+
 // GET /robots.txt - reference the sitemap
 router.get('/robots.txt', (req, res) => {
   const txt = `User-agent: *
 Allow: /
 
-# Sitemap auto-generated from database
+# Sitemaps (index + specialized)
+Sitemap: ${SITE_URL}/sitemap-index.xml
 Sitemap: ${SITE_URL}/sitemap.xml
+Sitemap: ${SITE_URL}/sitemap-news.xml
+Sitemap: ${SITE_URL}/sitemap-images.xml
 
 # Disallow API endpoints
 Disallow: /api/
