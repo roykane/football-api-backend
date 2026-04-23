@@ -90,16 +90,28 @@ router.get('/hot', async (req, res) => {
     const limitNum = parseInt(limit);
     const skip = (pageNum - 1) * limitNum;
 
-    const query = { status: 'published' };
+    // Sort strategy: upcoming matches first (soonest at top), then recent past
+    // (max 3 days old) in reverse chronological order. Older past matches are
+    // filtered out entirely — once the match is 3+ days in the past, the
+    // preview article has no forward SEO/traffic value.
+    const now = new Date();
+    const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000);
+    const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
 
-    const [articles, total] = await Promise.all([
-      SoiKeoArticle.find(query)
-        .sort({ createdAt: -1, 'matchInfo.matchDate': 1 })
-        .skip(skip)
-        .limit(limitNum)
-        .lean(),
-      SoiKeoArticle.countDocuments(query)
+    const [upcoming, pastRecent] = await Promise.all([
+      SoiKeoArticle.find({
+        status: 'published',
+        'matchInfo.matchDate': { $gte: twoHoursAgo },
+      }).sort({ 'matchInfo.matchDate': 1 }).lean(),
+      SoiKeoArticle.find({
+        status: 'published',
+        'matchInfo.matchDate': { $gte: threeDaysAgo, $lt: twoHoursAgo },
+      }).sort({ 'matchInfo.matchDate': -1 }).lean(),
     ]);
+
+    const combined = [...upcoming, ...pastRecent];
+    const total = combined.length;
+    const articles = combined.slice(skip, skip + limitNum);
 
     res.json({
       success: true,
