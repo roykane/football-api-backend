@@ -200,20 +200,22 @@ async function generateSitemap() {
   try {
     const Article = require('../models/Article');
     addUrl(`${SITE_URL}/tin-bong-da`, today, 'hourly', '0.8');
-    for (const cat of ['general', 'analysis', 'transfer', 'interview']) {
+    for (const cat of ['general', 'analysis', 'transfer']) {
       addUrl(`${SITE_URL}/tin-bong-da?cat=${cat}`, today, 'daily', '0.6');
     }
+    // Sort by createdAt (publication date) so newest-published articles come first.
     const news = await Article.find({ status: 'published' })
-      .sort({ pubDate: -1 })
+      .sort({ createdAt: -1 })
       .limit(500)
-      .select('slug title pubDate updatedAt _id')
+      .select('slug title createdAt updatedAt _id')
       .lean();
     let newsAdded = 0;
     for (const a of news) {
       const slug = a.slug || Article.slugifyFromTitle(a.title);
       if (!slug) continue;
-      const lastmod = (a.updatedAt || a.pubDate || new Date()).toISOString().split('T')[0];
-      const ageHours = (Date.now() - new Date(a.pubDate).getTime()) / 3_600_000;
+      const ref = a.updatedAt || a.createdAt || new Date();
+      const lastmod = new Date(ref).toISOString().split('T')[0];
+      const ageHours = (Date.now() - new Date(a.createdAt || ref).getTime()) / 3_600_000;
       const changefreq = ageHours < 24 ? 'hourly' : ageHours < 168 ? 'daily' : 'weekly';
       const priority = ageHours < 24 ? '0.8' : ageHours < 168 ? '0.6' : '0.4';
       addUrl(`${SITE_URL}/tin-bong-da/${slug}`, lastmod, changefreq, priority);
@@ -275,15 +277,17 @@ async function generateNewsSitemap() {
   };
 
   try {
-    const news = await Article.find({ status: 'published', pubDate: { $gte: cutoff } })
-      .sort({ pubDate: -1 })
+    // Google News: use createdAt (when we published the article) for cutoff + date,
+    // not pubDate (underlying event date which may be much older for transfers).
+    const news = await Article.find({ status: 'published', createdAt: { $gte: cutoff } })
+      .sort({ createdAt: -1 })
       .limit(1000)
-      .select('slug title pubDate')
+      .select('slug title createdAt')
       .lean();
     for (const a of news) {
       const slug = a.slug || Article.slugifyFromTitle(a.title);
       if (!slug) continue;
-      pushNewsEntry(`${SITE_URL}/tin-bong-da/${slug}`, a.pubDate, a.title);
+      pushNewsEntry(`${SITE_URL}/tin-bong-da/${slug}`, a.createdAt, a.title);
     }
   } catch (err) {
     console.error('[SitemapNews] Article load failed:', err.message);
