@@ -53,15 +53,21 @@ class MatchReportGenerator {
    * Find recently-finished matches from target leagues that don't have reports yet.
    * Returns fixtures sorted by most-recent-first, capped at `limit`.
    */
-  async findCandidateFixtures(limit = 10) {
+  async findCandidateFixtures(limit = 10, daysBack = 0) {
     const now = new Date();
-    const today = now.toISOString().split('T')[0];
-    const yesterday = new Date(now.getTime() - 24 * 3600 * 1000).toISOString().split('T')[0];
+    // daysBack=0 → today+yesterday (normal live behavior)
+    // daysBack=N → today + N days back (for back-populate)
+    const totalDays = Math.max(1, daysBack + 1);
+    const dates = [];
+    for (let i = 0; i <= totalDays; i++) {
+      const d = new Date(now.getTime() - i * 24 * 3600 * 1000);
+      dates.push(d.toISOString().split('T')[0]);
+    }
 
     const collected = [];
     const seen = new Set();
 
-    for (const date of [today, yesterday]) {
+    for (const date of dates) {
       try {
         const res = await this.footballApi.get('/fixtures', {
           params: { date, status: 'FT-AET-PEN' },
@@ -72,9 +78,8 @@ class MatchReportGenerator {
           if (!TARGET_LEAGUES.includes(leagueId)) continue;
           const finishedAt = new Date(f.fixture?.date || f.fixture?.timestamp * 1000);
           const ageHours = (now - finishedAt) / 3_600_000;
-          // Match fixture.date is kickoff time; FT means +~2 hours later.
-          // We accept matches that kicked off in the last 6 hours to cover finished window.
-          if (ageHours > LOOKBACK_HOURS + 3 || ageHours < 0) continue;
+          if (ageHours < 0) continue; // skip future matches
+          if (daysBack === 0 && ageHours > LOOKBACK_HOURS + 3) continue; // live mode: fresh only
           const fid = f.fixture?.id;
           if (!fid || seen.has(fid)) continue;
           seen.add(fid);
@@ -354,7 +359,7 @@ ${formationsText}
       tags: Array.isArray(aiContent.tags) ? aiContent.tags : [teams.home.name, teams.away.name],
       image: FALLBACK_IMAGES[Math.floor(Math.random() * FALLBACK_IMAGES.length)],
       category: this.categorize(fixture),
-      status: 'draft', // ← Start as draft; flip to 'published' after quality check
+      status: 'published',
       pubDate: new Date(fixture.fixture?.date || Date.now()),
       aiModel: 'claude-haiku-4-5-20251001',
     });
@@ -372,18 +377,21 @@ ${formationsText}
 
   /**
    * Main entry. Processes up to maxPerRun finished matches.
+   * daysBack=0 (default) = live mode: today+yesterday, fresh only
+   * daysBack=N = back-populate mode: look N days into past
    */
-  async run(maxPerRun = 5) {
+  async run(maxPerRun = 5, daysBack = 0) {
     const startTime = Date.now();
+    const mode = daysBack > 0 ? `BACK-POPULATE ${daysBack}d` : 'LIVE';
     console.log('\n📰 ========== MATCH REPORT GENERATION ==========');
-    console.log(`🕐 ${new Date().toLocaleString('vi-VN')} — target ${maxPerRun} reports`);
+    console.log(`🕐 ${new Date().toLocaleString('vi-VN')} — mode: ${mode}, target ${maxPerRun} reports`);
 
     if (!this.apiKey || !this.anthropicKey) {
       console.error('[MatchReport] Missing API keys, skipping run');
       return { generated: 0, duration: 0 };
     }
 
-    const candidates = await this.findCandidateFixtures(maxPerRun);
+    const candidates = await this.findCandidateFixtures(maxPerRun, daysBack);
     console.log(`[MatchReport] Found ${candidates.length} candidate fixtures`);
 
     if (candidates.length === 0) {

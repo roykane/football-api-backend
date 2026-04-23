@@ -196,9 +196,33 @@ async function generateSitemap() {
     console.error('[Sitemap] Failed to load teams:', err.message);
   }
 
-  // 8. News hub (/tin-bong-da) — DISABLED
-  // News scheduler is off (AI hallucination risk). Page redirects to /nhan-dinh at nginx level.
-  // Do not submit these URLs to Google to avoid thin-content signal.
+  // 8. News hub + articles (/tin-bong-da) — match reports from real API-Sports data
+  try {
+    const Article = require('../models/Article');
+    addUrl(`${SITE_URL}/tin-bong-da`, today, 'hourly', '0.8');
+    for (const cat of ['general', 'analysis', 'transfer', 'interview']) {
+      addUrl(`${SITE_URL}/tin-bong-da?cat=${cat}`, today, 'daily', '0.6');
+    }
+    const news = await Article.find({ status: 'published' })
+      .sort({ pubDate: -1 })
+      .limit(500)
+      .select('slug title pubDate updatedAt _id')
+      .lean();
+    let newsAdded = 0;
+    for (const a of news) {
+      const slug = a.slug || Article.slugifyFromTitle(a.title);
+      if (!slug) continue;
+      const lastmod = (a.updatedAt || a.pubDate || new Date()).toISOString().split('T')[0];
+      const ageHours = (Date.now() - new Date(a.pubDate).getTime()) / 3_600_000;
+      const changefreq = ageHours < 24 ? 'hourly' : ageHours < 168 ? 'daily' : 'weekly';
+      const priority = ageHours < 24 ? '0.8' : ageHours < 168 ? '0.6' : '0.4';
+      addUrl(`${SITE_URL}/tin-bong-da/${slug}`, lastmod, changefreq, priority);
+      newsAdded++;
+    }
+    console.log(`[Sitemap] ${newsAdded} news articles added`);
+  } catch (err) {
+    console.error('[Sitemap] Failed to load news:', err.message);
+  }
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -230,8 +254,8 @@ router.get('/sitemap.xml', async (req, res) => {
 });
 
 // Google News sitemap — articles published in last 48h
-// /tin-bong-da sources excluded: news scheduler is disabled (AI hallucination).
 async function generateNewsSitemap() {
+  const Article = require('../models/Article');
   const SoiKeoArticle = require('../models/SoiKeoArticle');
   const cutoff = new Date(Date.now() - 48 * 3600 * 1000);
   const urls = [];
@@ -249,6 +273,21 @@ async function generateNewsSitemap() {
     </news:news>
   </url>`);
   };
+
+  try {
+    const news = await Article.find({ status: 'published', pubDate: { $gte: cutoff } })
+      .sort({ pubDate: -1 })
+      .limit(1000)
+      .select('slug title pubDate')
+      .lean();
+    for (const a of news) {
+      const slug = a.slug || Article.slugifyFromTitle(a.title);
+      if (!slug) continue;
+      pushNewsEntry(`${SITE_URL}/tin-bong-da/${slug}`, a.pubDate, a.title);
+    }
+  } catch (err) {
+    console.error('[SitemapNews] Article load failed:', err.message);
+  }
 
   try {
     const soiKeo = await SoiKeoArticle.find({ status: 'published', createdAt: { $gte: cutoff } })
@@ -291,8 +330,8 @@ router.get('/sitemap-news.xml', async (req, res) => {
 });
 
 // Image sitemap — article thumbnails for Google Images
-// /tin-bong-da sources excluded: news scheduler is disabled (AI hallucination).
 async function generateImagesSitemap() {
+  const Article = require('../models/Article');
   const SoiKeoArticle = require('../models/SoiKeoArticle');
   const urls = [];
 
@@ -305,6 +344,21 @@ async function generateImagesSitemap() {
     </image:image>
   </url>`);
   };
+
+  try {
+    const news = await Article.find({ status: 'published', image: { $exists: true, $ne: '' } })
+      .sort({ pubDate: -1 })
+      .limit(500)
+      .select('slug title image')
+      .lean();
+    for (const a of news) {
+      const slug = a.slug || Article.slugifyFromTitle(a.title);
+      if (!slug || !a.image) continue;
+      pushImageEntry(`${SITE_URL}/tin-bong-da/${slug}`, a.image, a.title);
+    }
+  } catch (err) {
+    console.error('[SitemapImages] Article load failed:', err.message);
+  }
 
   try {
     const soiKeo = await SoiKeoArticle.find({ status: 'published', thumbnail: { $exists: true, $ne: '' } })
