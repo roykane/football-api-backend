@@ -27,6 +27,7 @@ const matchCacheWorker = require('./workers/matchCacheWorker');
 const connectArticlesDB = require('./config/database');
 const { startNewsScheduler } = require('./services/news-scheduler');
 const { startMatchReportScheduler } = require('./services/match-report-scheduler');
+const { startTransferNewsScheduler } = require('./services/transfer-news-scheduler');
 const teamSync = require('./services/team-sync');
 
 const app = express();
@@ -452,6 +453,8 @@ connectMongoDB().then(async () => {
     startContentScheduler();
     // Match report scheduler — generates drafts from real API-Sports match events every 15 min.
     startMatchReportScheduler();
+    // Transfer news scheduler — generates articles from real /transfers data twice daily.
+    startTransferNewsScheduler();
     teamSync.start();
   } catch (err) {
     console.error('Failed to setup Articles DB and scheduler:', err);
