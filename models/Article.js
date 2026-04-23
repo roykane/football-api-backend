@@ -93,6 +93,31 @@ const ArticleSchema = new mongoose.Schema({
     unique: true,
   },
 
+  // Match context for match-report articles. Optional — only populated for source='match-report'.
+  matchInfo: {
+    homeTeam: {
+      id: Number,
+      name: String,
+      logo: String,
+      score: Number,
+    },
+    awayTeam: {
+      id: Number,
+      name: String,
+      logo: String,
+      score: Number,
+    },
+    league: {
+      id: Number,
+      name: String,
+      logo: String,
+      country: String,
+    },
+    matchDate: Date,
+    venue: String,
+    status: String, // FT, AET, PEN
+  },
+
 }, {
   timestamps: true, // Auto add createdAt and updatedAt
   toJSON: { virtuals: true },

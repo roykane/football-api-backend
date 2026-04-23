@@ -347,7 +347,14 @@ ${formationsText}
       return null;
     }
 
-    // Save as DRAFT during trial period
+    const homeLogo = fixture.teams?.home?.logo || null;
+    const awayLogo = fixture.teams?.away?.logo || null;
+    const leagueLogo = fixture.league?.logo || null;
+
+    // Use home team logo as article image — reliable API-Sports CDN, no Unsplash referer issues.
+    // If missing (very rare), fallback to random Unsplash.
+    const image = homeLogo || FALLBACK_IMAGES[Math.floor(Math.random() * FALLBACK_IMAGES.length)];
+
     const article = new Article({
       originalTitle: aiContent.title,
       originalLink: `https://www.api-sports.io/fixtures/${fid}`,
@@ -357,16 +364,39 @@ ${formationsText}
       description: aiContent.description || aiContent.title,
       content: aiContent.content,
       tags: Array.isArray(aiContent.tags) ? aiContent.tags : [teams.home.name, teams.away.name],
-      image: FALLBACK_IMAGES[Math.floor(Math.random() * FALLBACK_IMAGES.length)],
+      image,
       category: this.categorize(fixture),
       status: 'published',
       pubDate: new Date(fixture.fixture?.date || Date.now()),
       aiModel: 'claude-haiku-4-5-20251001',
+      matchInfo: {
+        homeTeam: {
+          id: fixture.teams?.home?.id,
+          name: fixture.teams?.home?.name,
+          logo: homeLogo,
+          score: fixture.goals?.home ?? null,
+        },
+        awayTeam: {
+          id: fixture.teams?.away?.id,
+          name: fixture.teams?.away?.name,
+          logo: awayLogo,
+          score: fixture.goals?.away ?? null,
+        },
+        league: {
+          id: fixture.league?.id,
+          name: fixture.league?.name,
+          logo: leagueLogo,
+          country: fixture.league?.country,
+        },
+        matchDate: new Date(fixture.fixture?.date || Date.now()),
+        venue: fixture.fixture?.venue?.name || null,
+        status: fixture.fixture?.status?.short || 'FT',
+      },
     });
 
     try {
       await article.save();
-      console.log(`   ✅ Saved DRAFT: "${article.title}"`);
+      console.log(`   ✅ Saved: "${article.title}"`);
       return article;
     } catch (err) {
       // Likely duplicate fixtureId (race) or validation — log and skip.
