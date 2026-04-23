@@ -8,12 +8,13 @@ const mongoose = require('mongoose');
 const SLUG = 'v-league-1-cam-nang-toan-tap-cho-fan-bong-da-viet-nam';
 const TITLE = 'V-League 1: Cẩm nang toàn tập cho fan bóng đá Việt Nam';
 const DESCRIPTION = 'V-League 1 là giải bóng đá cao nhất Việt Nam với 14 đội thi đấu 26 vòng. Hướng dẫn toàn diện về lịch sử, format, CLB nổi bật, ngôi sao và cách theo dõi V-League.';
+// Unique image set for pillar #3 — zero overlap with pillars #1 or #2.
 const HERO_IMAGE = 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=1200&h=630&fit=crop';
 
 const IMG_STADIUM = 'https://images.unsplash.com/photo-1560272564-c83b66b1ad12?w=1000&h=560&fit=crop';
-const IMG_MATCH = 'https://images.unsplash.com/photo-1522778119026-d647f0596c20?w=1000&h=560&fit=crop';
-const IMG_PLAYER = 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=1000&h=560&fit=crop';
-const IMG_TROPHY = 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1000&h=560&fit=crop';
+const IMG_MATCH = 'https://images.unsplash.com/photo-1486286701208-1d58e9338013?w=1000&h=560&fit=crop';
+const IMG_PLAYER = 'https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=1000&h=560&fit=crop';
+const IMG_TROPHY = 'https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?w=1000&h=560&fit=crop';
 
 const CONTENT = `:::info Tóm tắt nhanh
 **V-League 1** là giải bóng đá chuyên nghiệp cao nhất Việt Nam, thành lập 1980 (chuyên nghiệp hóa 2000). Có **14 đội** thi đấu **26 vòng** mỗi mùa. Nhà vô địch được suất **AFC Champions League 2**, 2 đội cuối xuống **V-League 2**. Các CLB lịch sử gồm Hà Nội FC, Hoàng Anh Gia Lai, Công An Nhân Dân, Viettel, Thể Công, Nam Định. Giải là bệ phóng cho nhiều cầu thủ Đội tuyển Việt Nam như Quang Hải, Công Phượng, Hùng Dũng.
@@ -53,6 +54,8 @@ Trước 2023, V-League theo calendar năm (tháng 3 đến tháng 10). Từ 202
 - **Thua**: 0 điểm
 - **Vô địch**: đội nhiều điểm nhất sau 26 vòng
 :::
+
+![V-League mang đến không khí cuồng nhiệt trên sân trong cả mùa](${IMG_MATCH})
 
 ### Tiebreaker
 

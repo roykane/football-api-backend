@@ -9,12 +9,13 @@ const mongoose = require('mongoose');
 const SLUG = 'premier-league-cam-nang-a-z-cho-fan-bong-da-viet-nam';
 const TITLE = 'Premier League: Cẩm nang A đến Z cho fan bóng đá Việt Nam';
 const DESCRIPTION = 'Premier League là giải bóng đá hấp dẫn nhất thế giới với 20 đội thi đấu 38 vòng. Hướng dẫn toàn diện về lịch sử, format, Big 6, cầu thủ huyền thoại và cách xem EPL tại Việt Nam.';
-const HERO_IMAGE = 'https://images.unsplash.com/photo-1522778119026-d647f0596c20?w=1200&h=630&fit=crop';
+// Unique image set for pillar #2 — zero overlap with pillars #1 or #3.
+const HERO_IMAGE = 'https://images.unsplash.com/photo-1489944440615-453fc2b6a9a9?w=1200&h=630&fit=crop';
 
-const IMG_STADIUM = 'https://images.unsplash.com/photo-1551958219-acbc608c6377?w=1000&h=560&fit=crop';
-const IMG_ACTION = 'https://images.unsplash.com/photo-1577223625816-7546f13df25d?w=1000&h=560&fit=crop';
-const IMG_FANS = 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=1000&h=560&fit=crop';
-const IMG_TROPHY = 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1000&h=560&fit=crop';
+const IMG_STADIUM = 'https://images.unsplash.com/photo-1518091043644-c1d4457512c6?w=1000&h=560&fit=crop';
+const IMG_ACTION = 'https://images.unsplash.com/photo-1517927033932-b3d18e61fb3a?w=1000&h=560&fit=crop';
+const IMG_FANS = 'https://images.unsplash.com/photo-1543351611-58f69d7c1781?w=1000&h=560&fit=crop';
+const IMG_TROPHY = 'https://images.unsplash.com/photo-1526307616774-60d0098f7642?w=1000&h=560&fit=crop';
 
 const CONTENT = `:::info Tóm tắt nhanh
 **Premier League** (Ngoại Hạng Anh) là giải bóng đá cấp cao nhất của Anh, thành lập 1992, có **20 đội** thi đấu **38 vòng** mỗi mùa (tháng 8 đến tháng 5). Đây là giải được **xem nhiều nhất thế giới** với 4.7 tỷ lượt xem/mùa ở hơn 200 quốc gia. Fan Việt Nam theo dõi qua FPT Play, K+, HTV Sports và các ứng dụng stream. Đọc bài này để hiểu cách Premier League hoạt động từ đầu đến cuối.
