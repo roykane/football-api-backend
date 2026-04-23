@@ -26,6 +26,7 @@ const { startContentScheduler } = require('./services/content-scheduler');
 const matchCacheWorker = require('./workers/matchCacheWorker');
 const connectArticlesDB = require('./config/database');
 const { startNewsScheduler } = require('./services/news-scheduler');
+const { startMatchReportScheduler } = require('./services/match-report-scheduler');
 const teamSync = require('./services/team-sync');
 
 const app = express();
@@ -444,11 +445,13 @@ connectMongoDB().then(async () => {
   // Connect to Articles database and start schedulers
   try {
     await connectArticlesDB();
-    // DISABLED: News scheduler - nội dung AI không có data thật, tập trung cho soi kèo
+    // DISABLED: News scheduler - AI fabricates content (hallucination). Replaced by match-report-scheduler.
     // startNewsScheduler();
     // Start Soi Keo scheduler (20 articles/day)
     startSoiKeoScheduler();
     startContentScheduler();
+    // Match report scheduler — generates drafts from real API-Sports match events every 15 min.
+    startMatchReportScheduler();
     teamSync.start();
   } catch (err) {
     console.error('Failed to setup Articles DB and scheduler:', err);

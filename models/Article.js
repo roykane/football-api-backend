@@ -85,6 +85,14 @@ const ArticleSchema = new mongoose.Schema({
     default: 0,
   },
 
+  // Match report dedup — fixtureId (API-Sports). Sparse so old articles are unaffected.
+  fixtureId: {
+    type: Number,
+    index: true,
+    sparse: true,
+    unique: true,
+  },
+
 }, {
   timestamps: true, // Auto add createdAt and updatedAt
   toJSON: { virtuals: true },
@@ -179,6 +187,13 @@ ArticleSchema.statics.getById = function(id) {
 // Static method: Check if article exists (by original title)
 ArticleSchema.statics.existsByOriginalTitle = async function(originalTitle) {
   const count = await this.countDocuments({ originalTitle });
+  return count > 0;
+};
+
+// Static method: Check if match report exists (by fixtureId)
+ArticleSchema.statics.existsByFixtureId = async function(fixtureId) {
+  if (!fixtureId) return false;
+  const count = await this.countDocuments({ fixtureId });
   return count > 0;
 };
 
