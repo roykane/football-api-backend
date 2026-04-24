@@ -70,7 +70,9 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.use(express.json());
+// JSON body — bumped to 8mb so the admin image upload endpoint can accept
+// base64-encoded PNG/WebP/JPG heroes (decoded max ~5MB, base64 adds ~33%).
+app.use(express.json({ limit: '8mb' }));
 
 // Rate limiting configuration
 const apiLimiter = rateLimit({
@@ -249,6 +251,12 @@ app.use('/api/football-knowledge', require('./routes/knowledgeApi'));
 app.use('/api/world-cup-2026', require('./routes/worldCupApi'));
 app.use('/api/coaches', require('./routes/coachesApi'));
 app.use('/api/img', require('./routes/imageProxy'));
+
+// Admin (single-user, cookie session) — keep mounted LAST so any more
+// permissive public routes above take priority on identical prefixes.
+const { router: adminAuthRouter } = require('./routes/adminAuth');
+app.use('/api/admin', adminAuthRouter);
+app.use('/api/admin/articles', require('./routes/adminArticles'));
 
 // Legacy endpoints (chỉ giữ lại leagues và fixtures)
 app.get('/api/leagues', async (req, res) => {

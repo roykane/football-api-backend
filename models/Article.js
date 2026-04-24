@@ -63,6 +63,13 @@ const ArticleSchema = new mongoose.Schema({
     enum: ['draft', 'published', 'archived'],
     index: true,
   },
+
+  // Admin review flags — set by /admin when a human has checked the
+  // auto-generated content / replaced the auto-generated images.
+  contentReviewed: { type: Boolean, default: false, index: true },
+  imageReviewed:   { type: Boolean, default: false, index: true },
+  reviewedAt:      { type: Date,    default: null },
+
   pubDate: {
     type: Date,
     default: Date.now,

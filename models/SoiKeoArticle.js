@@ -87,6 +87,12 @@ const SoiKeoArticleSchema = new mongoose.Schema({
     default: 'published',
     index: true,
   },
+
+  // Admin review flags — see Article.js for semantics.
+  contentReviewed: { type: Boolean, default: false, index: true },
+  imageReviewed:   { type: Boolean, default: false, index: true },
+  reviewedAt:      { type: Date,    default: null },
+
   views: {
     type: Number,
     default: 0,
