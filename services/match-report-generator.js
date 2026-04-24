@@ -10,6 +10,7 @@
 
 const axios = require('axios');
 const Article = require('../models/Article');
+const { generateForArticle } = require('./article-image-generator');
 
 const API_SPORTS_URL = 'https://v3.football.api-sports.io';
 
@@ -397,6 +398,20 @@ ${formationsText}
     try {
       await article.save();
       console.log(`   ✅ Saved: "${article.title}"`);
+
+      // Generate composed header image from matchInfo and persist the URL.
+      // Non-fatal: if image gen fails, keep the fallback URL already set.
+      try {
+        const imgUrl = await generateForArticle(article);
+        if (imgUrl) {
+          article.image = imgUrl;
+          await article.save();
+          console.log(`   🎨 Image: ${imgUrl}`);
+        }
+      } catch (imgErr) {
+        console.warn(`   ⚠️  image gen skipped:`, imgErr.message);
+      }
+
       return article;
     } catch (err) {
       // Likely duplicate fixtureId (race) or validation — log and skip.

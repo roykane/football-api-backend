@@ -10,6 +10,7 @@
 const axios = require('axios');
 const crypto = require('crypto');
 const Article = require('../models/Article');
+const { generateForArticle } = require('./article-image-generator');
 
 const API_SPORTS_URL = 'https://v3.football.api-sports.io';
 
@@ -280,6 +281,19 @@ class TransferNewsGenerator {
     try {
       await article.save();
       console.log(`   ✅ Saved: "${article.title}"`);
+
+      // Generate composed header image (transfer variant: teamOut → teamIn).
+      try {
+        const imgUrl = await generateForArticle(article);
+        if (imgUrl) {
+          article.image = imgUrl;
+          await article.save();
+          console.log(`   🎨 Image: ${imgUrl}`);
+        }
+      } catch (imgErr) {
+        console.warn(`   ⚠️  image gen skipped:`, imgErr.message);
+      }
+
       return article;
     } catch (err) {
       console.error(`   ❌ Save failed:`, err.message);

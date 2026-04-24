@@ -212,6 +212,12 @@ app.use('/thumbnails', express.static(path.join(__dirname, 'public', 'thumbnails
   immutable: true,
 }));
 
+// Composed article header images (1200x630) — generated per article.
+app.use('/article-images', express.static(path.join(__dirname, 'public', 'article-images'), {
+  maxAge: '30d',
+  immutable: true,
+}));
+
 // Public SEO endpoints (sitemap.xml, robots.txt) - no API key required
 app.use('/', require('./routes/sitemap'));
 
