@@ -104,6 +104,11 @@ router.get('/:idOrSlug', async (req, res) => {
 
     Article.updateOne({ _id: article._id }, { $inc: { views: 1 } }).catch(() => {});
 
+    // Admins edit content/images live — don't let browsers serve a stale
+    // article after an admin update. Force a conditional revalidation on
+    // every request so edits are visible on the next refresh without the
+    // reader needing a hard reload.
+    res.set('Cache-Control', 'no-cache, must-revalidate');
     res.json({ success: true, data: article });
   } catch (error) {
     console.error('[Articles API] Error:', error);

@@ -209,6 +209,9 @@ router.get('/:slug', async (req, res) => {
     // Increment views
     await SoiKeoArticle.updateOne({ slug }, { $inc: { views: 1 } });
 
+    // See routes/articles.js — force revalidation so admin edits are visible
+    // on the next refresh.
+    res.set('Cache-Control', 'no-cache, must-revalidate');
     res.json({
       success: true,
       data: article

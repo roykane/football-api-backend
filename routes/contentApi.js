@@ -84,6 +84,9 @@ router.get('/articles/:slug', async (req, res) => {
     // Increment views
     AutoArticle.updateOne({ _id: article._id }, { $inc: { views: 1 } }).catch(() => {});
 
+    // See routes/articles.js — force revalidation so admin edits are visible
+    // on the next refresh.
+    res.set('Cache-Control', 'no-cache, must-revalidate');
     res.json({ success: true, data: article });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
