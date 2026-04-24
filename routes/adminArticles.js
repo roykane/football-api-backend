@@ -267,46 +267,67 @@ router.post('/:collection/:id/image', async (req, res) => {
       return res.status(413).json({ success: false, error: 'image > 5MB' });
     }
 
+    // slot = 'hero' (default) → top-of-article image, also mirrored into the
+    // article.image / .thumbnail field used for OG/SEO.
+    // slot = 'stats' → second inline image (the "stats card" the generators
+    // inject mid-article). Only updates the markdown — no top-level field.
+    const slot = req.body.slot === 'stats' ? 'stats' : 'hero';
+
     // Bust browser/CDN cache by appending a version suffix each upload.
-    const filename = `${req.params.id}-admin.${ext}`;
+    const filename = `${req.params.id}-admin-${slot}.${ext}`;
     fs.writeFileSync(path.join(UPLOAD_DIR, filename), buf);
     const publicUrl = `/article-images/${filename}?v=${Date.now()}`;
 
-    // Load the doc first so we can rewrite the inline hero image in content.
-    // The generators embed a `![hero](...)` as the FIRST markdown image at
-    // the top of the body; replacing that is what makes the new image show
-    // on the public detail page. For SoiKeoArticle, the hero lives inside
-    // content.introduction (structured subdoc); for Article/AutoArticle it
-    // sits in the single `content` string.
     const doc = await cfg.model.findById(req.params.id);
     if (!doc) return res.status(404).json({ success: false, error: 'not found' });
 
-    doc[cfg.imageField] = publicUrl;
+    // Mirror the HERO into the top-level image field; stats slot doesn't
+    // have a dedicated field (it only lives inline in content).
+    if (slot === 'hero') {
+      doc[cfg.imageField] = publicUrl;
+    }
     doc.imageReviewed = true;
     doc.reviewedAt = new Date();
 
-    const replaceFirstImage = (text) => {
+    // ─── Rewrite the matching inline image in content ────────────────────
+
+    // Replace the Nth `![alt](url)` (0-indexed) in a string.
+    const replaceNthImage = (text, nth) => {
       if (typeof text !== 'string') return text;
-      // Match the first `![alt](url)` anywhere in the string.
-      return text.replace(/!\[([^\]]*)\]\(([^)]+)\)/, `![$1](${publicUrl})`);
+      let seen = 0;
+      return text.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (match, alt) => {
+        const out = seen === nth ? `![${alt}](${publicUrl})` : match;
+        seen += 1;
+        return out;
+      });
     };
 
     if (req.params.collection === 'soi-keo') {
+      // Soi-keo stores the 2 inline images in DIFFERENT sections:
+      //   hero  → content.introduction
+      //   stats → content.formAnalysis (fallback: oddsAnalysis)
       if (doc.content && typeof doc.content === 'object') {
-        if (doc.content.introduction) {
-          doc.content.introduction = replaceFirstImage(doc.content.introduction);
+        if (slot === 'hero' && doc.content.introduction) {
+          doc.content.introduction = replaceNthImage(doc.content.introduction, 0);
+        } else if (slot === 'stats') {
+          const target = doc.content.formAnalysis ? 'formAnalysis'
+            : doc.content.oddsAnalysis ? 'oddsAnalysis'
+            : null;
+          if (target) doc.content[target] = replaceNthImage(doc.content[target], 0);
         }
         doc.markModified('content');
       }
     } else {
+      // Article / AutoArticle keep content as a single markdown string, so
+      // the 2 inline images are the 1st and 2nd `![](...)` globally.
       if (typeof doc.content === 'string') {
-        doc.content = replaceFirstImage(doc.content);
+        doc.content = replaceNthImage(doc.content, slot === 'hero' ? 0 : 1);
       }
     }
 
     await doc.save();
 
-    res.json({ success: true, url: publicUrl, data: doc });
+    res.json({ success: true, url: publicUrl, slot, data: doc });
   } catch (err) {
     console.error('[admin/articles image] error:', err);
     res.status(500).json({ success: false, error: err.message });
