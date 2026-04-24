@@ -129,10 +129,15 @@ router.get('/', async (req, res) => {
       return res.status(400).json({ success: false, error: 'invalid collection' });
     }
 
+    // Use { $ne: true } instead of { $eq: false } so documents created before
+    // these fields existed on the schema (still `undefined` in Mongo) are
+    // counted as "not reviewed". A bare `false` equality filter would miss
+    // them entirely.
+    const UNREVIEWED = { $ne: true };
     const reviewFilter = {};
-    if (reviewed === 'pending') { reviewFilter.contentReviewed = false; reviewFilter.imageReviewed = false; }
-    else if (reviewed === 'content') { reviewFilter.contentReviewed = true; reviewFilter.imageReviewed = false; }
-    else if (reviewed === 'image') { reviewFilter.imageReviewed = true; reviewFilter.contentReviewed = false; }
+    if (reviewed === 'pending') { reviewFilter.contentReviewed = UNREVIEWED; reviewFilter.imageReviewed = UNREVIEWED; }
+    else if (reviewed === 'content') { reviewFilter.contentReviewed = true; reviewFilter.imageReviewed = UNREVIEWED; }
+    else if (reviewed === 'image') { reviewFilter.imageReviewed = true; reviewFilter.contentReviewed = UNREVIEWED; }
     else if (reviewed === 'done') { reviewFilter.contentReviewed = true; reviewFilter.imageReviewed = true; }
 
     const textFilter = q ? { title: { $regex: q, $options: 'i' } } : {};
