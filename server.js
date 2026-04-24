@@ -248,6 +248,7 @@ app.use('/api/players', require('./routes/playersApi'));
 app.use('/api/football-knowledge', require('./routes/knowledgeApi'));
 app.use('/api/world-cup-2026', require('./routes/worldCupApi'));
 app.use('/api/coaches', require('./routes/coachesApi'));
+app.use('/api/img', require('./routes/imageProxy'));
 
 // Legacy endpoints (chỉ giữ lại leagues và fixtures)
 app.get('/api/leagues', async (req, res) => {
