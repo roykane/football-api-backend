@@ -1,5 +1,6 @@
 const SoiKeoArticle = require('../models/SoiKeoArticle');
 const oddsCache = require('./oddsCache');
+const { generateForArticle, generateVariantForArticle } = require('./article-image-generator');
 const axios = require('axios');
 require('dotenv').config();
 
@@ -680,6 +681,46 @@ KHÔNG bịa chấn thương cầu thủ. Trả về ĐÚNG JSON.`;
 
       await article.save();
       console.log(`   ✅ Article saved: "${article.title}"`);
+
+      // Generate 2 inline images (hero + preview card) and embed them into
+      // the article's introduction + formAnalysis sections as markdown, so
+      // readers see two visuals interleaved with the analysis text.
+      // Non-fatal: on failure we keep the random Unsplash thumbnail.
+      try {
+        const [heroUrl, variantUrl] = await Promise.all([
+          generateForArticle(article).catch(() => null),
+          generateVariantForArticle(article).catch(() => null),
+        ]);
+        const homeName = teams.home.name;
+        const awayName = teams.away.name;
+
+        if (heroUrl && article.content?.introduction) {
+          const alt = `${homeName} vs ${awayName}`;
+          article.content.introduction = `![${alt}](${heroUrl})\n\n${article.content.introduction}`;
+          // Also replace the Unsplash-random thumbnail with our composed image
+          // so the shared OG card matches the hero used inline.
+          article.thumbnail = heroUrl;
+          console.log(`   🎨 Hero: ${heroUrl}`);
+        }
+        if (variantUrl) {
+          const alt = `Phân tích kèo ${homeName} vs ${awayName}`;
+          // Prefer inserting before form analysis; fallback to odds analysis.
+          const target = article.content?.formAnalysis ? 'formAnalysis'
+            : article.content?.oddsAnalysis ? 'oddsAnalysis'
+            : null;
+          if (target && article.content[target]) {
+            article.content[target] = `![${alt}](${variantUrl})\n\n${article.content[target]}`;
+            console.log(`   🎨 Variant: ${variantUrl} (into ${target})`);
+          }
+        }
+        if (heroUrl || variantUrl) {
+          // Mongoose: mark the mixed/nested content path dirty before save
+          article.markModified('content');
+          await article.save();
+        }
+      } catch (imgErr) {
+        console.warn(`   ⚠️  image gen skipped:`, imgErr.message);
+      }
 
       return article;
 

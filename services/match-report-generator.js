@@ -10,7 +10,44 @@
 
 const axios = require('axios');
 const Article = require('../models/Article');
-const { generateForArticle } = require('./article-image-generator');
+const { generateForArticle, generateVariantForArticle } = require('./article-image-generator');
+
+/**
+ * Inject two generated images into the article content body.
+ * - Hero goes before paragraph 1
+ * - Stats card is injected before ~2/3 through the article (before the stats
+ *   paragraph if we can find it, else before the last paragraph)
+ * Both are plain markdown so SimpleMarkdown renders them as figures.
+ */
+function injectImagesIntoContent(content, heroUrl, variantUrl, homeName, awayName) {
+  if (!content) return content;
+  const paragraphs = content.split(/\n\n+/).filter(Boolean);
+  if (paragraphs.length === 0) return content;
+
+  const heroAlt = `${homeName} vs ${awayName}`;
+  const variantAlt = `Tỷ số & thống kê ${homeName} vs ${awayName}`;
+  const heroBlock = heroUrl ? `![${heroAlt}](${heroUrl})` : null;
+  const variantBlock = variantUrl ? `![${variantAlt}](${variantUrl})` : null;
+
+  // Find a good insertion point for the variant image: before the paragraph
+  // that talks about "Thống kê" / "Tỉ lệ" / stats numbers. Fallback: 2/3 through.
+  let variantIdx = -1;
+  for (let i = paragraphs.length - 1; i >= 1; i--) {
+    if (/thống kê|possession|kiểm soát|số liệu/i.test(paragraphs[i])) {
+      variantIdx = i;
+      break;
+    }
+  }
+  if (variantIdx < 0) variantIdx = Math.max(1, Math.floor(paragraphs.length * 2 / 3));
+
+  const out = [];
+  if (heroBlock) out.push(heroBlock);
+  for (let i = 0; i < paragraphs.length; i++) {
+    if (variantBlock && i === variantIdx) out.push(variantBlock);
+    out.push(paragraphs[i]);
+  }
+  return out.join('\n\n');
+}
 
 const API_SPORTS_URL = 'https://v3.football.api-sports.io';
 
@@ -399,14 +436,30 @@ ${formationsText}
       await article.save();
       console.log(`   ✅ Saved: "${article.title}"`);
 
-      // Generate composed header image from matchInfo and persist the URL.
+      // Generate 2 composed images (hero + stats card) and embed both
+      // into the article body as markdown so readers see them inline.
       // Non-fatal: if image gen fails, keep the fallback URL already set.
       try {
-        const imgUrl = await generateForArticle(article);
-        if (imgUrl) {
-          article.image = imgUrl;
+        const [heroUrl, variantUrl] = await Promise.all([
+          generateForArticle(article).catch(() => null),
+          generateVariantForArticle(article).catch(() => null),
+        ]);
+        if (heroUrl) {
+          article.image = heroUrl;
+          console.log(`   🎨 Hero image: ${heroUrl}`);
+        }
+        if (variantUrl) {
+          console.log(`   🎨 Stats image: ${variantUrl}`);
+        }
+        if (heroUrl || variantUrl) {
+          article.content = injectImagesIntoContent(
+            article.content,
+            heroUrl,
+            variantUrl,
+            teams.home.name,
+            teams.away.name,
+          );
           await article.save();
-          console.log(`   🎨 Image: ${imgUrl}`);
         }
       } catch (imgErr) {
         console.warn(`   ⚠️  image gen skipped:`, imgErr.message);

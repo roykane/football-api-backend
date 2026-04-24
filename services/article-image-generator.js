@@ -265,4 +265,168 @@ async function generateForArticle(article) {
   return generate({ title, leagueName, leagueId, homeLogoUrl, awayLogoUrl, articleId, dateStr });
 }
 
-module.exports = { generate, generateForArticle };
+/**
+ * Second variant: "Stats Card" for finished matches (big final score) or
+ * "Preview Card" for upcoming matches (big date/time). Saved as
+ * {articleId}-2.png so it doesn't collide with the hero image.
+ */
+async function generateVariant({
+  variant = 'score', // 'score' | 'preview'
+  title,
+  leagueName,
+  leagueId,
+  homeName,
+  awayName,
+  homeLogoUrl,
+  awayLogoUrl,
+  articleId,
+  homeScore,
+  awayScore,
+  dateStr,
+  timeStr,
+  badge,
+}) {
+  if (!sharp) return null;
+  if (!articleId) return null;
+
+  const outFile = path.join(OUTPUT_DIR, `${articleId}-2.png`);
+  const publicUrl = `${PUBLIC_URL_BASE}/${articleId}-2.png`;
+
+  // Reversed gradient for visual differentiation from hero image.
+  const [c1, c2] = themeFor(leagueId);
+  const titleLines = wrap(title, 44, 2);
+  const badgeText = badge || (variant === 'score' ? 'KẾT QUẢ TRẬN ĐẤU' : 'TRƯỚC GIỜ BÓNG LĂN');
+
+  const svgBg = `
+<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+  <defs>
+    <linearGradient id="g1" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="${c2}"/>
+      <stop offset="100%" stop-color="${c1}"/>
+    </linearGradient>
+    <radialGradient id="g2" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.18)"/>
+      <stop offset="100%" stop-color="rgba(0,0,0,0)"/>
+    </radialGradient>
+  </defs>
+  <rect width="${W}" height="${H}" fill="url(#g1)"/>
+  <rect width="${W}" height="${H}" fill="url(#g2)"/>
+  <!-- horizontal pattern bars -->
+  <g opacity="0.06" fill="#ffffff">
+    <rect x="0" y="140" width="${W}" height="2"/>
+    <rect x="0" y="490" width="${W}" height="2"/>
+  </g>
+</svg>`;
+
+  const centerBig = variant === 'score'
+    ? `${homeScore ?? 0} <tspan fill="rgba(255,255,255,0.45)">−</tspan> ${awayScore ?? 0}`
+    : (timeStr || dateStr || 'VS');
+
+  const bigFontSize = variant === 'score' ? 96 : 72;
+
+  const overlaySvg = `
+<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+  <style>
+    .badge  { font: 800 20px sans-serif; fill: #0f172a; letter-spacing: 2px; }
+    .league { font: 700 20px sans-serif; fill: rgba(255,255,255,0.8); letter-spacing: 1.5px; }
+    .team   { font: 800 26px sans-serif; fill: #ffffff; }
+    .big    { font: 900 ${bigFontSize}px sans-serif; fill: #fbbf24; letter-spacing: 2px; }
+    .title  { font: 700 32px sans-serif; fill: rgba(255,255,255,0.95); }
+    .brand  { font: 900 22px sans-serif; fill: rgba(255,255,255,0.7); letter-spacing: 3px; }
+    .date   { font: 600 20px sans-serif; fill: rgba(255,255,255,0.65); }
+  </style>
+
+  <!-- Top-left badge pill -->
+  <rect x="60" y="40" rx="14" ry="14" width="${Math.max(180, badgeText.length * 11 + 30)}" height="38" fill="#fbbf24"/>
+  <text x="${60 + 16}" y="66" class="badge">${escapeSvg(badgeText)}</text>
+
+  <!-- Top-right league or date -->
+  <text x="${W - 60}" y="66" text-anchor="end" class="league">${escapeSvg((leagueName || '').toUpperCase())}</text>
+
+  <!-- Center big number/time -->
+  <text x="${W / 2}" y="300" text-anchor="middle" class="big">${centerBig}</text>
+
+  <!-- Team names under logos -->
+  <text x="${W / 2 - 260}" y="475" text-anchor="middle" class="team">${escapeSvg((homeName || '').slice(0, 20))}</text>
+  <text x="${W / 2 + 260}" y="475" text-anchor="middle" class="team">${escapeSvg((awayName || '').slice(0, 20))}</text>
+
+  <!-- Title line(s) at bottom -->
+  ${titleLines.map((line, i) => {
+    const y = 540 + i * 38;
+    return `<text x="${W / 2}" y="${y}" text-anchor="middle" class="title">${escapeSvg(line)}</text>`;
+  }).join('\n  ')}
+
+  <!-- Bottom-left: date, bottom-right: brand -->
+  ${dateStr ? `<text x="60" y="${H - 30}" class="date">${escapeSvg(dateStr)}</text>` : ''}
+  <text x="${W - 60}" y="${H - 30}" text-anchor="end" class="brand">SCORELINE.IO</text>
+</svg>`;
+
+  const composites = [];
+
+  // Smaller logos in variant (vs huge in hero)
+  const smallLogoSize = 160;
+  const homeLogoPath = await getLogo(homeLogoUrl);
+  const awayLogoPath = await getLogo(awayLogoUrl);
+
+  if (homeLogoPath) {
+    // Need to resize down since cached logos are LOGO_SIZE=220
+    const resized = await sharp(homeLogoPath).resize(smallLogoSize, smallLogoSize).toBuffer();
+    composites.push({ input: resized, top: 250, left: Math.floor(W / 2) - 340 });
+  }
+  if (awayLogoPath) {
+    const resized = await sharp(awayLogoPath).resize(smallLogoSize, smallLogoSize).toBuffer();
+    composites.push({ input: resized, top: 250, left: Math.floor(W / 2) + 180 });
+  }
+
+  composites.push({ input: Buffer.from(overlaySvg), top: 0, left: 0 });
+
+  try {
+    await sharp(Buffer.from(svgBg))
+      .composite(composites)
+      .png({ quality: 90 })
+      .toFile(outFile);
+    return publicUrl;
+  } catch (e) {
+    console.error(`❌ article-image-generator variant failed for ${articleId}:`, e.message);
+    return null;
+  }
+}
+
+/** Build "stats card" variant for an Article — picks 'score' vs 'preview' automatically. */
+async function generateVariantForArticle(article) {
+  if (!sharp) return null;
+  if (!article?._id) return null;
+
+  const articleId = String(article._id);
+  const title = article.title;
+  const info = article.matchInfo || {};
+  const homeScore = info.homeTeam?.score;
+  const awayScore = info.awayTeam?.score;
+  const hasScore = homeScore != null && awayScore != null;
+
+  let dateStr = null;
+  let timeStr = null;
+  if (info.matchDate) {
+    const d = new Date(info.matchDate);
+    dateStr = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+    timeStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  }
+
+  return generateVariant({
+    variant: hasScore ? 'score' : 'preview',
+    title,
+    leagueName: info.league?.name || '',
+    leagueId: info.league?.id || null,
+    homeName: info.homeTeam?.name || '',
+    awayName: info.awayTeam?.name || '',
+    homeLogoUrl: info.homeTeam?.logo || null,
+    awayLogoUrl: info.awayTeam?.logo || null,
+    articleId,
+    homeScore,
+    awayScore,
+    dateStr,
+    timeStr,
+  });
+}
+
+module.exports = { generate, generateForArticle, generateVariant, generateVariantForArticle };
