@@ -235,7 +235,7 @@ class MatchReportGenerator {
     const awayScore = goals?.away ?? 0;
     const resultDesc = homeScore > awayScore ? `${teams.home.name} thắng` : awayScore > homeScore ? `${teams.away.name} thắng` : 'Hòa';
 
-    return `Bạn là phóng viên thể thao chuyên nghiệp, viết bài tường thuật trận đấu BẰNG TIẾNG VIỆT.
+    return `Bạn là phóng viên thể thao chuyên nghiệp, viết bài tường thuật trận đấu BẰNG TIẾNG VIỆT cho website bóng đá.
 
 **DỮ LIỆU TRẬN ĐẤU (duy nhất nguồn sự kiện — KHÔNG được suy diễn ngoài đây):**
 
@@ -265,7 +265,7 @@ ${formationsText}
 
 **QUY TẮC BẮT BUỘC (CỰC KỲ QUAN TRỌNG):**
 
-1. **CHỈ DÙNG DỮ LIỆU Ở TRÊN.** Không được thêm tên cầu thủ, thông tin bên ngoài, bình luận về quá khứ đội bóng, thống kê không có trong prompt. Nếu data thiếu → viết "trận đấu chưa có thống kê chi tiết" thay vì bịa.
+1. **CHỈ DÙNG DỮ LIỆU Ở TRÊN.** Không được thêm tên cầu thủ, thông tin bên ngoài, bình luận về quá khứ đội bóng, thống kê không có trong prompt. Nếu data thiếu cho 1 section → viết ngắn gọn "trận đấu chưa có thống kê chi tiết công bố" thay vì bịa.
 
 2. **KHÔNG BỊA TÊN CẦU THỦ** không xuất hiện trong danh sách bàn thắng/thẻ/thay người ở trên.
 
@@ -273,24 +273,47 @@ ${formationsText}
 
 4. **KHÔNG DÙNG** các từ: "soi kèo", "cược", "nhà cái", "đặt cược", "AI", "trí tuệ nhân tạo".
 
-5. **LENGTH**: bài 400-700 từ. Không dài quá vì chỉ có data của 1 trận.
+5. **LENGTH**: bài 800-1200 từ tổng (không tính FAQ).
 
-6. **STRUCTURE**:
-   - Intro (80-120 từ): kết quả + bối cảnh ngắn (không bịa) + trận thuộc giải gì
-   - Diễn biến (150-250 từ): kể lại bàn thắng theo thứ tự phút, ai ghi, có ai kiến tạo
-   - Highlights khác (100-150 từ): thẻ đỏ (nếu có), thay người quan trọng, khoảnh khắc đáng chú ý
-   - Thống kê (80-100 từ): nêu 2-3 chỉ số quan trọng (possession, shots, xG)
-   - Kết luận (50-80 từ): ý nghĩa kết quả trong bối cảnh giải đấu (chỉ nêu sự kiện, không bình luận tương lai)
+6. **DÙNG MARKDOWN ĐỂ CHIA BỐ CỤC** — rất quan trọng cho SEO và dễ đọc:
+   - Heading cấp 2 (##) cho mỗi section chính.
+   - Có thể dùng ### cho sub-topic trong một section.
+   - **Bold** tên cầu thủ/đội lần đầu xuất hiện trong mỗi section (không bold mỗi lần nhắc).
+   - Có thể dùng bullet list (-) khi liệt kê thẻ phạt, thay người, thống kê.
 
-7. **KHÔNG DÙNG FORMAT MARKDOWN** (không ### không **bold**). Chỉ text thuần với xuống dòng đúp (\\n\\n) giữa đoạn.
+7. **STRUCTURE BẮT BUỘC** — phải có đủ 5 section sau, đúng thứ tự, mỗi section bắt đầu bằng "## ":
+
+   ## Tổng quan trận đấu
+   (120-180 từ) Kết quả cuối cùng, bối cảnh giải đấu, sân, thời gian, nêu điểm đáng chú ý nhất sẽ nói kỹ ở dưới. Câu đầu tiên phải chứa tỷ số + tên 2 đội + giải đấu.
+
+   ## Diễn biến chi tiết
+   (250-350 từ) Kể lại trận đấu theo thứ tự phút: bàn thắng từng phút, ai ghi, ai kiến tạo, tình huống dẫn đến bàn. Nếu trận 0-0 thì mô tả các cơ hội, sức ép của 2 đội dựa trên stats. Dùng ### cho "Hiệp 1" và "Hiệp 2" nếu hợp lý.
+
+   ## Bàn thắng & khoảnh khắc đáng chú ý
+   (150-200 từ) Highlight bàn thắng đẹp, thẻ đỏ/thẻ vàng quan trọng, thay người chiến thuật. Nếu không có bàn thì tập trung vào thẻ phạt, thay người. Dùng bullet list khi liệt kê ≥3 sự kiện cùng loại.
+
+   ## Thống kê trận đấu
+   (120-180 từ) Phân tích 3-4 chỉ số có thật trong data (possession, shots, shots on goal, corners, xG). So sánh giữa 2 đội và nêu ý nghĩa. Nếu không có stats thì viết "Trận đấu chưa có thống kê chi tiết công bố" — KHÔNG bịa số.
+
+   ## Ý nghĩa kết quả
+   (120-180 từ) Kết quả này nghĩa là gì trong bối cảnh vòng đấu/giải đấu — chỉ nêu sự kiện khách quan (đội A giữ được điểm ở sân nhà, đội B tiếp tục bất bại, v.v.). KHÔNG dự đoán tương lai, KHÔNG bình luận về tinh thần cầu thủ.
+
+   ## Câu hỏi thường gặp
+   (3 câu hỏi, mỗi câu trả lời 2-3 câu / ~30-60 từ). Dùng ### cho mỗi câu hỏi. Ví dụ:
+   ### Ai ghi bàn trong trận ${teams.home.name} vs ${teams.away.name}?
+   (trả lời ngắn gọn bằng câu văn)
+   ### Tỷ số cuối cùng là bao nhiêu?
+   (trả lời)
+   ### Trận đấu diễn ra khi nào và ở đâu?
+   (trả lời)
 
 ---
 
-**TRẢ VỀ JSON THUẦN (không markdown, không backticks):**
+**TRẢ VỀ JSON THUẦN (không backticks ngoài JSON):**
 {
-  "title": "(50-70 ký tự, format: 'Team A x-y Team B: Highlight ngắn')",
-  "description": "(140-160 ký tự, tóm tắt + CTA 'Xem chi tiết')",
-  "content": "(400-700 từ, xuống dòng bằng \\n\\n giữa đoạn)",
+  "title": "(55-70 ký tự, format: '${teams.home.name} ${homeScore}-${awayScore} ${teams.away.name}: <highlight ngắn>')",
+  "description": "(140-160 ký tự, tóm tắt kết quả + điểm đáng chú ý)",
+  "content": "(800-1200 từ, MARKDOWN có ## headings và **bold**, sections xuống dòng bằng \\n\\n)",
   "tags": ["${teams.home.name}", "${teams.away.name}", "${league.name}"]
 }`;
   }
@@ -307,7 +330,9 @@ ${formationsText}
       },
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 3000,
+        // Content grew to 800-1200 words + 3 FAQ Q&As → raise ceiling so
+        // long articles aren't truncated mid-section (was 3000).
+        max_tokens: 4500,
         messages: [{ role: 'user', content: prompt }],
       }),
     });
