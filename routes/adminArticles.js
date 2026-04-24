@@ -291,15 +291,28 @@ router.post('/:collection/:id/image', async (req, res) => {
 
     // ─── Rewrite the matching inline image in content ────────────────────
 
-    // Replace the Nth `![alt](url)` (0-indexed) in a string.
-    const replaceNthImage = (text, nth) => {
+    const altText = doc.title || 'hero image';
+    const newMarkdown = `![${altText}](${publicUrl})`;
+
+    /**
+     * Replace the Nth `![alt](url)` (0-indexed) in a string, OR prepend the
+     * new image when the Nth slot doesn't exist yet. Older articles from
+     * before the image-injection feature landed have no inline images, so a
+     * plain replace would be a no-op and the upload would appear "lost".
+     */
+    const upsertNthImage = (text, nth) => {
       if (typeof text !== 'string') return text;
-      let seen = 0;
-      return text.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (match, alt) => {
-        const out = seen === nth ? `![${alt}](${publicUrl})` : match;
-        seen += 1;
-        return out;
-      });
+      const count = (text.match(/!\[[^\]]*\]\([^)]+\)/g) || []).length;
+      if (count > nth) {
+        let seen = 0;
+        return text.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (match, alt) => {
+          const out = seen === nth ? `![${alt || altText}](${publicUrl})` : match;
+          seen += 1;
+          return out;
+        });
+      }
+      // Slot doesn't exist yet — add the image at the start of this text.
+      return `${newMarkdown}\n\n${text}`;
     };
 
     if (req.params.collection === 'soi-keo') {
@@ -307,13 +320,14 @@ router.post('/:collection/:id/image', async (req, res) => {
       //   hero  → content.introduction
       //   stats → content.formAnalysis (fallback: oddsAnalysis)
       if (doc.content && typeof doc.content === 'object') {
-        if (slot === 'hero' && doc.content.introduction) {
-          doc.content.introduction = replaceNthImage(doc.content.introduction, 0);
-        } else if (slot === 'stats') {
+        if (slot === 'hero') {
+          doc.content.introduction = upsertNthImage(doc.content.introduction || '', 0);
+        } else {
+          // Pick whichever mid-article section exists; prefer formAnalysis.
           const target = doc.content.formAnalysis ? 'formAnalysis'
             : doc.content.oddsAnalysis ? 'oddsAnalysis'
-            : null;
-          if (target) doc.content[target] = replaceNthImage(doc.content[target], 0);
+            : 'formAnalysis'; // fall back by creating the slot
+          doc.content[target] = upsertNthImage(doc.content[target] || '', 0);
         }
         doc.markModified('content');
       }
@@ -321,7 +335,11 @@ router.post('/:collection/:id/image', async (req, res) => {
       // Article / AutoArticle keep content as a single markdown string, so
       // the 2 inline images are the 1st and 2nd `![](...)` globally.
       if (typeof doc.content === 'string') {
-        doc.content = replaceNthImage(doc.content, slot === 'hero' ? 0 : 1);
+        doc.content = upsertNthImage(doc.content, slot === 'hero' ? 0 : 1);
+      } else if (slot === 'hero') {
+        // Never happens in practice (content is always a string here) but
+        // keep the upload non-fatal if the document is in an unexpected shape.
+        doc.content = newMarkdown;
       }
     }
 
