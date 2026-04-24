@@ -267,17 +267,44 @@ router.post('/:collection/:id/image', async (req, res) => {
       return res.status(413).json({ success: false, error: 'image > 5MB' });
     }
 
+    // Bust browser/CDN cache by appending a version suffix each upload.
     const filename = `${req.params.id}-admin.${ext}`;
     fs.writeFileSync(path.join(UPLOAD_DIR, filename), buf);
-    const publicUrl = `/article-images/${filename}`;
+    const publicUrl = `/article-images/${filename}?v=${Date.now()}`;
 
-    const update = {
-      [cfg.imageField]: publicUrl,
-      imageReviewed: true,
-      reviewedAt: new Date(),
-    };
-    const doc = await cfg.model.findByIdAndUpdate(req.params.id, { $set: update }, { new: true });
+    // Load the doc first so we can rewrite the inline hero image in content.
+    // The generators embed a `![hero](...)` as the FIRST markdown image at
+    // the top of the body; replacing that is what makes the new image show
+    // on the public detail page. For SoiKeoArticle, the hero lives inside
+    // content.introduction (structured subdoc); for Article/AutoArticle it
+    // sits in the single `content` string.
+    const doc = await cfg.model.findById(req.params.id);
     if (!doc) return res.status(404).json({ success: false, error: 'not found' });
+
+    doc[cfg.imageField] = publicUrl;
+    doc.imageReviewed = true;
+    doc.reviewedAt = new Date();
+
+    const replaceFirstImage = (text) => {
+      if (typeof text !== 'string') return text;
+      // Match the first `![alt](url)` anywhere in the string.
+      return text.replace(/!\[([^\]]*)\]\(([^)]+)\)/, `![$1](${publicUrl})`);
+    };
+
+    if (req.params.collection === 'soi-keo') {
+      if (doc.content && typeof doc.content === 'object') {
+        if (doc.content.introduction) {
+          doc.content.introduction = replaceFirstImage(doc.content.introduction);
+        }
+        doc.markModified('content');
+      }
+    } else {
+      if (typeof doc.content === 'string') {
+        doc.content = replaceFirstImage(doc.content);
+      }
+    }
+
+    await doc.save();
 
     res.json({ success: true, url: publicUrl, data: doc });
   } catch (err) {
