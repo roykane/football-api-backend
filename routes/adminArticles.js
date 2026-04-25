@@ -254,6 +254,57 @@ router.patch('/:collection/:id', async (req, res) => {
   }
 });
 
+// ─── DELETE /:collection/:id ── permanent delete ──────────────────────────
+
+/**
+ * Hard-deletes the article doc and tries to clean up its admin-uploaded
+ * hero/stats images. Sitemap cache is invalidated so the now-404 URL
+ * doesn't keep getting re-served. Idempotent: 404 if the doc is already
+ * gone, never partial state.
+ */
+router.delete('/:collection/:id', async (req, res) => {
+  try {
+    const cfg = cfgFor(req.params.collection);
+    if (!cfg) return res.status(404).json({ success: false, error: 'unknown collection' });
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ success: false, error: 'invalid id' });
+    }
+
+    const doc = await cfg.model.findByIdAndDelete(req.params.id);
+    if (!doc) return res.status(404).json({ success: false, error: 'not found' });
+
+    // Best-effort cleanup of uploaded files. Each upload writes
+    // <id>-admin-<slot>.<ext>; we don't know the extension, so glob the
+    // directory and remove anything starting with `<id>-admin-`.
+    try {
+      const prefix = `${req.params.id}-admin-`;
+      for (const name of fs.readdirSync(UPLOAD_DIR)) {
+        if (name.startsWith(prefix)) {
+          fs.unlinkSync(path.join(UPLOAD_DIR, name));
+        }
+      }
+    } catch (cleanupErr) {
+      // Non-fatal — the doc is already gone, orphan files are harmless.
+      console.warn('[admin/articles delete] image cleanup failed:', cleanupErr.message);
+    }
+
+    // Drop the dynamic sitemap cache so the next bot crawl reflects the
+    // removal. invalidateSitemapCache is exported as a named property on
+    // the sitemap router module.
+    try {
+      const sitemap = require('./sitemap');
+      if (typeof sitemap.invalidateSitemapCache === 'function') {
+        sitemap.invalidateSitemapCache();
+      }
+    } catch (_) { /* sitemap module not loaded yet — ignore */ }
+
+    res.json({ success: true, deleted: { _id: String(doc._id), title: doc.title } });
+  } catch (err) {
+    console.error('[admin/articles delete] error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // ─── POST /:collection/:id/image ── upload hero image ─────────────────────
 
 /**
