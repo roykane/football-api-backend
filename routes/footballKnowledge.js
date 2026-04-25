@@ -105,17 +105,57 @@ router.get('/kien-thuc-bong-da/:slug', (req, res) => {
 
   const faqsHtml = article.faqs?.length ? `
     <div class="section-card">
-      <h2>❓ Câu hỏi thường gặp</h2>
+      <h2 id="cau-hoi-thuong-gap">❓ Câu hỏi thường gặp</h2>
       ${article.faqs.map(f => `<div class="faq-item"><div class="q">${escapeHtml(f.q)}</div><div class="a">${escapeHtml(f.a)}</div></div>`).join('')}
     </div>` : '';
 
-  const sectionCardsHtml = splitBySections(article.body).map(sec => {
-    if (!sec.title && !sec.body.trim()) return '';
-    return `<div class="section-card">
-      ${sec.title ? `<h2>${escapeHtml(sec.title)}</h2>` : ''}
-      ${markdownToHtml(sec.body)}
-    </div>`;
-  }).join('\n');
+  // Build TOC from the sectioned body so long articles get anchor jumps
+  // and the sidebar shows a navigable outline. Each heading gets a slug
+  // id; we also expose the outline as an ItemList JSON-LD for Google's
+  // jump-to-section rich result.
+  const slugify = (str) => String(str || '')
+    .toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd')
+    .replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-').replace(/-+/g, '-').slice(0, 64);
+
+  const sections = splitBySections(article.body)
+    .filter(sec => sec.title && sec.title.trim())
+    .map(sec => ({ ...sec, id: slugify(sec.title) }));
+
+  // Add the FAQ section to the outline only if it exists.
+  const tocItems = [...sections.map(s => ({ id: s.id, title: s.title }))];
+  if (article.faqs?.length) tocItems.push({ id: 'cau-hoi-thuong-gap', title: 'Câu hỏi thường gặp' });
+
+  const tocHtml = tocItems.length >= 3 ? `
+    <div class="sidebar-card toc-card">
+      <div class="sidebar-title">📑 Mục lục bài viết</div>
+      <ol class="toc-list">
+        ${tocItems.map((t, i) => `<li><a href="#${t.id}" class="toc-link"><span class="toc-num">${i + 1}.</span> ${escapeHtml(t.title)}</a></li>`).join('')}
+      </ol>
+    </div>` : '';
+
+  const tocItemList = tocItems.length >= 3 ? {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: `Mục lục: ${article.title}`,
+    itemListElement: tocItems.map((t, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: t.title,
+      url: `${url}#${t.id}`,
+    })),
+  } : null;
+
+  const sectionCardsHtml = sections.length
+    ? sections.map(sec => `<div class="section-card">
+        <h2 id="${sec.id}">${escapeHtml(sec.title)}</h2>
+        ${markdownToHtml(sec.body)}
+      </div>`).join('\n')
+    // Fallback: render an article that has no ## headings at all (shouldn't
+    // happen for current data, but don't drop the body silently if it does).
+    : splitBySections(article.body).map(sec => {
+        if (!sec.title && !sec.body.trim()) return '';
+        return `<div class="section-card">${markdownToHtml(sec.body)}</div>`;
+      }).join('\n');
 
   const html = `<!DOCTYPE html>
 <html lang="vi">
@@ -145,7 +185,16 @@ router.get('/kien-thuc-bong-da/:slug', (req, res) => {
   <script type="application/ld+json">${JSON.stringify(articleSchema)}</script>
   <script type="application/ld+json">${JSON.stringify(breadcrumbSchema)}</script>
   ${faqSchema ? `<script type="application/ld+json">${JSON.stringify(faqSchema)}</script>` : ''}
-  <style>${baseStyles()}</style>
+  ${tocItemList ? `<script type="application/ld+json">${JSON.stringify(tocItemList)}</script>` : ''}
+  <style>${baseStyles()}
+    html{scroll-behavior:smooth}
+    .toc-list{list-style:none;padding:0;margin:0;counter-reset:none}
+    .toc-link{display:block;padding:7px 0;font-size:13.5px;color:#475569;border-bottom:1px solid #f1f5f9;line-height:1.45;text-decoration:none}
+    .toc-list li:last-child .toc-link{border-bottom:none}
+    .toc-link:hover{color:#0ea5e9}
+    .toc-num{display:inline-block;min-width:22px;color:#94a3b8;font-weight:700}
+    .section-card h2{scroll-margin-top:80px}
+  </style>
 </head>
 <body>
   ${siteHeader()}
@@ -172,6 +221,7 @@ router.get('/kien-thuc-bong-da/:slug', (req, res) => {
         </div>
       </main>
       <aside class="sidebar">
+        ${tocHtml}
         <div class="sidebar-card">
           <div class="sidebar-title">📚 Kiến thức khác</div>
           ${sidebarLinks}

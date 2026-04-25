@@ -292,11 +292,24 @@ Trả về JSON:
       if (jsonMatch) {
         const parsed = JSON.parse(jsonMatch[0].replace(/[\x00-\x1F\x7F]/g, ' ').replace(/\n/g, '\\n'));
         if (parsed.content) {
-          await Team.updateOne(
-            { teamId: team.teamId },
-            { aiContent: parsed.content.replace(/\\n/g, '\n'), aiContentGeneratedAt: new Date() }
-          );
-          console.log(`  ✅ AI content generated for ${team.name}`);
+          const cleanedContent = parsed.content.replace(/\\n/g, '\n');
+          // Same runtime gate as the article generators — banned phrases +
+          // minimum word count. Team copy targets 400-600 từ; reject if
+          // Haiku under-delivers below 250 to keep the index thin-content-free.
+          const { validate } = require('./contentValidator');
+          const issues = validate({
+            title: team.name,
+            content: cleanedContent,
+          }, { minTotalWords: 250 });
+          if (issues.length) {
+            console.warn(`  ⚠️  AI rejected for ${team.name}: ${issues.join('; ')}`);
+          } else {
+            await Team.updateOne(
+              { teamId: team.teamId },
+              { aiContent: cleanedContent, aiContentGeneratedAt: new Date() }
+            );
+            console.log(`  ✅ AI content generated for ${team.name}`);
+          }
         }
       }
 

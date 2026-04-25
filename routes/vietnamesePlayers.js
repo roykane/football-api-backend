@@ -12,6 +12,7 @@ const { players } = require('../data/vietnamesePlayers');
 
 const SITE_URL = process.env.SITE_URL || 'https://scoreline.io';
 const { getEntityDates, pickOgImage, ogImageMeta, authorByline } = require('../utils/seoCommon');
+const { timelines: CAREER_TIMELINES } = require('../data/playerCareerTimelines');
 
 function escapeHtml(str) {
   if (!str) return '';
@@ -111,7 +112,8 @@ router.get('/cau-thu/:slug', (req, res) => {
     memberOf: [
       { '@type': 'SportsTeam', name: player.currentClub },
       { '@type': 'SportsTeam', name: `Đội tuyển bóng đá ${player.nationalTeam}` }
-    ]
+    ],
+    ...(awards.length ? { award: awards } : {}),
   };
 
   const breadcrumbSchema = {
@@ -146,6 +148,43 @@ router.get('/cau-thu/:slug', (req, res) => {
       <img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name)}" loading="lazy">
       <div><div class="name">${escapeHtml(p.name)}</div><div class="pos">${escapeHtml(p.position)}</div></div>
     </a>`).join('');
+
+  // Career timeline — sourced from playerCareerTimelines sidecar.
+  // Falls back to player.careerTimeline if a record provides one inline.
+  const timeline = Array.isArray(player.careerTimeline) && player.careerTimeline.length
+    ? player.careerTimeline
+    : CAREER_TIMELINES[player.slug] || [];
+  const timelineHtml = timeline.length ? `
+    <div class="card">
+      <h2>📅 Hành trình sự nghiệp ${escapeHtml(player.name)}</h2>
+      <ol style="list-style:none;padding:0;margin:0;position:relative;">
+        ${timeline.map((t, i) => `
+          <li style="display:grid;grid-template-columns:120px 1fr;gap:14px;padding:12px 0;${i < timeline.length - 1 ? 'border-bottom:1px solid #f1f5f9;' : ''}">
+            <div style="font-weight:800;color:#0066FF;font-size:13px;line-height:1.3;">${escapeHtml(t.period || '')}</div>
+            <div>
+              <div style="font-weight:700;color:#0f172a;font-size:15px;">${escapeHtml(t.club || '')}${t.role ? ` <span style="font-weight:500;color:#64748b;font-size:13px;">— ${escapeHtml(t.role)}</span>` : ''}</div>
+              ${t.league && t.league !== '—' ? `<div style="font-size:12.5px;color:#64748b;margin-top:2px;">🏆 ${escapeHtml(t.league)}</div>` : ''}
+              ${t.note ? `<div style="font-size:13px;color:#475569;margin-top:4px;line-height:1.6;">${escapeHtml(t.note)}</div>` : ''}
+            </div>
+          </li>
+        `).join('')}
+      </ol>
+    </div>` : '';
+
+  // Honors block — flatten timeline notes that look like trophies/awards into a
+  // structured Schema.org `award` array so Person rich-results pick it up.
+  const awards = [];
+  for (const t of timeline) {
+    if (!t.note) continue;
+    // A coarse heuristic: a "·" separated chunk that contains common honor keywords.
+    for (const chunk of String(t.note).split(/\s*·\s*/)) {
+      const trimmed = chunk.trim();
+      if (!trimmed) continue;
+      if (/(Vô địch|Quả Bóng Vàng|Vua phá lưới|kỷ lục|Đội trưởng|Cầu thủ xuất sắc|Cầu thủ trẻ|Á quân)/i.test(trimmed)) {
+        awards.push(trimmed);
+      }
+    }
+  }
 
   const html = `<!DOCTYPE html>
 <html lang="vi">
@@ -218,8 +257,10 @@ router.get('/cau-thu/:slug', (req, res) => {
           <ul>${highlightsHtml}</ul>
         </div>
 
+        ${timelineHtml}
+
         <div class="card">
-          <h2>🛤️ Hành trình sự nghiệp</h2>
+          <h2>🛤️ Phân tích sự nghiệp</h2>
           ${player.careerSummary.split('\n\n').map(p => `<p>${escapeHtml(p)}</p>`).join('')}
         </div>
 
