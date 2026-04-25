@@ -20,6 +20,7 @@ const SITE_URL = process.env.SITE_URL || 'https://scoreline.io';
 const log = require('../utils/logger').child('seo-pages');
 const { autoLinkPlayers, autoLinkKnowledge, DEFAULT_KNOWLEDGE_TERMS } = require('../utils/autoLinker');
 const { players: VN_PLAYERS } = require('../data/vietnamesePlayers');
+const { authorByline } = require('../utils/seoCommon');
 
 // Strip markdown decorations + collapse whitespace so the answer stays
 // readable when Google renders it as a rich-result snippet.
@@ -735,22 +736,57 @@ router.get('/doi-bong/:slug', async (req, res) => {
     const description = escapeHtml(`Trang thông tin ${team.name}: vị trí BXH #${team.standings?.rank || '?'}, ${team.standings?.points || 0} điểm, phong độ ${team.standings?.form || 'N/A'}. Lịch sử, sân vận động ${team.venue?.name || ''} và phân tích chi tiết.`);
     const url = `${SITE_URL_LOCAL}/doi-bong/${team.slug}`;
 
+    // Build a richer SportsTeam schema from the data we already have on
+    // disk. additionalProperty[] is the supported way to expose season
+    // stats Google can pick up for rich results without inventing fields.
+    const stats = team.standings || {};
+    const statProps = [];
+    if (Number.isFinite(stats.played)) statProps.push({ "@type": "PropertyValue", name: "Số trận đã đấu", value: stats.played });
+    if (Number.isFinite(stats.win)) statProps.push({ "@type": "PropertyValue", name: "Số trận thắng", value: stats.win });
+    if (Number.isFinite(stats.draw)) statProps.push({ "@type": "PropertyValue", name: "Số trận hòa", value: stats.draw });
+    if (Number.isFinite(stats.lose)) statProps.push({ "@type": "PropertyValue", name: "Số trận thua", value: stats.lose });
+    if (Number.isFinite(stats.points)) statProps.push({ "@type": "PropertyValue", name: "Điểm", value: stats.points });
+    if (Number.isFinite(stats.goalsFor)) statProps.push({ "@type": "PropertyValue", name: "Bàn thắng", value: stats.goalsFor });
+    if (Number.isFinite(stats.goalsAgainst)) statProps.push({ "@type": "PropertyValue", name: "Bàn thua", value: stats.goalsAgainst });
+    if (Number.isFinite(stats.rank)) statProps.push({ "@type": "PropertyValue", name: "Vị trí trên BXH", value: stats.rank });
+
+    const teamSchemaDescription = team.aiContent
+      ? plainTextFromMd(team.aiContent, 280)
+      : `${team.name}${team.country ? ` là câu lạc bộ bóng đá ${team.country}` : ''}${team.founded ? `, thành lập năm ${team.founded}` : ''}${team.league?.name ? `, hiện thi đấu tại ${team.league.name}` : ''}.`;
+
     const structuredData = {
       "@context": "https://schema.org",
       "@type": "SportsTeam",
       "name": team.name,
       "url": url,
       "logo": team.logo,
+      "image": team.logo,
       "sport": "Soccer",
+      "inLanguage": "vi-VN",
+      "description": teamSchemaDescription,
+      ...(team.founded ? { "foundingDate": String(team.founded) } : {}),
+      ...(team.country ? { "areaServed": { "@type": "Country", "name": team.country } } : {}),
       "memberOf": {
         "@type": "SportsOrganization",
         "name": team.league?.name || '',
+        ...(team.league?.logo ? { "logo": team.league.logo } : {}),
       },
-      "location": team.venue?.name ? {
-        "@type": "Place",
-        "name": team.venue.name,
-        "address": { "@type": "PostalAddress", "addressLocality": team.venue.city || '' },
-      } : undefined,
+      ...(team.venue?.name ? {
+        "location": {
+          "@type": "Place",
+          "name": team.venue.name,
+          ...(team.venue.image ? { "photo": team.venue.image } : {}),
+          ...(Number.isFinite(team.venue.capacity) ? {
+            "maximumAttendeeCapacity": team.venue.capacity,
+          } : {}),
+          "address": {
+            "@type": "PostalAddress",
+            "addressLocality": team.venue.city || '',
+            ...(team.country ? { "addressCountry": team.country } : {}),
+          },
+        },
+      } : {}),
+      ...(statProps.length ? { "additionalProperty": statProps } : {}),
     };
 
     const breadcrumbSchema = {
@@ -762,6 +798,78 @@ router.get('/doi-bong/:slug', async (req, res) => {
         { "@type": "ListItem", "position": 3, "name": team.name, "item": url },
       ],
     };
+
+    // FAQ block — sourced from the team's own data so every answer is
+    // factual and link-rich. Renders both as JSON-LD (rich-result eligible)
+    // and as visible HTML at the bottom of the page.
+    const faqs = [];
+    if (team.founded) {
+      faqs.push({
+        q: `${team.name} thành lập năm bao nhiêu?`,
+        a: `${team.name} được thành lập năm ${team.founded}, đến nay đã có lịch sử ${new Date().getFullYear() - team.founded} năm hoạt động.${team.country ? ` Đây là một trong những câu lạc bộ bóng đá tại ${team.country}.` : ''}`,
+      });
+    }
+    if (team.venue?.name) {
+      faqs.push({
+        q: `Sân nhà của ${team.name} là gì?`,
+        a: `${team.name} có sân nhà là ${team.venue.name}${team.venue.city ? `, tọa lạc tại ${team.venue.city}` : ''}${Number.isFinite(team.venue.capacity) && team.venue.capacity > 0 ? `, sức chứa ${team.venue.capacity.toLocaleString('vi-VN')} khán giả` : ''}.`,
+      });
+    }
+    if (team.league?.name) {
+      faqs.push({
+        q: `${team.name} thi đấu ở giải đấu nào?`,
+        a: `Mùa giải ${team.seasonYear || new Date().getFullYear()}, ${team.name} đang thi đấu tại ${team.league.name}${team.league.country ? ` (${team.league.country})` : ''}. Theo dõi lịch thi đấu và bảng xếp hạng trực tiếp tại ScoreLine.`,
+      });
+    }
+    if (Number.isFinite(stats.rank) && Number.isFinite(stats.points)) {
+      faqs.push({
+        q: `${team.name} đang xếp thứ mấy trên BXH?`,
+        a: `${team.name} hiện xếp thứ ${stats.rank}${team.league?.name ? ` ${team.league.name}` : ''} với ${stats.points} điểm sau ${stats.played || '?'} trận (${stats.win || 0} thắng, ${stats.draw || 0} hòa, ${stats.lose || 0} thua). Hiệu số bàn thắng-bại: ${(stats.goalsDiff > 0 ? '+' : '') + (stats.goalsDiff ?? 0)}.`,
+      });
+    }
+    if (typeof stats.form === 'string' && stats.form.length) {
+      const w = (stats.form.match(/W/g) || []).length;
+      const d = (stats.form.match(/D/g) || []).length;
+      const l = (stats.form.match(/L/g) || []).length;
+      faqs.push({
+        q: `Phong độ gần đây của ${team.name} thế nào?`,
+        a: `Trong ${stats.form.length} trận gần nhất, ${team.name} có ${w} trận thắng, ${d} trận hòa, ${l} trận thua. Chuỗi kết quả gần nhất: ${stats.form.split('').map(c => c === 'W' ? 'Thắng' : c === 'D' ? 'Hòa' : 'Thua').join(' → ')}.`,
+      });
+    }
+    if (team.upcomingMatches && team.upcomingMatches.length) {
+      const next = team.upcomingMatches[0];
+      const isHome = next.home?.name === team.name;
+      const opponent = isHome ? next.away?.name : next.home?.name;
+      const dateStr = next.date ? new Date(next.date).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '';
+      const timeStr = next.date ? new Date(next.date).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '';
+      faqs.push({
+        q: `Trận đấu kế tiếp của ${team.name} là khi nào?`,
+        a: `Trận kế tiếp của ${team.name} là gặp ${opponent || 'đối thủ chưa xác định'}${dateStr ? `, ngày ${dateStr}` : ''}${timeStr ? ` lúc ${timeStr}` : ''}${isHome ? ' trên sân nhà' : ' trên sân khách'}. Theo dõi tỷ số trực tiếp và lịch thi đấu của ${team.name} tại ScoreLine.`,
+      });
+    }
+
+    const faqSchema = faqs.length ? {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": faqs.map(f => ({
+        "@type": "Question",
+        "name": f.q,
+        "acceptedAnswer": { "@type": "Answer", "text": f.a },
+      })),
+    } : null;
+
+    const faqHtml = faqs.length ? `
+        <div class="section-card">
+          <h2>❓ Câu hỏi thường gặp về ${escapeHtml(team.name)}</h2>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            ${faqs.map(f => `
+              <details style="background:#f8fafc;border-radius:6px;padding:12px 14px;border-left:3px solid #0066FF;">
+                <summary style="font-weight:700;color:#0f172a;font-size:15px;cursor:pointer;list-style:none;">${escapeHtml(f.q)}</summary>
+                <div style="margin-top:8px;color:#475569;font-size:14px;line-height:1.7;">${escapeHtml(f.a)}</div>
+              </details>
+            `).join('')}
+          </div>
+        </div>` : '';
 
     // Build recent matches HTML
     const recentHtml = (team.recentMatches || []).map(m => {
@@ -818,6 +926,7 @@ router.get('/doi-bong/:slug', async (req, res) => {
   <meta name="twitter:image:alt" content="${escapeHtml(team.name)}">
   <script type="application/ld+json">${JSON.stringify(breadcrumbSchema)}</script>
   <script type="application/ld+json">${JSON.stringify(structuredData)}</script>
+  ${faqSchema ? `<script type="application/ld+json">${JSON.stringify(faqSchema)}</script>` : ''}
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.8; color: #1e293b; background: #f1f5f9; }
@@ -912,14 +1021,14 @@ router.get('/doi-bong/:slug', async (req, res) => {
           ${markdownToHtml(team.aiContent)}
         </div>` : ''}
 
-        <!-- Author -->
-        <div style="background:#fff;border-radius:8px;padding:16px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06);display:flex;gap:12px;align-items:center;">
-          <div style="width:48px;height:48px;background:#eff6ff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;">🤖</div>
-          <div>
-            <div style="font-size:14px;font-weight:700;color:#0f172a;"><a href="/about">Ban Biên Tập ScoreLine</a></div>
-            <div style="font-size:13px;color:#64748b;">Phân tích tự động dựa trên dữ liệu thống kê mùa giải.</div>
-          </div>
-        </div>
+        ${faqHtml}
+
+        ${authorByline({
+          publishedIso: new Date(team.createdAt || team.lastSyncedAt || Date.now()).toISOString(),
+          modifiedIso: new Date(team.updatedAt || team.lastSyncedAt || team.aiContentGeneratedAt || Date.now()).toISOString(),
+          icon: '⚽',
+          bio: `Hồ sơ ${escapeHtml(team.name)} được tổng hợp từ dữ liệu chính thức của ${escapeHtml(team.league?.name || 'giải đấu')} và API-Sports. Bảng xếp hạng, kết quả và lịch thi đấu được cập nhật mỗi khi có trận mới.`,
+        })}
       </main>
 
       <aside class="sidebar">
