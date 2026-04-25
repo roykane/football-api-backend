@@ -349,6 +349,19 @@ async function generateImagesSitemap() {
   </url>`);
   };
 
+  // Google Search Console rejects relative paths inside <image:loc>. The
+  // admin upload pipeline saves URLs like "/article-images/<id>.png?v=…"
+  // which need to be absolutised AND have their cache-busting query
+  // string stripped so the sitemap reports a stable canonical URL.
+  const toAbsoluteImage = (raw) => {
+    if (!raw) return null;
+    let cleaned = String(raw).split('?')[0]; // drop ?v=… cache buster
+    if (!cleaned) return null;
+    if (cleaned.startsWith('http://') || cleaned.startsWith('https://')) return cleaned;
+    if (!cleaned.startsWith('/')) cleaned = `/${cleaned}`;
+    return `${SITE_URL}${cleaned}`;
+  };
+
   try {
     const news = await Article.find({ status: 'published', image: { $exists: true, $ne: '' } })
       .sort({ pubDate: -1 })
@@ -357,8 +370,10 @@ async function generateImagesSitemap() {
       .lean();
     for (const a of news) {
       const slug = a.slug || Article.slugifyFromTitle(a.title);
-      if (!slug || !a.image) continue;
-      pushImageEntry(`${SITE_URL}/tin-bong-da/${slug}`, a.image, a.title);
+      if (!slug) continue;
+      const imageUrl = toAbsoluteImage(a.image);
+      if (!imageUrl) continue;
+      pushImageEntry(`${SITE_URL}/tin-bong-da/${slug}`, imageUrl, a.title);
     }
   } catch (err) {
     console.error('[SitemapImages] Article load failed:', err.message);
@@ -371,8 +386,9 @@ async function generateImagesSitemap() {
       .select('slug title thumbnail')
       .lean();
     for (const a of soiKeo) {
-      if (!a.slug || !a.thumbnail) continue;
-      const imageUrl = a.thumbnail.startsWith('http') ? a.thumbnail : `${SITE_URL}${a.thumbnail}`;
+      if (!a.slug) continue;
+      const imageUrl = toAbsoluteImage(a.thumbnail);
+      if (!imageUrl) continue;
       pushImageEntry(`${SITE_URL}/nhan-dinh/${a.slug}`, imageUrl, a.title);
     }
   } catch (err) {
