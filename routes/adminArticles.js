@@ -216,6 +216,23 @@ router.patch('/:collection/:id', async (req, res) => {
       update.reviewedAt = new Date();
     }
 
+    // Auto-publish workflow: a fresh auto-generated article sits as 'draft'
+    // until a human signs off on BOTH content and image. Once both flags are
+    // true we promote it to 'published' (unless the admin explicitly set a
+    // different status in the same patch — manual control wins).
+    const existing = await cfg.model.findById(req.params.id).lean();
+    if (!existing) return res.status(404).json({ success: false, error: 'not found' });
+
+    const willContent = Object.prototype.hasOwnProperty.call(update, 'contentReviewed')
+      ? !!update.contentReviewed : !!existing.contentReviewed;
+    const willImage = Object.prototype.hasOwnProperty.call(update, 'imageReviewed')
+      ? !!update.imageReviewed : !!existing.imageReviewed;
+    const adminSetStatus = Object.prototype.hasOwnProperty.call(update, 'status');
+
+    if (!adminSetStatus && willContent && willImage && existing.status === 'draft') {
+      update.status = 'published';
+    }
+
     const doc = await cfg.model.findByIdAndUpdate(
       req.params.id,
       { $set: update },

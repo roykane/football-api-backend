@@ -674,7 +674,8 @@ KHÔNG bịa chấn thương cầu thủ. Trả về ĐÚNG JSON.`;
         },
         thumbnail: FOOTBALL_IMAGES[Math.floor(Math.random() * FOOTBALL_IMAGES.length)],
         tags: aiContent.tags || [teams.home.name, teams.away.name, league.name],
-        status: 'published',
+        // Wait for admin review — /admin flips this once both checkboxes are set.
+        status: 'draft',
         metaTitle: aiContent.title,
         metaDescription: aiContent.excerpt,
       });

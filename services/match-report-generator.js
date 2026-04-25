@@ -429,7 +429,9 @@ ${formationsText}
       tags: Array.isArray(aiContent.tags) ? aiContent.tags : [teams.home.name, teams.away.name],
       image,
       category: this.categorize(fixture),
-      status: 'published',
+      // Generated articles wait for admin review before going public.
+      // /admin flips this to 'published' once both review checkboxes are set.
+      status: 'draft',
       pubDate: new Date(fixture.fixture?.date || Date.now()),
       aiModel: 'claude-haiku-4-5-20251001',
       matchInfo: {

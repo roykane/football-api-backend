@@ -403,7 +403,8 @@ async function generateArticleFromData(fixtureId, homeTeam, awayTeam, league, ma
       matchDate: new Date(matchDate),
     },
     h2hStats: h2hData.stats,
-    status: 'published',
+    // Hold for admin review — /admin auto-publishes on full sign-off.
+    status: 'draft',
     aiModel: 'claude-haiku-4-5-20251001',
   });
 

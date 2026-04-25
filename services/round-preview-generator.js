@@ -255,7 +255,8 @@ async function generateForLeagueObj(league) {
         },
         round: `Vong ${roundNumber}`,
         seasonYear: league.season,
-        status: 'published',
+        // Hold for admin review — /admin auto-publishes on full sign-off.
+        status: 'draft',
         aiModel: 'claude-haiku-4-5-20251001',
       });
 
