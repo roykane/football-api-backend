@@ -13,7 +13,10 @@ const matchReportGenerator = require('./match-report-generator');
 const { invalidateSitemapCache } = require('../routes/sitemap');
 
 const MAX_PER_RUN = 5;
-const SCHEDULE = '*/15 * * * *'; // Every 15 minutes
+// Every 30 minutes (was */15). 96 runs/day → 48 runs/day cuts API-Sports
+// "find finished fixtures" polling in half. Match reports still land
+// within ~30 min of FT, well inside any reasonable freshness window.
+const SCHEDULE = '*/30 * * * *';
 
 let isRunning = false;
 let lastRun = null;

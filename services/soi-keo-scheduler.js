@@ -68,15 +68,18 @@ async function runGenerationJob() {
  */
 function startSoiKeoScheduler() {
   console.log('\n🗓️  ========== SOI KÈO SCHEDULER ==========');
-  console.log('📋 Schedule: every 4 hours (6 runs/day)');
+  console.log('📋 Schedule: 6 runs/day at xx:05 (every 4h, offset +5min)');
   console.log(`   - Daily limit: ${MAX_ARTICLES_PER_DAY} articles`);
   console.log(`   - Per run: ${MAX_ARTICLES_PER_RUN} articles`);
   console.log('==========================================\n');
 
-  // Run every 4 hours: 0, 4, 8, 12, 16, 20 (6 times/day)
-  cron.schedule('0 */4 * * *', () => {
-    const hour = new Date().getHours();
-    console.log(`\n⏰ [SoiKeoScheduler] Job triggered at ${hour}:00`);
+  // 5 minutes past every 4 hours: 0:05, 4:05, 8:05, 12:05, 16:05, 20:05.
+  // Offset off the xx:00 boundary so this doesn't fire alongside h2h
+  // (xx:35) or any other top-of-hour cron — keeps Claude's parallel
+  // request count from spiking.
+  cron.schedule('5 */4 * * *', () => {
+    const now = new Date();
+    console.log(`\n⏰ [SoiKeoScheduler] Job triggered at ${now.toLocaleTimeString('vi-VN')}`);
     runGenerationJob();
   }, {
     timezone: 'Asia/Ho_Chi_Minh'
