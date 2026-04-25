@@ -109,6 +109,22 @@ function formatDateShort(date) {
   return `${dd}/${mm}/${yyyy} | ${hh}:${min}`;
 }
 
+// Tense particle for a match-date display ("đã" / "đang" / "sẽ" diễn ra).
+// Match window ≈ 2h. Returns a label without the date itself so callers
+// can compose freely.
+function matchTenseLabel(date, matchStatus) {
+  const status = String(matchStatus || '').toLowerCase();
+  if (['1h', '2h', 'ht', 'et', 'bt', 'p', 'live'].includes(status)) return 'Đang diễn ra';
+  if (['ft', 'aet', 'pen', 'finished'].includes(status)) return 'Đã diễn ra';
+  if (!date) return '';
+  const ts = new Date(date).getTime();
+  if (!Number.isFinite(ts)) return '';
+  const now = Date.now();
+  if (ts + 2 * 3600 * 1000 < now) return 'Đã diễn ra';
+  if (ts > now + 60 * 1000) return 'Sẽ diễn ra';
+  return 'Đang diễn ra';
+}
+
 function generateMatchBanner({ homeName, homeLogo, awayName, awayLogo, leagueName, leagueLogo, matchDate }) {
   const dateStr = formatDateShort(matchDate);
   return `
@@ -884,6 +900,7 @@ router.get('/doi-dau/:slug', async (req, res) => {
     const leagueLogo = matchInfo?.league?.logo ? escapeHtml(matchInfo.league.logo) : '';
     const leagueName2 = escapeHtml(matchInfo?.league?.name || '');
     const matchDateStr = matchInfo?.matchDate ? formatDate(matchInfo.matchDate) : '';
+    const tense = matchTenseLabel(matchInfo?.matchDate, matchInfo?.status);
 
     const headerHtml = `
       <div class="league-bar">
@@ -891,6 +908,7 @@ router.get('/doi-dau/:slug', async (req, res) => {
         <span>${leagueName2}</span>
       </div>
       <div class="match-card">
+        ${tense ? `<div class="match-tense" style="font-size:11px;font-weight:700;color:#64748b;letter-spacing:.5px;margin-bottom:6px;">${tense}</div>` : ''}
         <div class="match-teams">
           <div class="match-team">
             ${homeLogo ? `<img src="${escapeHtml(homeLogo)}" alt="${escapeHtml(homeName)}" width="64" height="64" decoding="async">` : ''}

@@ -282,7 +282,12 @@ class TransferNewsGenerator {
       // the review queue keeps the publishing pipeline uniform and gives a
       // chance to spike sloppy AI rewrites before they hit the index.
       status: 'draft',
-      pubDate: new Date(t.date),
+      // pubDate = when the article is published, NOT the underlying event.
+      // Setting pubDate to t.date (transfer event) used to make Schema.org
+      // datePublished claim the article existed months before it actually
+      // did — Google flags that as a structured-data lie. Event date is
+      // preserved on matchInfo.matchDate for any UI that needs it.
+      pubDate: new Date(),
       aiModel: 'claude-haiku-4-5-20251001',
       // Reuse matchInfo.league/homeTeam/awayTeam slots loosely: store teamIn + teamOut.
       matchInfo: {

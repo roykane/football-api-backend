@@ -444,7 +444,10 @@ ${formationsText}
       // Generated articles wait for admin review before going public.
       // /admin flips this to 'published' once both review checkboxes are set.
       status: 'draft',
-      pubDate: new Date(fixture.fixture?.date || Date.now()),
+      // pubDate = when this match report was published. The kickoff time is
+      // already captured on matchInfo.matchDate; using it here would lie
+      // about when the article first existed (Google freshness signal).
+      pubDate: new Date(),
       aiModel: 'claude-haiku-4-5-20251001',
       matchInfo: {
         homeTeam: {

@@ -155,7 +155,10 @@ router.get('/kien-thuc-bong-da/:slug', (req, res) => {
       <main class="main">
         <div class="header-card">
           <h1>${article.icon} ${escapeHtml(article.title.split(' - ')[0])}</h1>
-          <div class="article-meta">📂 ${escapeHtml(article.category)} · ⏱ Cập nhật <time datetime="${dateModified}">${formatDateVi(dateModified)}</time></div>
+          <div class="article-meta">📂 ${escapeHtml(article.category)} · ${dateModified !== datePublished
+            ? `⏱ Cập nhật <time datetime="${dateModified}">${formatDateVi(dateModified)}</time>`
+            : `📅 Đăng <time datetime="${datePublished}">${formatDateVi(datePublished)}</time>`
+          }</div>
         </div>
         <div class="intro-box"><p>${escapeHtml(article.metaDesc)}</p></div>
         ${sectionCardsHtml}

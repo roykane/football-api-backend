@@ -111,6 +111,29 @@ function formatDate(date) {
   });
 }
 
+// Wrap a match-date string with the right Vietnamese tense particle so the
+// page reads naturally regardless of when it's viewed. Match window ≈ 2h:
+// inside that window we say "đang diễn ra"; outside, "đã" or "sẽ".
+function formatMatchDateWithTense(date, matchStatus) {
+  if (!date) return '';
+  const formatted = formatDate(date);
+  const status = String(matchStatus || '').toLowerCase();
+  if (['1h', '2h', 'ht', 'et', 'bt', 'p', 'live'].includes(status)) {
+    return `đang diễn ra · ${formatted}`;
+  }
+  if (['ft', 'aet', 'pen', 'finished'].includes(status)) {
+    return `đã diễn ra · ${formatted}`;
+  }
+  const ts = new Date(date).getTime();
+  if (Number.isFinite(ts)) {
+    const now = Date.now();
+    if (ts + 2 * 3600 * 1000 < now) return `đã diễn ra · ${formatted}`;
+    if (ts > now + 60 * 1000) return `sẽ diễn ra · ${formatted}`;
+    return `đang diễn ra · ${formatted}`;
+  }
+  return formatted;
+}
+
 const siteHeader = require('../utils/siteHeader');
 
 // Page-level <h1> already exists in the article header — promote AI's
@@ -198,7 +221,7 @@ function renderSoiKeoHtml(article, thumbnailUrl) {
   const title = escapeHtml(article.metaTitle || article.title);
   const description = escapeHtml(article.metaDescription || article.excerpt);
   const url = `${SITE_URL}/nhan-dinh/${article.slug}`;
-  const matchDate = formatDate(matchInfo?.matchDate);
+  const matchDate = formatMatchDateWithTense(matchInfo?.matchDate, article.matchStatus);
   const homeName = escapeHtml(matchInfo?.homeTeam?.name || '');
   const awayName = escapeHtml(matchInfo?.awayTeam?.name || '');
   const publishedIso = new Date(article.createdAt || Date.now()).toISOString();
