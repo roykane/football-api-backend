@@ -98,6 +98,28 @@ router.get('/cau-thu/:slug', (req, res) => {
 
   const { datePublished, dateModified } = getEntityDates(player);
   const og = pickOgImage(player, { alt: `${player.name} — ${player.position}` });
+
+  // Career timeline — sourced from playerCareerTimelines sidecar; falls
+  // back to an inline player.careerTimeline if a record provides one.
+  // Computed early so personSchema below can reference the awards array.
+  const timeline = Array.isArray(player.careerTimeline) && player.careerTimeline.length
+    ? player.careerTimeline
+    : CAREER_TIMELINES[player.slug] || [];
+
+  // Honors block — flatten timeline notes that look like trophies/awards
+  // into Schema.org `award` so Person rich-results pick them up.
+  const awards = [];
+  for (const t of timeline) {
+    if (!t.note) continue;
+    for (const chunk of String(t.note).split(/\s*·\s*/)) {
+      const trimmed = chunk.trim();
+      if (!trimmed) continue;
+      if (/(Vô địch|Quả Bóng Vàng|Vua phá lưới|kỷ lục|Đội trưởng|Cầu thủ xuất sắc|Cầu thủ trẻ|Á quân)/i.test(trimmed)) {
+        awards.push(trimmed);
+      }
+    }
+  }
+
   const personSchema = {
     '@context': 'https://schema.org',
     '@type': 'Person',
@@ -149,11 +171,6 @@ router.get('/cau-thu/:slug', (req, res) => {
       <div><div class="name">${escapeHtml(p.name)}</div><div class="pos">${escapeHtml(p.position)}</div></div>
     </a>`).join('');
 
-  // Career timeline — sourced from playerCareerTimelines sidecar.
-  // Falls back to player.careerTimeline if a record provides one inline.
-  const timeline = Array.isArray(player.careerTimeline) && player.careerTimeline.length
-    ? player.careerTimeline
-    : CAREER_TIMELINES[player.slug] || [];
   const timelineHtml = timeline.length ? `
     <div class="card">
       <h2>📅 Hành trình sự nghiệp ${escapeHtml(player.name)}</h2>
@@ -170,21 +187,6 @@ router.get('/cau-thu/:slug', (req, res) => {
         `).join('')}
       </ol>
     </div>` : '';
-
-  // Honors block — flatten timeline notes that look like trophies/awards into a
-  // structured Schema.org `award` array so Person rich-results pick it up.
-  const awards = [];
-  for (const t of timeline) {
-    if (!t.note) continue;
-    // A coarse heuristic: a "·" separated chunk that contains common honor keywords.
-    for (const chunk of String(t.note).split(/\s*·\s*/)) {
-      const trimmed = chunk.trim();
-      if (!trimmed) continue;
-      if (/(Vô địch|Quả Bóng Vàng|Vua phá lưới|kỷ lục|Đội trưởng|Cầu thủ xuất sắc|Cầu thủ trẻ|Á quân)/i.test(trimmed)) {
-        awards.push(trimmed);
-      }
-    }
-  }
 
   const html = `<!DOCTYPE html>
 <html lang="vi">
