@@ -13,24 +13,37 @@ function escapeRegex(s) {
   return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-function alreadyLinked(html, offset) {
-  // Scan back ~250 chars and check whether the most recent <a tag has been
-  // closed with </a>. If not, we're inside an existing link — skip.
-  const window = html.substring(Math.max(0, offset - 250), offset);
-  const lastOpen = window.lastIndexOf('<a');
-  const lastClose = window.lastIndexOf('</a>');
-  return lastOpen > lastClose;
-}
-
+/**
+ * Replace the first occurrence of `name` in `html` with an anchor — but
+ * only when `name` appears in a TEXT node (never inside a tag attribute).
+ *
+ * Splits on `/(<[^>]*>)/` so attribute payloads like `alt="Marseille vs
+ * Nice"` are kept inside tag segments and never matched by the search
+ * regex. Tracks `<a>` open/close depth so we don't nest links either.
+ */
 function linkOnce(html, name, href, style) {
   if (!html || !name) return html;
-  const re = new RegExp(`\\b(${escapeRegex(name)})\\b`, 'i');
-  const m = re.exec(html);
-  if (!m) return html;
-  if (alreadyLinked(html, m.index)) return html;
-  const before = html.slice(0, m.index);
-  const after = html.slice(m.index + m[0].length);
-  return `${before}<a href="${href}" style="${style}">${m[0]}</a>${after}`;
+  const escaped = escapeRegex(name);
+  const re = new RegExp(`\\b(${escaped})\\b`, 'i');
+  const segments = String(html).split(/(<[^>]*>)/);
+  let aDepth = 0;
+  for (let i = 0; i < segments.length; i++) {
+    const seg = segments[i];
+    if (!seg) continue;
+    if (seg.startsWith('<')) {
+      if (/^<a[\s>]/i.test(seg)) aDepth++;
+      else if (/^<\/a\s*>/i.test(seg)) aDepth = Math.max(0, aDepth - 1);
+      continue;
+    }
+    if (aDepth > 0) continue;
+    const m = re.exec(seg);
+    if (!m) continue;
+    segments[i] = seg.slice(0, m.index)
+      + `<a href="${href}" style="${style}">${m[0]}</a>`
+      + seg.slice(m.index + m[0].length);
+    return segments.join('');
+  }
+  return html;
 }
 
 /**
