@@ -20,6 +20,8 @@ const articlesRouter = require('./routes/articles');
 const schedulerRouter = require('./routes/scheduler');
 const soiKeoRouter = require('./routes/soiKeo');
 const oddsSyncJob = require('./services/oddsSyncJob');
+const logger = require('./utils/logger');
+const log = logger.child('server');
 const { startSoiKeoScheduler } = require('./services/soi-keo-scheduler');
 const { startContentScheduler } = require('./services/content-scheduler');
 // ✅ RE-ENABLED: $29 Ultra plan = 75,000 calls/day, worker uses ~3,000-5,000
@@ -342,7 +344,7 @@ app.use((req, res) => {
 });
 
 app.use((error, req, res, next) => {
-  console.error('Server error:', error);
+  log.error('Unhandled error', { method: req.method, url: req.url, err: error });
   res.status(500).json({
     success: false,
     error: 'Internal server error',

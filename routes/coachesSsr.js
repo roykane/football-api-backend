@@ -10,6 +10,7 @@ const siteHeader = require('../utils/siteHeader');
 const { coaches } = require('../data/coaches');
 
 const SITE_URL = process.env.SITE_URL || 'https://scoreline.io';
+const { getEntityDates, pickOgImage, ogImageMeta, authorByline } = require('../utils/seoCommon');
 
 function escapeHtml(str) {
   if (!str) return '';
@@ -86,6 +87,8 @@ router.get('/huan-luyen-vien/:slug', (req, res) => {
   const title = `${coach.name} - ${coach.role} | Tiểu Sử, Thành Tích`;
   const description = `${coach.name} (${coach.nationality}) - ${coach.role}. Nhiệm kỳ: ${coach.tenure}. Tiểu sử, sự nghiệp và thành tích với bóng đá Việt Nam.`;
 
+  const { datePublished, dateModified } = getEntityDates(coach);
+  const og = pickOgImage(coach, { alt: `${coach.name} — ${coach.role}` });
   const personSchema = {
     '@context': 'https://schema.org', '@type': 'Person',
     name: coach.name, birthDate: coach.dob,
@@ -136,17 +139,13 @@ router.get('/huan-luyen-vien/:slug', (req, res) => {
   <meta property="og:url" content="${escapeHtml(url)}">
   <meta property="og:title" content="${escapeHtml(title)}">
   <meta property="og:description" content="${escapeHtml(description)}">
-  <meta property="og:image" content="${SITE_URL}/og-image.jpg">
-  <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="630">
-  <meta property="og:image:type" content="image/jpeg">
-  <meta property="og:image:alt" content="${escapeHtml(coach.name)}">
+  ${ogImageMeta(og)}
   <meta property="og:locale" content="vi_VN">
   <meta property="og:site_name" content="ScoreLine">
+  <meta property="profile:first_name" content="${escapeHtml(coach.name.split(' ')[0])}">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="${escapeHtml(title)}">
   <meta name="twitter:description" content="${escapeHtml(description)}">
-  <meta name="twitter:image" content="${SITE_URL}/og-image.jpg">
   <script type="application/ld+json">${JSON.stringify(personSchema)}</script>
   <script type="application/ld+json">${JSON.stringify(breadcrumbSchema)}</script>
   <style>${baseStyles()}</style>
@@ -206,6 +205,8 @@ router.get('/huan-luyen-vien/:slug', (req, res) => {
             <a href="/huan-luyen-vien">Danh sách HLV</a>
           </p>
         </div>
+
+        ${authorByline({ publishedIso: datePublished, modifiedIso: dateModified, icon: '📋', bio: `Hồ sơ ${escapeHtml(coach.name)} được tổng hợp từ thông tin chính thức của VFF, FIFA và truyền thông trong nước. Phản ánh sai sót xin gửi qua trang <a href="/about">Giới thiệu</a>.` })}
       </main>
 
       <aside class="sidebar">

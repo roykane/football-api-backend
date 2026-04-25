@@ -43,7 +43,9 @@ const BANNED_PREDICTION = [
   /^dự đoán tỷ số chi tiết/i,
   /^\*\*dự đoán/i,
 ];
-const MIN_WORDS = { introduction: 100, teamAnalysis: 300, prediction: 60 };
+// Bumped prediction floor 60 → 150 — 60 words is one sentence, which Google
+// reads as thin content. Forces AI to substantiate each call with reasoning.
+const MIN_WORDS = { introduction: 100, teamAnalysis: 300, prediction: 150 };
 
 function countWords(str) {
   if (!str) return 0;

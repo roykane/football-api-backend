@@ -286,7 +286,12 @@ function renderPage({ title, description, url, robots, breadcrumbHtml, headerHtm
   const safeTitle = escapeHtml(title);
   const safeDesc = escapeHtml(description);
   const safeUrl = escapeHtml(url);
-  const image = ogImage || `${SITE_URL}/og-image.jpg`;
+  const fallbackOg = `${SITE_URL}/og-image.jpg`;
+  const image = ogImage || fallbackOg;
+  // Only emit width/height/type for the known 1200×630 fallback. When a
+  // route passes a custom URL (team logo, league badge, …) we can't claim
+  // dimensions we don't know — Facebook/Zalo will fetch and size it.
+  const isFallbackOg = image === fallbackOg;
   const robotsMeta = robots || 'index, follow';
 
   const ldScripts = (Array.isArray(structuredData) ? structuredData : [structuredData])
@@ -312,9 +317,7 @@ function renderPage({ title, description, url, robots, breadcrumbHtml, headerHtm
   <meta property="og:title" content="${safeTitle}">
   <meta property="og:description" content="${safeDesc}">
   <meta property="og:image" content="${escapeHtml(image)}">
-  <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="630">
-  <meta property="og:image:type" content="image/jpeg">
+  ${isFallbackOg ? '<meta property="og:image:width" content="1200">\n  <meta property="og:image:height" content="630">\n  <meta property="og:image:type" content="image/jpeg">' : ''}
   <meta property="og:image:alt" content="${safeTitle}">
   <meta property="og:locale" content="vi_VN">
   <meta property="og:site_name" content="ScoreLine">
@@ -462,11 +465,21 @@ async function buildSidebar(currentSlug, currentType) {
 // Shared layout for article pages (preview + h2h)
 // Same layout as soi-keo SSR for consistency
 // ============================================================
-function renderArticlePage({ title, description, url, canonicalUrl, breadcrumbItems, bannerHtml, headerHtml, bodyHtml, sidebarHtml, structuredData, ogImage }) {
+function renderArticlePage({ title, description, url, canonicalUrl, breadcrumbItems, bannerHtml, headerHtml, bodyHtml, sidebarHtml, structuredData, ogImage, datePublished, dateModified }) {
   const safeTitle = escapeHtml(title);
   const safeDesc = escapeHtml(description);
-  const image = ogImage || `${SITE_URL}/og-image.jpg`;
+  const fallbackOg = `${SITE_URL}/og-image.jpg`;
+  const image = ogImage || fallbackOg;
+  const isFallbackOg = image === fallbackOg;
   const canonical = canonicalUrl || url;
+  // article:published_time / article:modified_time are optional but improve
+  // freshness signals when present. Only emit when route supplies them.
+  const publishedMeta = datePublished
+    ? `<meta property="article:published_time" content="${escapeHtml(new Date(datePublished).toISOString())}">`
+    : '';
+  const modifiedMeta = dateModified
+    ? `<meta property="article:modified_time" content="${escapeHtml(new Date(dateModified).toISOString())}">`
+    : '';
 
   const breadcrumbSchema = breadcrumbItems?.length ? {
     '@context': 'https://schema.org',
@@ -506,12 +519,12 @@ function renderArticlePage({ title, description, url, canonicalUrl, breadcrumbIt
   <meta property="og:title" content="${safeTitle}">
   <meta property="og:description" content="${safeDesc}">
   <meta property="og:image" content="${escapeHtml(image)}">
-  <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="630">
-  <meta property="og:image:type" content="image/jpeg">
+  ${isFallbackOg ? '<meta property="og:image:width" content="1200">\n  <meta property="og:image:height" content="630">\n  <meta property="og:image:type" content="image/jpeg">' : ''}
   <meta property="og:image:alt" content="${safeTitle}">
   <meta property="og:locale" content="vi_VN">
   <meta property="og:site_name" content="ScoreLine">
+  ${publishedMeta}
+  ${modifiedMeta}
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="${safeTitle}">
   <meta name="twitter:description" content="${safeDesc}">
@@ -662,9 +675,17 @@ router.get('/preview/:slug', async (req, res) => {
 
     AutoArticle.updateOne({ _id: article._id }, { $inc: { views: 1 } }).catch(() => {});
 
-    // Generate thumbnail
+    // Thumbnail resolution — admin-uploaded image wins. Only fall through to
+    // the auto-generator (canvas-composed banner) when the editor hasn't
+    // attached a custom hero. Same pattern as /tin-bong-da uses
+    // article.image. See AutoArticle.thumbnail field — without that the
+    // upload silently disappears under Mongoose strict mode.
     let thumbUrl = `${SITE_URL}/og-image.jpg`;
-    if (thumbnailGenerator) {
+    if (article.thumbnail) {
+      thumbUrl = article.thumbnail.startsWith('http')
+        ? article.thumbnail
+        : `${SITE_URL}${article.thumbnail.startsWith('/') ? '' : '/'}${article.thumbnail}`;
+    } else if (thumbnailGenerator) {
       try {
         const tp = await thumbnailGenerator.generateForPreview(article);
         if (tp) thumbUrl = `${SITE_URL}${tp}`;
@@ -722,6 +743,9 @@ router.get('/preview/:slug', async (req, res) => {
       ],
       bannerHtml: bannerImgHtml,
       headerHtml, bodyHtml, sidebarHtml, structuredData,
+      ogImage: thumbUrl,
+      datePublished: article.createdAt,
+      dateModified: article.updatedAt || article.createdAt,
     });
 
     res.set('Content-Type', 'text/html; charset=utf-8');
@@ -750,9 +774,15 @@ router.get('/doi-dau/:slug', async (req, res) => {
 
     AutoArticle.updateOne({ _id: article._id }, { $inc: { views: 1 } }).catch(() => {});
 
-    // Generate thumbnail
+    // Thumbnail resolution — same pattern as /preview/:slug above. Editor
+    // upload (article.thumbnail) wins; auto-generated banner is the
+    // fallback for articles where the editor hasn't picked a hero yet.
     let thumbUrl = `${SITE_URL}/og-image.jpg`;
-    if (thumbnailGenerator) {
+    if (article.thumbnail) {
+      thumbUrl = article.thumbnail.startsWith('http')
+        ? article.thumbnail
+        : `${SITE_URL}${article.thumbnail.startsWith('/') ? '' : '/'}${article.thumbnail}`;
+    } else if (thumbnailGenerator) {
       try {
         const tp = await thumbnailGenerator.generateForH2H(article);
         if (tp) thumbUrl = `${SITE_URL}${tp}`;
@@ -918,6 +948,9 @@ router.get('/doi-dau/:slug', async (req, res) => {
         { name: `${homeName} vs ${awayName}`, url },
       ],
       bannerHtml: h2hBannerHtml, headerHtml, bodyHtml, sidebarHtml,
+      ogImage: thumbUrl,
+      datePublished: article.createdAt,
+      dateModified: article.updatedAt || article.createdAt,
       structuredData: [articleSchema, sportsEventSchema, {
         "@context": "https://schema.org",
         "@type": "FAQPage",

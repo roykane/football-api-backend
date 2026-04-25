@@ -78,9 +78,16 @@ function escapeXml(str) {
     .replace(/'/g, '&apos;');
 }
 
+// Strip ?v=… cache-buster + #fragment so the sitemap always reports the
+// canonical URL Google indexes — preventing duplicate URL entries.
+function canonicalLoc(url) {
+  if (!url) return url;
+  return String(url).split('#')[0].split('?')[0];
+}
+
 function urlEntry(loc, lastmod, changefreq, priority) {
   return `  <url>
-    <loc>${escapeXml(loc)}</loc>
+    <loc>${escapeXml(canonicalLoc(loc))}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>${changefreq}</changefreq>
     <priority>${priority}</priority>
@@ -137,10 +144,13 @@ async function generateSitemap() {
       if (!article.slug) continue;
       const lastmod = (article.updatedAt || article.createdAt || new Date()).toISOString().split('T')[0];
       const matchDate = article.matchInfo?.matchDate ? new Date(article.matchInfo.matchDate) : null;
-      const isUpcoming = matchDate && matchDate > new Date();
-      // Upcoming matches change more frequently (odds update); finished are static
-      const changefreq = isUpcoming ? 'hourly' : 'monthly';
-      const priority = isUpcoming ? '0.8' : '0.5';
+      const now = new Date();
+      const isUpcoming = matchDate && matchDate > now;
+      const isToday = matchDate && Math.abs(matchDate - now) < 36 * 3600 * 1000;
+      // Tighter priority bands so finished previews don't waste crawl budget:
+      //   today (live/imminent) → 0.8, upcoming future → 0.7, finished → 0.3
+      const changefreq = isUpcoming ? (isToday ? 'hourly' : 'daily') : 'monthly';
+      const priority = isUpcoming ? (isToday ? '0.8' : '0.7') : '0.3';
       addUrl(`${SITE_URL}/nhan-dinh/${article.slug}`, lastmod, changefreq, priority);
     }
 
@@ -264,7 +274,7 @@ async function generateNewsSitemap() {
 
   const pushNewsEntry = (loc, pubDate, title) => {
     urls.push(`  <url>
-    <loc>${escapeXml(loc)}</loc>
+    <loc>${escapeXml(canonicalLoc(loc))}</loc>
     <news:news>
       <news:publication>
         <news:name>ScoreLine</news:name>
@@ -341,7 +351,7 @@ async function generateImagesSitemap() {
 
   const pushImageEntry = (loc, imageUrl, caption) => {
     urls.push(`  <url>
-    <loc>${escapeXml(loc)}</loc>
+    <loc>${escapeXml(canonicalLoc(loc))}</loc>
     <image:image>
       <image:loc>${escapeXml(imageUrl)}</image:loc>
       <image:caption>${escapeXml(caption)}</image:caption>

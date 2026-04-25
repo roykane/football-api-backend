@@ -250,6 +250,19 @@ class TransferNewsGenerator {
       return null;
     }
 
+    // Runtime validator — transfer copy is short (200-350w) so we use a
+    // smaller floor than match-report/h2h.
+    const { validate: validateContent } = require('./contentValidator');
+    const validationIssues = validateContent({
+      title: ai.title,
+      description: ai.description,
+      content: ai.content,
+    }, { minTotalWords: 150 });
+    if (validationIssues.length) {
+      console.warn(`   ⚠️  AI rejected: ${validationIssues.join('; ')}`);
+      return null;
+    }
+
     // Try to fetch player photo; fall back to incoming team logo.
     const playerPhoto = await this.fetchPlayerPhoto(t.player.id);
     const image = playerPhoto || t.teamIn.logo || FALLBACK_PLAYER_IMAGE;
@@ -264,7 +277,11 @@ class TransferNewsGenerator {
       tags: Array.isArray(ai.tags) ? ai.tags : [t.player.name, t.teamIn.name, t.teamOut.name],
       image,
       category: 'transfer',
-      status: 'published',
+      // Editor gate — same as match-report/h2h/round-preview/soi-keo. Even
+      // though transfer facts come straight from API-Sports, going through
+      // the review queue keeps the publishing pipeline uniform and gives a
+      // chance to spike sloppy AI rewrites before they hit the index.
+      status: 'draft',
       pubDate: new Date(t.date),
       aiModel: 'claude-haiku-4-5-20251001',
       // Reuse matchInfo.league/homeTeam/awayTeam slots loosely: store teamIn + teamOut.

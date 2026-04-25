@@ -3,9 +3,10 @@ const router = express.Router();
 const roundPreviewGenerator = require('../services/round-preview-generator');
 const h2hGenerator = require('../services/h2h-generator');
 const AutoArticle = require('../models/AutoArticle');
+const { requireAdmin } = require('./adminAuth');
 
 // POST /api/content/generate-preview - Trigger round preview generation
-router.post('/generate-preview', async (req, res) => {
+router.post('/generate-preview', requireAdmin, async (req, res) => {
   try {
     const { maxArticles = 3 } = req.body;
     console.log(`[ContentAPI] Manual round preview generation: max ${maxArticles}`);
@@ -18,7 +19,7 @@ router.post('/generate-preview', async (req, res) => {
 });
 
 // POST /api/content/generate-h2h - Trigger H2H generation
-router.post('/generate-h2h', async (req, res) => {
+router.post('/generate-h2h', requireAdmin, async (req, res) => {
   try {
     const { maxArticles = 5 } = req.body;
     console.log(`[ContentAPI] Manual H2H generation: max ${maxArticles}`);

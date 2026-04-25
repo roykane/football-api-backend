@@ -410,6 +410,18 @@ ${formationsText}
       return null;
     }
 
+    // Runtime validator — banned phrases + minimum length.
+    const { validate: validateContent } = require('./contentValidator');
+    const validationIssues = validateContent({
+      title: aiContent.title,
+      description: aiContent.description,
+      content: aiContent.content,
+    }, { minTotalWords: 700 });
+    if (validationIssues.length) {
+      console.warn(`   ⚠️  AI rejected: ${validationIssues.join('; ')}`);
+      return null;
+    }
+
     const homeLogo = fixture.teams?.home?.logo || null;
     const awayLogo = fixture.teams?.away?.logo || null;
     const leagueLogo = fixture.league?.logo || null;

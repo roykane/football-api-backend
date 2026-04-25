@@ -12,6 +12,7 @@ const { articles } = require('../data/footballKnowledge');
 
 const SITE_URL = process.env.SITE_URL || 'https://scoreline.io';
 const { markdownToHtml, splitBySections } = require('../utils/markdown');
+const { getEntityDates, pickOgImage, ogImageMeta, authorByline, formatDateVi } = require('../utils/seoCommon');
 
 function escapeHtml(str) {
   if (!str) return '';
@@ -79,13 +80,18 @@ router.get('/kien-thuc-bong-da/:slug', (req, res) => {
       { '@type': 'ListItem', position: 3, name: article.title, item: url }
     ]
   };
+  const { datePublished, dateModified } = getEntityDates(article);
+  const og = pickOgImage(article, { alt: article.title });
   const articleSchema = {
     '@context': 'https://schema.org', '@type': 'Article',
     headline: article.title, description: article.metaDesc, url,
-    datePublished: '2026-04-21T00:00:00Z', dateModified: new Date().toISOString(),
-    author: { '@type': 'Organization', name: 'ScoreLine', url: SITE_URL },
+    datePublished, dateModified,
+    inLanguage: 'vi-VN',
+    author: { '@type': 'Organization', name: 'Ban Biên Tập ScoreLine', url: `${SITE_URL}/about` },
     publisher: { '@type': 'Organization', name: 'ScoreLine', logo: { '@type': 'ImageObject', url: `${SITE_URL}/og-image.jpg`, width: 1200, height: 630 } },
-    image: { '@type': 'ImageObject', url: `${SITE_URL}/og-image.jpg`, width: 1200, height: 630 },
+    image: og.knownDimensions
+      ? { '@type': 'ImageObject', url: og.url, width: og.width, height: og.height }
+      : { '@type': 'ImageObject', url: og.url },
     mainEntityOfPage: url,
     articleSection: article.category
   };
@@ -128,17 +134,14 @@ router.get('/kien-thuc-bong-da/:slug', (req, res) => {
   <meta property="og:url" content="${escapeHtml(url)}">
   <meta property="og:title" content="${escapeHtml(article.title)}">
   <meta property="og:description" content="${escapeHtml(article.metaDesc)}">
-  <meta property="og:image" content="${SITE_URL}/og-image.jpg">
-  <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="630">
-  <meta property="og:image:type" content="image/jpeg">
-  <meta property="og:image:alt" content="${escapeHtml(article.title)}">
+  ${ogImageMeta(og)}
   <meta property="og:locale" content="vi_VN">
   <meta property="og:site_name" content="ScoreLine">
+  <meta property="article:published_time" content="${datePublished}">
+  <meta property="article:modified_time" content="${dateModified}">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="${escapeHtml(article.title)}">
   <meta name="twitter:description" content="${escapeHtml(article.metaDesc)}">
-  <meta name="twitter:image" content="${SITE_URL}/og-image.jpg">
   <script type="application/ld+json">${JSON.stringify(articleSchema)}</script>
   <script type="application/ld+json">${JSON.stringify(breadcrumbSchema)}</script>
   ${faqSchema ? `<script type="application/ld+json">${JSON.stringify(faqSchema)}</script>` : ''}
@@ -152,11 +155,12 @@ router.get('/kien-thuc-bong-da/:slug', (req, res) => {
       <main class="main">
         <div class="header-card">
           <h1>${article.icon} ${escapeHtml(article.title.split(' - ')[0])}</h1>
-          <div class="article-meta">📂 ${escapeHtml(article.category)} · ⏱ Cập nhật 2026-04-21</div>
+          <div class="article-meta">📂 ${escapeHtml(article.category)} · ⏱ Cập nhật <time datetime="${dateModified}">${formatDateVi(dateModified)}</time></div>
         </div>
         <div class="intro-box"><p>${escapeHtml(article.metaDesc)}</p></div>
         ${sectionCardsHtml}
         ${faqsHtml}
+        ${authorByline({ publishedIso: datePublished, modifiedIso: dateModified, icon: '📚', bio: 'Bài viết tổng hợp & biên soạn bởi đội ngũ ScoreLine, đối chiếu với tài liệu chính thức của FIFA và các Liên đoàn bóng đá quốc gia. Phản ánh sai sót xin gửi qua trang <a href="/about">Giới thiệu</a>.' })}
         <div class="section-card">
           <h2>🔗 Bài viết liên quan</h2>
           <p>

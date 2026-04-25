@@ -371,6 +371,18 @@ async function generateArticleFromData(fixtureId, homeTeam, awayTeam, league, ma
   // Generate AI content
   const aiContent = await generateH2HContent(homeTeam, awayTeam, league, matchDate, h2hData, homeForm, awayForm);
 
+  // Runtime validator — reject if Haiku slipped a banned phrase or under-delivered.
+  const { validate: validateContent } = require('./contentValidator');
+  const validationIssues = validateContent({
+    title: aiContent.title,
+    description: aiContent.excerpt,
+    content: aiContent.content,
+  }, { minTotalWords: 700 });
+  if (validationIssues.length) {
+    console.warn(`[H2H] AI rejected: ${validationIssues.join('; ')}`);
+    return null;
+  }
+
   const leagueIdStr = typeof league.id === 'string' ? league.id : String(league.id);
   const leagueId = parseInt(leagueIdStr.replace('league-', '')) || 0;
 

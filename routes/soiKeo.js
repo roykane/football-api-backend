@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const SoiKeoArticle = require('../models/SoiKeoArticle');
 const soiKeoGenerator = require('../services/soi-keo-generator');
+const { requireAdmin } = require('./adminAuth');
 
 // ========================================
 // GET /api/soi-keo - Get all articles
@@ -12,9 +13,13 @@ router.get('/', async (req, res) => {
 
     const query = { status: 'published' };
 
-    // Filter by league
-    if (league) {
-      query['matchInfo.league.id'] = parseInt(league);
+    // Filter by league — only accept positive integer IDs
+    if (league !== undefined) {
+      const leagueId = parseInt(league, 10);
+      if (!Number.isFinite(leagueId) || leagueId <= 0) {
+        return res.status(400).json({ success: false, error: 'Invalid league id' });
+      }
+      query['matchInfo.league.id'] = leagueId;
     }
 
     // Filter upcoming matches only
@@ -22,8 +27,8 @@ router.get('/', async (req, res) => {
       query['matchInfo.matchDate'] = { $gte: new Date() };
     }
 
-    const pageNum = parseInt(page);
-    const limitNum = parseInt(limit);
+    const pageNum = Math.max(parseInt(page, 10) || 1, 1);
+    const limitNum = Math.min(Math.max(parseInt(limit, 10) || 10, 1), 50);
     const skip = (pageNum - 1) * limitNum;
 
     const [articles, total] = await Promise.all([
@@ -86,8 +91,8 @@ router.get('/upcoming', async (req, res) => {
 router.get('/hot', async (req, res) => {
   try {
     const { limit = 10, page = 1 } = req.query;
-    const pageNum = parseInt(page);
-    const limitNum = parseInt(limit);
+    const pageNum = Math.max(parseInt(page, 10) || 1, 1);
+    const limitNum = Math.min(Math.max(parseInt(limit, 10) || 10, 1), 50);
     const skip = (pageNum - 1) * limitNum;
 
     // Sort strategy: upcoming matches first (soonest at top), then recent past
@@ -139,8 +144,11 @@ router.get('/hot', async (req, res) => {
 // ========================================
 router.get('/fixture/:fixtureId', async (req, res) => {
   try {
-    const { fixtureId } = req.params;
-    const article = await SoiKeoArticle.getByFixtureId(parseInt(fixtureId));
+    const fixtureId = parseInt(req.params.fixtureId, 10);
+    if (!Number.isFinite(fixtureId) || fixtureId <= 0) {
+      return res.status(400).json({ success: false, error: 'Invalid fixture id' });
+    }
+    const article = await SoiKeoArticle.getByFixtureId(fixtureId);
 
     if (!article) {
       return res.status(404).json({
@@ -151,7 +159,7 @@ router.get('/fixture/:fixtureId', async (req, res) => {
 
     // Increment views
     await SoiKeoArticle.updateOne(
-      { fixtureId: parseInt(fixtureId) },
+      { fixtureId },
       { $inc: { views: 1 } }
     );
 
@@ -175,6 +183,9 @@ router.get('/fixture/:fixtureId', async (req, res) => {
 router.get('/:slug', async (req, res) => {
   try {
     const { slug } = req.params;
+    if (typeof slug !== 'string' || slug.length === 0 || slug.length > 200 || !/^[a-zA-Z0-9_-]+$/.test(slug)) {
+      return res.status(400).json({ success: false, error: 'Invalid slug' });
+    }
 
     // Check if it's an ObjectId (fallback for old links)
     if (slug.match(/^[0-9a-fA-F]{24}$/)) {
@@ -227,9 +238,9 @@ router.get('/:slug', async (req, res) => {
 });
 
 // ========================================
-// POST /api/soi-keo/generate - Trigger manual generation
+// POST /api/soi-keo/generate - Trigger manual generation (admin only)
 // ========================================
-router.post('/generate', async (req, res) => {
+router.post('/generate', requireAdmin, async (req, res) => {
   try {
     const { fixtureId, maxArticles = 5 } = req.body;
 
@@ -273,9 +284,9 @@ router.post('/generate', async (req, res) => {
 });
 
 // ========================================
-// POST /api/soi-keo/cleanup - Delete old articles (7+ days old)
+// POST /api/soi-keo/cleanup - Delete old articles (7+ days old, admin only)
 // ========================================
-router.post('/cleanup', async (req, res) => {
+router.post('/cleanup', requireAdmin, async (req, res) => {
   try {
     const { daysOld = 7, dryRun = false } = req.body;
 

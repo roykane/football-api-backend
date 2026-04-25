@@ -53,17 +53,29 @@ router.get('/', async (req, res) => {
  */
 router.get('/search', async (req, res) => {
   try {
-    const keyword = req.query.q;
-    const limit = parseInt(req.query.limit) || 20;
+    const rawKeyword = req.query.q;
+    const limit = Math.min(Math.max(parseInt(req.query.limit) || 20, 1), 50);
 
-    console.log(`[Articles API] Search: "${keyword}"`);
-
-    if (!keyword) {
+    if (typeof rawKeyword !== 'string' || !rawKeyword.trim()) {
       return res.status(400).json({
         success: false,
         error: 'Missing search keyword'
       });
     }
+    // Strip control chars + Mongo operator-like characters; cap length.
+    const keyword = rawKeyword
+      .replace(/[\u0000-\u001F\u007F$]/g, ' ')
+      .trim()
+      .slice(0, 100);
+
+    if (!keyword) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid search keyword'
+      });
+    }
+
+    console.log(`[Articles API] Search: "${keyword}"`);
 
     const articles = await Article.search(keyword, limit);
 

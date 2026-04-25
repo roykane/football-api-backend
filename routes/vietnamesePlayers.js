@@ -11,6 +11,7 @@ const siteHeader = require('../utils/siteHeader');
 const { players } = require('../data/vietnamesePlayers');
 
 const SITE_URL = process.env.SITE_URL || 'https://scoreline.io';
+const { getEntityDates, pickOgImage, ogImageMeta, authorByline } = require('../utils/seoCommon');
 
 function escapeHtml(str) {
   if (!str) return '';
@@ -94,6 +95,8 @@ router.get('/cau-thu/:slug', (req, res) => {
   const title = `${player.name} - ${player.position} ${player.nationalTeam} | Tiểu sử, Số áo, Thành tích`;
   const description = `${player.name} (${age} tuổi, ${player.position} ${player.currentClub}): tiểu sử, sự nghiệp, thành tích cùng ĐT Việt Nam. ${player.caps} lần khoác áo ĐTQG, ${player.goals} bàn thắng.`;
 
+  const { datePublished, dateModified } = getEntityDates(player);
+  const og = pickOgImage(player, { alt: `${player.name} — ${player.position}` });
   const personSchema = {
     '@context': 'https://schema.org',
     '@type': 'Person',
@@ -162,19 +165,13 @@ router.get('/cau-thu/:slug', (req, res) => {
   <meta property="og:url" content="${escapeHtml(url)}">
   <meta property="og:title" content="${escapeHtml(title)}">
   <meta property="og:description" content="${escapeHtml(description)}">
-  <meta property="og:image" content="${SITE_URL}/og-image.jpg">
-  <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="630">
-  <meta property="og:image:type" content="image/jpeg">
-  <meta property="og:image:alt" content="${escapeHtml(player.name)}">
+  ${ogImageMeta(og)}
   <meta property="og:locale" content="vi_VN">
   <meta property="og:site_name" content="ScoreLine">
 
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="${escapeHtml(title)}">
   <meta name="twitter:description" content="${escapeHtml(description)}">
-  <meta name="twitter:image" content="${SITE_URL}/og-image.jpg">
-  <meta name="twitter:image:alt" content="${escapeHtml(player.name)}">
 
   <script type="application/ld+json">${JSON.stringify(personSchema)}</script>
   <script type="application/ld+json">${JSON.stringify(breadcrumbSchema)}</script>
@@ -240,6 +237,8 @@ router.get('/cau-thu/:slug', (req, res) => {
             <a href="/world-cup-2026/doi-tuyen-viet-nam">Đội tuyển Việt Nam World Cup 2026</a>
           </p>
         </div>
+
+        ${authorByline({ publishedIso: datePublished, modifiedIso: dateModified, icon: '⚽', bio: `Hồ sơ ${escapeHtml(player.name)} tổng hợp từ VFF, AFC, FIFA và các nguồn truyền thông trong nước. Số liệu thống kê được đối chiếu với CLB chủ quản và Liên đoàn bóng đá Việt Nam.` })}
       </main>
 
       <aside class="sidebar">

@@ -17,6 +17,28 @@ let thumbnailGenerator;
 try { thumbnailGenerator = require('../services/thumbnail-generator'); } catch (e) { /* canvas not installed */ }
 
 const SITE_URL = process.env.SITE_URL || 'https://scoreline.io';
+const log = require('../utils/logger').child('seo-pages');
+const { autoLinkPlayers, autoLinkKnowledge, DEFAULT_KNOWLEDGE_TERMS } = require('../utils/autoLinker');
+const { players: VN_PLAYERS } = require('../data/vietnamesePlayers');
+
+// Strip markdown decorations + collapse whitespace so the answer stays
+// readable when Google renders it as a rich-result snippet.
+function plainTextFromMd(md, maxLen = 900) {
+  if (!md) return '';
+  const text = String(md)
+    .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/!\[[^\]]*\]\([^)]+\)/g, '')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/[#>*_~]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (text.length <= maxLen) return text;
+  // Cut on sentence boundary if possible.
+  const slice = text.slice(0, maxLen);
+  const lastDot = Math.max(slice.lastIndexOf('. '), slice.lastIndexOf('! '), slice.lastIndexOf('? '));
+  return (lastDot > maxLen * 0.6 ? slice.slice(0, lastDot + 1) : slice).trim();
+}
 
 function generateFaqSchema(matchInfo, content, oddsData) {
   const home = matchInfo?.homeTeam?.name || '';
@@ -31,11 +53,11 @@ function generateFaqSchema(matchInfo, content, oddsData) {
     },
     {
       question: `Phân tích phong độ ${home} vs ${away}?`,
-      answer: content?.formAnalysis ? content.formAnalysis.substring(0, 300) + '...' : `Xem phân tích chi tiết phong độ ${home} vs ${away} trong bài viết.`,
+      answer: plainTextFromMd(content?.formAnalysis) || `Xem phân tích chi tiết phong độ ${home} vs ${away} trong bài viết.`,
     },
     {
       question: `Dự đoán kết quả ${home} vs ${away}?`,
-      answer: content?.prediction ? content.prediction.substring(0, 300) + '...' : `Xem dự đoán chi tiết trận ${home} vs ${away} trong bài viết.`,
+      answer: plainTextFromMd(content?.prediction) || `Xem dự đoán chi tiết trận ${home} vs ${away} trong bài viết.`,
     },
   ];
 
@@ -49,7 +71,7 @@ function generateFaqSchema(matchInfo, content, oddsData) {
   if (content?.h2hHistory) {
     faqs.push({
       question: `Lịch sử đối đầu ${home} vs ${away}?`,
-      answer: content.h2hHistory.substring(0, 300) + '...',
+      answer: plainTextFromMd(content.h2hHistory),
     });
   }
 
@@ -91,6 +113,9 @@ function formatDate(date) {
 
 const siteHeader = require('../utils/siteHeader');
 
+// Page-level <h1> already exists in the article header — promote AI's
+// "# Heading" to <h2> so we don't ship two <h1>s. Markdown ### stays <h3>,
+// ## stays <h2>; the only special case is the bare "#" prefix.
 function markdownToHtml(text) {
   if (!text) return '';
 
@@ -104,6 +129,7 @@ function markdownToHtml(text) {
     if (/^#{4,6}\s+/.test(trimmed)) return trimmed.replace(/^#{4,6}\s+(.+)$/gm, '<h4>$1</h4>');
     if (/^###\s+/.test(trimmed)) return trimmed.replace(/^###\s+(.+)$/gm, '<h3>$1</h3>');
     if (/^##\s+/.test(trimmed)) return trimmed.replace(/^##\s+(.+)$/gm, '<h2>$1</h2>');
+    // Single "#" → <h2> to avoid duplicate page H1.
     if (/^#\s+/.test(trimmed)) return trimmed.replace(/^#\s+(.+)$/gm, '<h2>$1</h2>');
 
     // List block
@@ -130,6 +156,43 @@ function markdownToHtml(text) {
     });
 }
 
+// schema.org/EventStatusType — pick the right value based on match time.
+// SportsEvent with eventStatus stuck on "EventScheduled" after kickoff
+// is a structured-data lie that Google will eventually flag.
+function computeEventStatus(matchDate, matchStatus) {
+  const status = String(matchStatus || '').toLowerCase();
+  if (['ft', 'aet', 'pen', 'finished'].includes(status)) return 'https://schema.org/EventCompleted';
+  if (['1h', '2h', 'ht', 'et', 'bt', 'p', 'live'].includes(status)) return 'https://schema.org/EventInProgress';
+  if (['pst', 'canc', 'abd', 'awd', 'wo'].includes(status)) return 'https://schema.org/EventPostponed';
+  if (matchDate) {
+    const ts = new Date(matchDate).getTime();
+    if (Number.isFinite(ts)) {
+      const now = Date.now();
+      // Standard match window ≈ 2h. After +2h, treat as completed unless we
+      // have an explicit live-status tag.
+      if (ts + 2 * 3600 * 1000 < now) return 'https://schema.org/EventCompleted';
+    }
+  }
+  return 'https://schema.org/EventScheduled';
+}
+
+// Concatenate the editorial sections into a single plain string for the
+// `articleBody` field — Google's Article schema wants the actual prose,
+// not the excerpt.
+function buildArticleBody(content) {
+  if (!content) return '';
+  const parts = [
+    content.introduction,
+    content.teamAnalysis,
+    content.h2hHistory,
+    content.formAnalysis,
+    content.oddsAnalysis,
+    content.prediction,
+    content.bettingTips,
+  ].filter(Boolean);
+  return plainTextFromMd(parts.join('\n\n'), 5000);
+}
+
 function renderSoiKeoHtml(article, thumbnailUrl) {
   const { matchInfo, content, oddsData } = article;
   const title = escapeHtml(article.metaTitle || article.title);
@@ -142,6 +205,22 @@ function renderSoiKeoHtml(article, thumbnailUrl) {
   const updatedIso = new Date(article.updatedAt || article.createdAt || Date.now()).toISOString();
   const updatedShort = new Date(article.updatedAt || article.createdAt || Date.now()).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
+  // Image dimensions — generated thumbnails and the static og-image.jpg are
+  // both 1200×630, so the hardcoded value is correct for those. If the
+  // article has a custom thumbnail at a different aspect, fall back to
+  // omitting size — better than lying about it.
+  const isGeneratedThumb = !!thumbnailUrl && /\/article-images\//.test(thumbnailUrl);
+  const isOgFallback = !thumbnailUrl || thumbnailUrl === `${SITE_URL}/og-image.jpg`;
+  const imageObject = {
+    "@type": "ImageObject",
+    "url": thumbnailUrl || article.thumbnail || `${SITE_URL}/og-image.jpg`,
+  };
+  if (isGeneratedThumb || isOgFallback) {
+    imageObject.width = 1200;
+    imageObject.height = 630;
+  }
+
+  const articleBody = buildArticleBody(content);
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "Article",
@@ -150,6 +229,7 @@ function renderSoiKeoHtml(article, thumbnailUrl) {
     "url": url,
     "datePublished": article.createdAt,
     "dateModified": article.updatedAt || article.createdAt,
+    "inLanguage": "vi-VN",
     "author": {
       "@type": "Organization",
       "name": "Ban Biên Tập ScoreLine",
@@ -167,13 +247,9 @@ function renderSoiKeoHtml(article, thumbnailUrl) {
         "height": 630
       }
     },
-    "image": {
-      "@type": "ImageObject",
-      "url": thumbnailUrl || article.thumbnail || `${SITE_URL}/og-image.jpg`,
-      "width": 1200,
-      "height": 630
-    },
-    "mainEntityOfPage": url
+    "image": imageObject,
+    "mainEntityOfPage": url,
+    ...(articleBody ? { articleBody } : {}),
   };
 
   const leagueNameRaw = matchInfo?.league?.name || '';
@@ -186,7 +262,7 @@ function renderSoiKeoHtml(article, thumbnailUrl) {
     "image": matchInfo?.homeTeam?.logo || thumbnailUrl || `${SITE_URL}/og-image.jpg`,
     "sport": "Soccer",
     "startDate": matchInfo?.matchDate,
-    "eventStatus": "https://schema.org/EventScheduled",
+    "eventStatus": computeEventStatus(matchInfo?.matchDate, article.matchStatus),
     "eventAttendanceMode": "https://schema.org/MixedEventAttendanceMode",
     "inLanguage": "vi-VN",
     "homeTeam": {
@@ -233,49 +309,61 @@ function renderSoiKeoHtml(article, thumbnailUrl) {
     ],
   };
 
+  // Per-section markdown render with cross-content links — players
+  // mentioned in the prose link to /cau-thu/<slug>, football terms link to
+  // /kien-thuc-bong-da/<slug>. linkOnce dedupes so we don't carpet-bomb the
+  // same anchor.
+  const renderBody = (md) => {
+    if (!md) return '';
+    let html = markdownToHtml(md);
+    html = autoLinkPlayers(html, VN_PLAYERS);
+    html = autoLinkKnowledge(html, DEFAULT_KNOWLEDGE_TERMS);
+    return html;
+  };
+
   // Build content sections
   const sections = [];
   if (content?.introduction || content?.teamAnalysis) {
     sections.push(`
       <div class="section-card">
         <h2><span class="section-icon">⚽</span> Phong độ và lực lượng ${homeName} vs ${awayName}</h2>
-        ${content?.introduction ? markdownToHtml(content.introduction) : ''}
-        ${content?.teamAnalysis ? `<div class="section-divider"></div>${markdownToHtml(content.teamAnalysis)}` : ''}
+        ${content?.introduction ? renderBody(content.introduction) : ''}
+        ${content?.teamAnalysis ? `<div class="section-divider"></div>${renderBody(content.teamAnalysis)}` : ''}
       </div>`);
   }
   if (content?.h2hHistory) {
     sections.push(`
       <div class="section-card">
         <h2><span class="section-icon">🏆</span> Lịch sử đối đầu ${homeName} vs ${awayName}</h2>
-        ${markdownToHtml(content.h2hHistory)}
+        ${renderBody(content.h2hHistory)}
       </div>`);
   }
   if (content?.formAnalysis) {
     sections.push(`
       <div class="section-card">
-        <h2><span class="section-icon">📈</span> Phong độ gần đây</h2>
-        ${markdownToHtml(content.formAnalysis)}
+        <h2><span class="section-icon">📈</span> Phong độ gần đây ${homeName} vs ${awayName}</h2>
+        ${renderBody(content.formAnalysis)}
       </div>`);
   }
   if (content?.oddsAnalysis) {
     sections.push(`
       <div class="section-card">
         <h2><span class="section-icon">💹</span> Nhận định kèo ${homeName} vs ${awayName}</h2>
-        ${markdownToHtml(content.oddsAnalysis)}
+        ${renderBody(content.oddsAnalysis)}
       </div>`);
   }
   if (content?.prediction) {
     sections.push(`
       <div class="section-card prediction-card">
-        <h2><span class="section-icon">🎯</span> Dự đoán kết quả</h2>
-        ${markdownToHtml(content.prediction)}
+        <h2><span class="section-icon">🎯</span> Dự đoán kết quả ${homeName} vs ${awayName}</h2>
+        ${renderBody(content.prediction)}
       </div>`);
   }
   if (content?.bettingTips) {
     sections.push(`
       <div class="section-card tips-card">
-        <h2><span class="section-icon">🔥</span> Kèo khuyên chọn</h2>
-        ${markdownToHtml(content.bettingTips)}
+        <h2><span class="section-icon">🔥</span> Kèo khuyên chọn ${homeName} vs ${awayName}</h2>
+        ${renderBody(content.bettingTips)}
       </div>`);
   }
 
@@ -291,6 +379,7 @@ function renderSoiKeoHtml(article, thumbnailUrl) {
   <link rel="alternate" hreflang="vi" href="${escapeHtml(url)}">
   <link rel="alternate" hreflang="x-default" href="${escapeHtml(url)}">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  ${thumbnailUrl ? `<link rel="preload" as="image" href="${escapeHtml(thumbnailUrl)}" fetchpriority="high">` : ''}
 
   <meta property="og:type" content="article">
   <meta property="og:url" content="${escapeHtml(url)}">
@@ -575,9 +664,9 @@ router.get('/nhan-dinh/:slug', async (req, res) => {
         const homeLogoAlt = escapeHtml(a.matchInfo?.homeTeam?.name || 'Đội nhà');
         const awayLogoAlt = escapeHtml(a.matchInfo?.awayTeam?.name || 'Đội khách');
         const thumbHtml = a.thumbnail
-          ? `<img src="${escapeHtml(a.thumbnail)}" alt="${titleSafe}" class="sidebar-thumb" loading="lazy">`
+          ? `<img src="${escapeHtml(a.thumbnail)}" alt="${titleSafe}" class="sidebar-thumb" width="60" height="40" loading="lazy" decoding="async">`
           : (a.matchInfo?.homeTeam?.logo && a.matchInfo?.awayTeam?.logo)
-            ? `<div class="sidebar-logos"><img src="${escapeHtml(a.matchInfo.homeTeam.logo)}" alt="${homeLogoAlt}" loading="lazy"><span style="color:#94a3b8;font-size:10px;">vs</span><img src="${escapeHtml(a.matchInfo.awayTeam.logo)}" alt="${awayLogoAlt}" loading="lazy"></div>`
+            ? `<div class="sidebar-logos"><img src="${escapeHtml(a.matchInfo.homeTeam.logo)}" alt="${homeLogoAlt}" width="18" height="18" loading="lazy" decoding="async"><span style="color:#94a3b8;font-size:10px;">vs</span><img src="${escapeHtml(a.matchInfo.awayTeam.logo)}" alt="${awayLogoAlt}" width="18" height="18" loading="lazy" decoding="async"></div>`
             : '';
         return `<a href="/nhan-dinh/${a.slug}" class="sidebar-article">${thumbHtml}<div class="sidebar-info"><span class="sidebar-article-title">${escapeHtml(a.title?.substring(0, 60) || '')}</span></div></a>`;
       }).join('');
@@ -585,7 +674,7 @@ router.get('/nhan-dinh/:slug', async (req, res) => {
         const homeLogoAlt = escapeHtml(a.matchInfo?.homeTeam?.name || 'Đội nhà');
         const awayLogoAlt = escapeHtml(a.matchInfo?.awayTeam?.name || 'Đội khách');
         const thumbHtml = (a.matchInfo?.homeTeam?.logo && a.matchInfo?.awayTeam?.logo)
-          ? `<div class="sidebar-logos"><img src="${escapeHtml(a.matchInfo.homeTeam.logo)}" alt="${homeLogoAlt}" loading="lazy"><span style="color:#94a3b8;font-size:10px;">vs</span><img src="${escapeHtml(a.matchInfo.awayTeam.logo)}" alt="${awayLogoAlt}" loading="lazy"></div>`
+          ? `<div class="sidebar-logos"><img src="${escapeHtml(a.matchInfo.homeTeam.logo)}" alt="${homeLogoAlt}" width="18" height="18" loading="lazy" decoding="async"><span style="color:#94a3b8;font-size:10px;">vs</span><img src="${escapeHtml(a.matchInfo.awayTeam.logo)}" alt="${awayLogoAlt}" width="18" height="18" loading="lazy" decoding="async"></div>`
           : '';
         return `<a href="/doi-dau/${a.slug}" class="sidebar-article">${thumbHtml}<div class="sidebar-info"><span class="sidebar-article-title">${escapeHtml(a.title?.substring(0, 60) || '')}</span></div></a>`;
       }).join('');
@@ -601,7 +690,7 @@ router.get('/nhan-dinh/:slug', async (req, res) => {
     res.send(html);
 
   } catch (error) {
-    console.error('[SEO Pages] Error rendering soi-keo:', error);
+    log.error('Error rendering soi-keo', { slug: req.params.slug, err: error });
     res.status(500).send('<html><body><h1>Server Error</h1></body></html>');
   }
 });
@@ -834,7 +923,7 @@ router.get('/doi-bong/:slug', async (req, res) => {
     res.send(html);
 
   } catch (error) {
-    console.error('[SEO Pages] Error rendering team:', error);
+    log.error('Error rendering team', { slug: req.params.slug, err: error });
     res.status(500).send('<html><body><h1>Server Error</h1></body></html>');
   }
 });

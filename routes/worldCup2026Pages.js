@@ -10,6 +10,7 @@ const { sections } = require('../data/worldCup2026');
 
 const SITE_URL = process.env.SITE_URL || 'https://scoreline.io';
 const { markdownToHtml, splitBySections } = require('../utils/markdown');
+const { getEntityDates, pickOgImage, ogImageMeta, authorByline, formatDateVi } = require('../utils/seoCommon');
 
 function escapeHtml(str) {
   if (!str) return '';
@@ -63,20 +64,24 @@ function renderSection(req, res, section) {
     ]
   };
 
+  const { datePublished, dateModified } = getEntityDates(section);
+  const og = pickOgImage(section, { alt: section.h1 });
   const articleSchema = {
     '@context': 'https://schema.org',
     '@type': 'Article',
     headline: section.h1,
     description: section.metaDesc,
     url,
-    datePublished: '2026-04-21T00:00:00Z',
-    dateModified: new Date().toISOString(),
-    author: { '@type': 'Organization', name: 'ScoreLine', url: SITE_URL },
+    datePublished, dateModified,
+    inLanguage: 'vi-VN',
+    author: { '@type': 'Organization', name: 'Ban Biên Tập ScoreLine', url: `${SITE_URL}/about` },
     publisher: {
       '@type': 'Organization', name: 'ScoreLine',
       logo: { '@type': 'ImageObject', url: `${SITE_URL}/og-image.jpg`, width: 1200, height: 630 }
     },
-    image: { '@type': 'ImageObject', url: `${SITE_URL}/og-image.jpg`, width: 1200, height: 630 },
+    image: og.knownDimensions
+      ? { '@type': 'ImageObject', url: og.url, width: og.width, height: og.height }
+      : { '@type': 'ImageObject', url: og.url },
     mainEntityOfPage: url
   };
 
@@ -108,17 +113,14 @@ function renderSection(req, res, section) {
   <meta property="og:url" content="${escapeHtml(url)}">
   <meta property="og:title" content="${escapeHtml(section.title)}">
   <meta property="og:description" content="${escapeHtml(section.metaDesc)}">
-  <meta property="og:image" content="${SITE_URL}/og-image.jpg">
-  <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="630">
-  <meta property="og:image:type" content="image/jpeg">
-  <meta property="og:image:alt" content="World Cup 2026">
+  ${ogImageMeta(og)}
   <meta property="og:locale" content="vi_VN">
   <meta property="og:site_name" content="ScoreLine">
+  <meta property="article:published_time" content="${datePublished}">
+  <meta property="article:modified_time" content="${dateModified}">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="${escapeHtml(section.title)}">
   <meta name="twitter:description" content="${escapeHtml(section.metaDesc)}">
-  <meta name="twitter:image" content="${SITE_URL}/og-image.jpg">
   <script type="application/ld+json">${JSON.stringify(articleSchema)}</script>
   <script type="application/ld+json">${JSON.stringify(breadcrumbSchema)}</script>
   <style>${baseStyles()}</style>
@@ -140,6 +142,7 @@ function renderSection(req, res, section) {
       <main class="main">
         <div class="intro">${escapeHtml(section.intro)}</div>
         ${sectionCardsHtml}
+        ${authorByline({ publishedIso: datePublished, modifiedIso: dateModified, icon: '🏆', bio: 'Thông tin tổng hợp từ FIFA, US Soccer, Canada Soccer, FMF (Mexico) và truyền thông quốc tế. Cập nhật mỗi khi FIFA công bố lịch/bốc thăm/luật chơi mới.' })}
       </main>
       <aside class="sidebar">
         <div class="sidebar-card">

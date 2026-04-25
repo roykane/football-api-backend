@@ -238,6 +238,18 @@ async function generateForLeagueObj(league) {
 
       const aiContent = await generatePreviewContent(league, roundNumber, roundData.matches);
 
+      // Runtime validator — drop AI batches with banned phrases or weak length.
+      const { validate: validateContent } = require('./contentValidator');
+      const validationIssues = validateContent({
+        title: aiContent.title,
+        description: aiContent.excerpt,
+        content: aiContent.content,
+      }, { minTotalWords: 800 });
+      if (validationIssues.length) {
+        console.warn(`[RoundPreview] AI rejected: ${validationIssues.join('; ')}`);
+        continue;
+      }
+
       const article = new AutoArticle({
         type: 'round-preview',
         title: aiContent.title,

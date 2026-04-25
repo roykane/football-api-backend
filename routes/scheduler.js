@@ -1,6 +1,7 @@
 const express = require('express');
 const { getSchedulerStatus, triggerManualRun } = require('../services/news-scheduler');
 const { cleanupArticlesWithoutImages } = require('../services/auto-news-generator');
+const { requireAdmin } = require('./adminAuth');
 const router = express.Router();
 
 /**
@@ -30,7 +31,7 @@ router.get('/status', async (req, res) => {
  * POST /api/scheduler/trigger
  * Manually trigger news generation
  */
-router.post('/trigger', async (req, res) => {
+router.post('/trigger', requireAdmin, async (req, res) => {
   try {
     const { maxArticles = 5 } = req.body;
 
@@ -61,7 +62,7 @@ router.post('/trigger', async (req, res) => {
  * POST /api/scheduler/cleanup-images
  * Clean up articles without valid images
  */
-router.post('/cleanup-images', async (req, res) => {
+router.post('/cleanup-images', requireAdmin, async (req, res) => {
   try {
     console.log('[Scheduler API] Cleanup images requested');
 

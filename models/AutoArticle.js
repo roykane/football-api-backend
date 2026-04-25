@@ -29,6 +29,13 @@ const AutoArticleSchema = new mongoose.Schema({
   },
   metaTitle: String,
   metaDescription: String,
+  // Hero image URL (admin upload writes here via adminArticles.js → cfg.imageField).
+  // Without an explicit field, Mongoose strict mode silently drops the
+  // assignment on .save() and the SSR loses its admin-uploaded thumbnail.
+  thumbnail: {
+    type: String,
+    default: null,
+  },
   tags: [{
     type: String,
     index: true,

@@ -1,6 +1,7 @@
 const SoiKeoArticle = require('../models/SoiKeoArticle');
 const oddsCache = require('./oddsCache');
 const { generateForArticle, generateVariantForArticle } = require('./article-image-generator');
+const { validate: validateContent } = require('./contentValidator');
 const axios = require('axios');
 require('dotenv').config();
 
@@ -507,7 +508,7 @@ ${h2hData}
 3. h2hHistory (200-250 từ) — chỉ highlight insight quan trọng, không liệt kê từng trận
 4. formAnalysis (200-300 từ) — tóm tắt xu hướng, không lặp lại số liệu đã nêu
 5. oddsAnalysis (200-300 từ) — phân tích kèo ngắn gọn, có quan điểm rõ ràng
-6. prediction (100-150 từ) — tỷ số + 2-3 câu lý do, KHÔNG viết dài dòng
+6. prediction (150-200 từ) — tỷ số dự đoán + 3 LÝ DO CỤ THỂ có dẫn chứng số liệu (phong độ, H2H, kèo); mỗi lý do 1-2 câu
 7. bettingTips (100 từ) — bullet points ngắn
 
 **TITLE GỢI Ý (chọn 1 hoặc tự sáng tạo):**
@@ -522,7 +523,7 @@ Format JSON:
   "h2hHistory": "[200-250 từ]",
   "formAnalysis": "[200-300 từ]",
   "oddsAnalysis": "[200-300 từ]",
-  "prediction": "[100-150 từ]",
+  "prediction": "[150-200 từ, gồm tỷ số + 3 lý do cụ thể]",
   "bettingTips": "[bullet points ngắn]",
   "tags": ["${teams.home.name}", "${teams.away.name}", "${league.name}", "nhận định bóng đá", "phân tích trận đấu"]
 }
@@ -635,6 +636,30 @@ KHÔNG bịa chấn thương cầu thủ. Trả về ĐÚNG JSON.`;
       let bettingTips = aiContent.bettingTips;
       if (Array.isArray(bettingTips)) {
         bettingTips = bettingTips.join('\n');
+      }
+
+      // Runtime validation — reject batches where Haiku slipped a banned
+      // phrase into prose or under-delivered on word count. Falls back to a
+      // logged skip rather than throwing so the scheduler can move on.
+      const validationIssues = validateContent({
+        title: aiContent.title,
+        description: aiContent.excerpt,
+        content: {
+          introduction: aiContent.introduction,
+          teamAnalysis: aiContent.teamAnalysis,
+          h2hHistory: aiContent.h2hHistory,
+          formAnalysis: aiContent.formAnalysis,
+          oddsAnalysis: aiContent.oddsAnalysis,
+          prediction: aiContent.prediction,
+          bettingTips: bettingTips,
+        },
+      }, {
+        minTotalWords: 1200,
+        minSectionWords: { introduction: 100, teamAnalysis: 300, prediction: 150 },
+      });
+      if (validationIssues.length) {
+        console.warn(`   ⚠️  AI output rejected: ${validationIssues.join('; ')}`);
+        return null;
       }
 
       // Create article
