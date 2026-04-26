@@ -13,11 +13,16 @@ router.get('/', async (req, res) => {
     const limit = parseInt(req.query.limit) || 20;
     const page = parseInt(req.query.page) || 1;
     const category = req.query.category || 'all';
+    const excludeCategory = typeof req.query.excludeCategory === 'string' ? req.query.excludeCategory : null;
     const skip = (page - 1) * limit;
 
     const query = { status: 'published' };
     if (category && category !== 'all') {
       query.category = category;
+    } else if (excludeCategory) {
+      // Used by /tin-bong-da to keep long-form analysis (now lives at
+      // /phan-tich) from leaking back into the news feed.
+      query.category = { $ne: excludeCategory };
     }
 
     const [articles, total] = await Promise.all([

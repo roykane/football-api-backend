@@ -508,6 +508,13 @@ router.get('/tin-bong-da/:slug', async (req, res) => {
       return res.status(410).send(render404('Bài viết đã được gỡ hoặc không còn tồn tại.'));
     }
 
+    // Long-form analysis lives at /phan-tich/<slug> now. If somebody (or
+    // Google) lands on the old /tin-bong-da/<slug> URL, send them to the
+    // canonical home so the signals consolidate.
+    if (article.category === 'analysis') {
+      return res.redirect(301, `/phan-tich/${article.slug}`);
+    }
+
     // Increment views (fire-and-forget)
     Article.updateOne({ _id: article._id }, { $inc: { views: 1 } }).catch(() => {});
 
