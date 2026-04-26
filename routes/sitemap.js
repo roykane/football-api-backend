@@ -206,15 +206,17 @@ async function generateSitemap() {
     console.error('[Sitemap] Failed to load teams:', err.message);
   }
 
-  // 8. News hub + articles (/tin-bong-da) — match reports from real API-Sports data
+  // 8. News hub + articles (/tin-bong-da) — match reports + transfers + general
+  // (analysis articles split out into /phan-tich below; excluded here to avoid
+  // dual indexing).
   try {
     const Article = require('../models/Article');
     addUrl(`${SITE_URL}/tin-bong-da`, today, 'hourly', '0.8');
-    for (const cat of ['general', 'analysis', 'transfer']) {
+    for (const cat of ['general', 'transfer']) {
       addUrl(`${SITE_URL}/tin-bong-da?cat=${cat}`, today, 'daily', '0.6');
     }
     // Sort by createdAt (publication date) so newest-published articles come first.
-    const news = await Article.find({ status: 'published' })
+    const news = await Article.find({ status: 'published', category: { $ne: 'analysis' } })
       .sort({ createdAt: -1 })
       .limit(500)
       .select('slug title createdAt updatedAt _id')
@@ -234,6 +236,26 @@ async function generateSitemap() {
     console.log(`[Sitemap] ${newsAdded} news articles added`);
   } catch (err) {
     console.error('[Sitemap] Failed to load news:', err.message);
+  }
+
+  // 9. Long-form analysis hub + articles (/phan-tich) — evergreen, monthly cadence.
+  try {
+    const Article = require('../models/Article');
+    addUrl(`${SITE_URL}/phan-tich`, today, 'weekly', '0.8');
+    const analysis = await Article.find({ status: 'published', category: 'analysis' })
+      .sort({ pubDate: -1, createdAt: -1 })
+      .limit(200)
+      .select('slug title pubDate createdAt updatedAt')
+      .lean();
+    for (const a of analysis) {
+      if (!a.slug) continue;
+      const ref = a.updatedAt || a.pubDate || a.createdAt || new Date();
+      const lastmod = new Date(ref).toISOString().split('T')[0];
+      addUrl(`${SITE_URL}/phan-tich/${a.slug}`, lastmod, 'monthly', '0.7');
+    }
+    console.log(`[Sitemap] ${analysis.length} analysis articles added`);
+  } catch (err) {
+    console.error('[Sitemap] Failed to load analysis:', err.message);
   }
 
   return `<?xml version="1.0" encoding="UTF-8"?>

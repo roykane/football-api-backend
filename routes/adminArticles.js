@@ -82,6 +82,9 @@ function shapeListRow(doc, collectionKey) {
     // AutoArticle uses .type ('round-preview' vs 'h2h-analysis') to pick the page.
     const base = obj.type === 'h2h-analysis' ? '/doi-dau/' : '/preview/';
     url = obj.slug ? `${base}${obj.slug}` : '#';
+  } else if (collectionKey === 'article' && obj.category === 'analysis') {
+    // Long-form analysis lives at /phan-tich/* (split from the news hub).
+    url = obj.slug ? `/phan-tich/${obj.slug}` : '#';
   } else if (cfg?.urlPrefix) {
     url = obj.slug ? `${cfg.urlPrefix}${obj.slug}` : '#';
   }

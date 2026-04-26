@@ -312,9 +312,16 @@ function render404(msg = 'Bài viết không tồn tại.') {
 // ===== /tin-bong-da — hub/list =====
 router.get('/tin-bong-da', async (req, res) => {
   try {
+    // Long-form analysis split out into /phan-tich. Permanent-redirect any
+    // legacy ?cat=analysis traffic so Google consolidates the signals.
+    if (req.query.cat === 'analysis') {
+      return res.redirect(301, '/phan-tich');
+    }
     const page = Math.max(1, parseInt(req.query.page) || 1);
     const cat = CATEGORIES[req.query.cat] ? req.query.cat : null;
-    const query = { status: 'published' };
+    // Exclude analysis from the news feed even if no category is requested,
+    // so the hub doesn't dual-list articles that have a dedicated home.
+    const query = { status: 'published', category: { $ne: 'analysis' } };
     if (cat) query.category = cat;
 
     const [items, total] = await Promise.all([
