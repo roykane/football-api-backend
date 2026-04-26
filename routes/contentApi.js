@@ -49,17 +49,86 @@ router.get('/stats', async (req, res) => {
 });
 
 // GET /api/content/articles - List auto articles
+//
+// Query params:
+//   type            'h2h-analysis' | 'round-preview' | (omitted = all)
+//   limit, page     pagination (default 10, page 1)
+//   sort            'match-date' to surface upcoming matches first (mirrors
+//                   /api/soi-keo/hot semantics so /doi-dau and /preview hubs
+//                   read like /nhan-dinh: today's matches at top, then
+//                   tomorrow, then forward; recently-played matches in a
+//                   second tier; older past dropped). Default falls back to
+//                   chronological newest-created-first for backward compat.
+//   pastWindowDays  how far back to surface played matches when
+//                   sort=match-date (default 7 — H2H analysis stays
+//                   relevant longer than a 90-min preview).
 router.get('/articles', async (req, res) => {
   try {
-    const { type, limit = 10, page = 1 } = req.query;
+    const { type, sort } = req.query;
+    const pageNum = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const limitNum = Math.min(Math.max(parseInt(req.query.limit, 10) || 10, 1), 50);
+    const skip = (pageNum - 1) * limitNum;
+
     const query = { status: 'published' };
     if (type) query.type = type;
+
+    if (sort === 'match-date') {
+      // Same two-bucket strategy as /api/soi-keo/hot. The "now" cutoff is
+      // pulled back 1h so a kickoff that just started still counts as
+      // upcoming (users following the match in real time still see it).
+      const pastWindowDays = Math.min(
+        Math.max(parseInt(req.query.pastWindowDays, 10) || 7, 1),
+        30,
+      );
+      const now = new Date();
+      const liveCutoff = new Date(now.getTime() - 60 * 60 * 1000);
+      const pastCutoff = new Date(now.getTime() - pastWindowDays * 24 * 60 * 60 * 1000);
+
+      const [upcoming, pastRecent] = await Promise.all([
+        AutoArticle.find({
+          ...query,
+          'matchInfo.matchDate': { $gte: liveCutoff },
+        })
+          .sort({ 'matchInfo.matchDate': 1 })
+          .lean(),
+        AutoArticle.find({
+          ...query,
+          'matchInfo.matchDate': { $gte: pastCutoff, $lt: liveCutoff },
+        })
+          .sort({ 'matchInfo.matchDate': -1 })
+          .lean(),
+      ]);
+
+      const combined = [...upcoming, ...pastRecent];
+      const total = combined.length;
+      const items = combined.slice(skip, skip + limitNum);
+      // Tell the client which articles came from the "past recent" bucket so
+      // it can render them under a separate "Đã diễn ra" section without
+      // having to re-derive the cutoff from matchDate.
+      const liveCutoffMs = liveCutoff.getTime();
+      const itemsTagged = items.map((a) => ({
+        ...a,
+        _isPast: a.matchInfo?.matchDate
+          ? new Date(a.matchInfo.matchDate).getTime() < liveCutoffMs
+          : false,
+      }));
+
+      return res.json({
+        success: true,
+        data: {
+          items: itemsTagged,
+          total,
+          upcomingCount: upcoming.length,
+          pastCount: pastRecent.length,
+        },
+      });
+    }
 
     const [articles, total] = await Promise.all([
       AutoArticle.find(query)
         .sort({ createdAt: -1 })
-        .skip((parseInt(page) - 1) * parseInt(limit))
-        .limit(parseInt(limit))
+        .skip(skip)
+        .limit(limitNum)
         .lean(),
       AutoArticle.countDocuments(query),
     ]);
