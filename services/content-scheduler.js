@@ -9,16 +9,16 @@ const { invalidateSitemapCache } = require('../routes/sitemap');
 // scheduler (xx:05 every 4h) and this h2h job (xx:35 every 4h) don't fire
 // 20+ Claude calls at the same instant.
 //
-// Schedule:
-// - Round previews: 06:15 + 18:15 (twice daily; rounds rarely change so 4x
-//   was wasteful — most runs hit existsRoundPreview)
-// - H2H analysis: 35 minutes past every 4 hours, max 8 per run
+// Schedule (halved apr-2026 cost-cut pass — Anthropic spend dominant):
+// - Round previews: 12:15 (once daily; rounds change weekly so 1x is enough)
+// - H2H analysis: 35 minutes past every 4 hours, max 4 per run
 // - Cleanup old articles: Daily at 3am
 function startContentScheduler() {
-  // Round previews — 2x/day (06:15 morning, 18:15 evening). A new round only
-  // appears once a week per league, so the previous "every 6 hours" was
-  // 90% no-op runs that still hit Claude with sanity checks.
-  cron.schedule('15 6,18 * * *', async () => {
+  // Round previews — 1x/day at 12:15. Down from 2x because rounds only
+  // change once a week per league; previous 06:15 + 18:15 was already
+  // mostly no-op, so trimming to a single noon run halves spend with no
+  // material loss in coverage.
+  cron.schedule('15 12 * * *', async () => {
     console.log('[ContentScheduler] Running round preview generation...');
     try {
       const result = await roundPreviewGenerator.run(3);
@@ -29,11 +29,11 @@ function startContentScheduler() {
     }
   });
 
-  // H2H analysis - 6 times/day, 35 minutes past every 4 hours.
+  // H2H analysis - 6 times/day, 35 minutes past every 4 hours, max 4 per run.
   cron.schedule('35 */4 * * *', async () => {
     console.log('[ContentScheduler] Running H2H analysis generation...');
     try {
-      const result = await h2hGenerator.run(8);
+      const result = await h2hGenerator.run(4);
       if (result.generated > 0) invalidateSitemapCache();
       console.log(`[ContentScheduler] H2H analysis done: ${result.generated} generated (${result.duration || 0}s)`);
     } catch (error) {
@@ -53,7 +53,7 @@ function startContentScheduler() {
     }
   });
 
-  console.log('[ContentScheduler] Started - Round previews (06:15, 18:15), H2H (every 4h at xx:35), Cleanup (3am)');
+  console.log('[ContentScheduler] Started - Round previews (12:15), H2H (every 4h at xx:35, max 4/run), Cleanup (3am)');
 }
 
 module.exports = { startContentScheduler };

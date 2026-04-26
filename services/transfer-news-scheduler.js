@@ -9,7 +9,10 @@ const cron = require('node-cron');
 const transferNewsGenerator = require('./transfer-news-generator');
 const { invalidateSitemapCache } = require('../routes/sitemap');
 
-const MAX_PER_RUN = 8;
+// Halved from 8 in apr-2026 cost-cut pass. Big transfer windows still get
+// covered (cron fires twice daily); off-window days were producing
+// padding anyway.
+const MAX_PER_RUN = 4;
 const SCHEDULE = '30 */12 * * *'; // 00:30 and 12:30 daily
 
 let isRunning = false;

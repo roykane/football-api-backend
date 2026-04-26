@@ -12,7 +12,10 @@ const cron = require('node-cron');
 const matchReportGenerator = require('./match-report-generator');
 const { invalidateSitemapCache } = require('../routes/sitemap');
 
-const MAX_PER_RUN = 5;
+// Halved from 5 in apr-2026 cost-cut pass. Real-world supply rarely
+// exceeds 2 finished fixtures per 30-min window outside peak weekends, so
+// the lower cap mostly affects post-match-day burst spend.
+const MAX_PER_RUN = 2;
 // Every 30 minutes (was */15). 96 runs/day → 48 runs/day cuts API-Sports
 // "find finished fixtures" polling in half. Match reports still land
 // within ~30 min of FT, well inside any reasonable freshness window.

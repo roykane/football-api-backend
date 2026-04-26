@@ -2,8 +2,10 @@ const cron = require('node-cron');
 const soiKeoGenerator = require('./soi-keo-generator');
 const { invalidateSitemapCache } = require('../routes/sitemap');
 
-const MAX_ARTICLES_PER_DAY = 50;
-const MAX_ARTICLES_PER_RUN = 12;
+// Halved from 50/12 in apr-2026 cost-cut pass — Anthropic spend was the
+// dominant line item. Per-day still well above realistic match supply.
+const MAX_ARTICLES_PER_DAY = 25;
+const MAX_ARTICLES_PER_RUN = 6;
 
 /**
  * Soi Kèo Article Generation Scheduler
