@@ -1,7 +1,7 @@
 /**
  * Match Report Scheduler
  *
- * Runs every 15 minutes; generates news articles for recently-finished matches.
+ * Runs every 30 minutes; generates news articles for recently-finished matches.
  * Designed to replace the old news-scheduler which generated from thin air.
  *
  * Articles are saved as status='draft' during trial period — flip to 'published'
@@ -55,7 +55,7 @@ async function runJob() {
 
 function startMatchReportScheduler() {
   console.log('\n📰 ========== MATCH REPORT SCHEDULER ==========');
-  console.log(`📅 Schedule: every 15 minutes (${SCHEDULE})`);
+  console.log(`📅 Schedule: every 30 minutes (${SCHEDULE})`);
   console.log(`📝 Max per run: ${MAX_PER_RUN} reports`);
   console.log(`🚦 Status: reports saved as DRAFT (trial period)`);
   console.log('===============================================\n');
