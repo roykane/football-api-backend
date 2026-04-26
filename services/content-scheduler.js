@@ -29,17 +29,16 @@ function startContentScheduler() {
     }
   });
 
-  // H2H analysis - 6 times/day, 35 minutes past every 4 hours, max 4 per run.
-  cron.schedule('35 */4 * * *', async () => {
-    console.log('[ContentScheduler] Running H2H analysis generation...');
-    try {
-      const result = await h2hGenerator.run(4);
-      if (result.generated > 0) invalidateSitemapCache();
-      console.log(`[ContentScheduler] H2H analysis done: ${result.generated} generated (${result.duration || 0}s)`);
-    } catch (error) {
-      console.error('[ContentScheduler] H2H analysis generation failed:', error.message);
-    }
-  });
+  // H2H analysis — DISABLED (apr-2026). The /nhan-dinh soi-keo article
+  // already contains an h2hHistory section per fixture, so a separate
+  // h2h-analysis article was duplicating coverage and diluting SEO across
+  // /nhan-dinh and /doi-dau. We're consolidating authority on /nhan-dinh.
+  // Existing AutoArticle docs of type='h2h-analysis' remain in the DB so
+  // their URLs still serve, but no new ones are generated.
+  // cron.schedule('35 */4 * * *', async () => {
+  //   const result = await h2hGenerator.run(4);
+  //   if (result.generated > 0) invalidateSitemapCache();
+  // });
 
   // Cleanup old articles - daily at 3am
   cron.schedule('0 3 * * *', async () => {
@@ -53,7 +52,7 @@ function startContentScheduler() {
     }
   });
 
-  console.log('[ContentScheduler] Started - Round previews (12:15), H2H (every 4h at xx:35, max 4/run), Cleanup (3am)');
+  console.log('[ContentScheduler] Started - Round previews (12:15), H2H (DISABLED — consolidated under /nhan-dinh), Cleanup (3am)');
 }
 
 module.exports = { startContentScheduler };

@@ -57,12 +57,16 @@ const COLLECTIONS = {
   },
   auto: {
     model: AutoArticle,
-    label: 'Preview / Đối đầu',
+    label: 'Preview',
     imageField: 'thumbnail',
     // URL prefix depends on .type; resolved per-row in shapeListRow().
     urlPrefix: null,
     patchable: ['title', 'excerpt', 'content', 'thumbnail', 'tags', 'status',
                 'contentReviewed', 'imageReviewed'],
+    // h2h-analysis articles were de-listed in apr-2026 — keep them in the DB
+    // so existing /doi-dau URLs still serve, but hide from admin lists so
+    // editors don't accidentally publish or edit dead content.
+    listFilter: { type: { $ne: 'h2h-analysis' } },
   },
 };
 
@@ -149,8 +153,8 @@ router.get('/', async (req, res) => {
     const textFilter = q ? { title: { $regex: q, $options: 'i' } } : {};
 
     const results = await Promise.all(keys.map(async (key) => {
-      const { model } = COLLECTIONS[key];
-      const filter = { ...reviewFilter, ...textFilter };
+      const { model, listFilter } = COLLECTIONS[key];
+      const filter = { ...(listFilter || {}), ...reviewFilter, ...textFilter };
       const [rows, total] = await Promise.all([
         model.find(filter).sort({ createdAt: -1 }).limit(limit + skip).lean(),
         model.countDocuments(filter),
