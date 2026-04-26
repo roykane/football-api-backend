@@ -234,6 +234,7 @@ app.use('/', require('./routes/footballKnowledge'));
 app.use('/', require('./routes/coachesSsr'));
 app.use('/', require('./routes/seoNewsPages'));
 app.use('/', require('./routes/seoAnalysisPages'));
+app.use('/', require('./routes/seoTransfersPages'));
 
 // Mount routers - ✅ Thứ tự quan trọng!
 app.use('/api/competitions', competitionsRouter);

@@ -312,16 +312,17 @@ function render404(msg = 'Bài viết không tồn tại.') {
 // ===== /tin-bong-da — hub/list =====
 router.get('/tin-bong-da', async (req, res) => {
   try {
-    // Long-form analysis split out into /phan-tich. Permanent-redirect any
-    // legacy ?cat=analysis traffic so Google consolidates the signals.
-    if (req.query.cat === 'analysis') {
-      return res.redirect(301, '/phan-tich');
-    }
+    // Both analysis (→ /phan-tich) and transfer (→ /chuyen-nhuong) have
+    // their own hubs now. Permanent-redirect legacy ?cat= URLs so signals
+    // consolidate.
+    if (req.query.cat === 'analysis') return res.redirect(301, '/phan-tich');
+    if (req.query.cat === 'transfer') return res.redirect(301, '/chuyen-nhuong');
+
     const page = Math.max(1, parseInt(req.query.page) || 1);
     const cat = CATEGORIES[req.query.cat] ? req.query.cat : null;
-    // Exclude analysis from the news feed even if no category is requested,
-    // so the hub doesn't dual-list articles that have a dedicated home.
-    const query = { status: 'published', category: { $ne: 'analysis' } };
+    // Exclude both split-out categories so the news feed doesn't dual-list
+    // articles that already have a dedicated home.
+    const query = { status: 'published', category: { $nin: ['analysis', 'transfer'] } };
     if (cat) query.category = cat;
 
     const [items, total] = await Promise.all([
@@ -508,11 +509,13 @@ router.get('/tin-bong-da/:slug', async (req, res) => {
       return res.status(410).send(render404('Bài viết đã được gỡ hoặc không còn tồn tại.'));
     }
 
-    // Long-form analysis lives at /phan-tich/<slug> now. If somebody (or
-    // Google) lands on the old /tin-bong-da/<slug> URL, send them to the
-    // canonical home so the signals consolidate.
+    // Long-form analysis lives at /phan-tich/<slug>; transfer news at
+    // /chuyen-nhuong/<slug>. Send legacy URLs to their canonical home.
     if (article.category === 'analysis') {
       return res.redirect(301, `/phan-tich/${article.slug}`);
+    }
+    if (article.category === 'transfer') {
+      return res.redirect(301, `/chuyen-nhuong/${article.slug}`);
     }
 
     // Increment views (fire-and-forget)

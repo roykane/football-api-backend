@@ -13,16 +13,23 @@ router.get('/', async (req, res) => {
     const limit = parseInt(req.query.limit) || 20;
     const page = parseInt(req.query.page) || 1;
     const category = req.query.category || 'all';
-    const excludeCategory = typeof req.query.excludeCategory === 'string' ? req.query.excludeCategory : null;
+    // excludeCategory accepts a single value, comma-separated string, or
+    // repeated query param (express parses repeats as array). /tin-bong-da
+    // uses this to filter out 'analysis' (→ /phan-tich) AND 'transfer'
+    // (→ /chuyen-nhuong) at the same time.
+    const rawExclude = req.query.excludeCategory;
+    let excludeList = [];
+    if (Array.isArray(rawExclude)) excludeList = rawExclude.filter(Boolean);
+    else if (typeof rawExclude === 'string') excludeList = rawExclude.split(',').map((s) => s.trim()).filter(Boolean);
     const skip = (page - 1) * limit;
 
     const query = { status: 'published' };
     if (category && category !== 'all') {
       query.category = category;
-    } else if (excludeCategory) {
-      // Used by /tin-bong-da to keep long-form analysis (now lives at
-      // /phan-tich) from leaking back into the news feed.
-      query.category = { $ne: excludeCategory };
+    } else if (excludeList.length === 1) {
+      query.category = { $ne: excludeList[0] };
+    } else if (excludeList.length > 1) {
+      query.category = { $nin: excludeList };
     }
 
     const [articles, total] = await Promise.all([

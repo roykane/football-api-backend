@@ -206,17 +206,14 @@ async function generateSitemap() {
     console.error('[Sitemap] Failed to load teams:', err.message);
   }
 
-  // 8. News hub + articles (/tin-bong-da) — match reports + transfers + general
-  // (analysis articles split out into /phan-tich below; excluded here to avoid
-  // dual indexing).
+  // 8. News hub + articles (/tin-bong-da) — match reports + general only.
+  // Analysis split → /phan-tich (section #9); Transfer split → /chuyen-nhuong
+  // (section #10). Both excluded here to avoid dual indexing.
   try {
     const Article = require('../models/Article');
     addUrl(`${SITE_URL}/tin-bong-da`, today, 'hourly', '0.8');
-    for (const cat of ['general', 'transfer']) {
-      addUrl(`${SITE_URL}/tin-bong-da?cat=${cat}`, today, 'daily', '0.6');
-    }
     // Sort by createdAt (publication date) so newest-published articles come first.
-    const news = await Article.find({ status: 'published', category: { $ne: 'analysis' } })
+    const news = await Article.find({ status: 'published', category: { $nin: ['analysis', 'transfer'] } })
       .sort({ createdAt: -1 })
       .limit(500)
       .select('slug title createdAt updatedAt _id')
@@ -256,6 +253,30 @@ async function generateSitemap() {
     console.log(`[Sitemap] ${analysis.length} analysis articles added`);
   } catch (err) {
     console.error('[Sitemap] Failed to load analysis:', err.message);
+  }
+
+  // 10. Transfer-news hub + articles (/chuyen-nhuong) — news cadence (hourly
+  // for fresh transfers, decaying with age).
+  try {
+    const Article = require('../models/Article');
+    addUrl(`${SITE_URL}/chuyen-nhuong`, today, 'hourly', '0.8');
+    const transfers = await Article.find({ status: 'published', category: 'transfer' })
+      .sort({ pubDate: -1, createdAt: -1 })
+      .limit(300)
+      .select('slug title pubDate createdAt updatedAt')
+      .lean();
+    for (const a of transfers) {
+      if (!a.slug) continue;
+      const ref = a.updatedAt || a.pubDate || a.createdAt || new Date();
+      const lastmod = new Date(ref).toISOString().split('T')[0];
+      const ageHours = (Date.now() - new Date(a.pubDate || a.createdAt || ref).getTime()) / 3_600_000;
+      const changefreq = ageHours < 24 ? 'hourly' : ageHours < 168 ? 'daily' : 'weekly';
+      const priority = ageHours < 24 ? '0.8' : ageHours < 168 ? '0.6' : '0.4';
+      addUrl(`${SITE_URL}/chuyen-nhuong/${a.slug}`, lastmod, changefreq, priority);
+    }
+    console.log(`[Sitemap] ${transfers.length} transfer articles added`);
+  } catch (err) {
+    console.error('[Sitemap] Failed to load transfers:', err.message);
   }
 
   return `<?xml version="1.0" encoding="UTF-8"?>
@@ -314,12 +335,17 @@ async function generateNewsSitemap() {
     const news = await Article.find({ status: 'published', createdAt: { $gte: cutoff } })
       .sort({ createdAt: -1 })
       .limit(1000)
-      .select('slug title createdAt')
+      .select('slug title category createdAt')
       .lean();
     for (const a of news) {
       const slug = a.slug || Article.slugifyFromTitle(a.title);
       if (!slug) continue;
-      pushNewsEntry(`${SITE_URL}/tin-bong-da/${slug}`, a.createdAt, a.title);
+      // Each category lives at a different URL prefix. Send Google News
+      // the canonical home so the rich-result links land on the right hub.
+      let prefix = '/tin-bong-da/';
+      if (a.category === 'analysis') prefix = '/phan-tich/';
+      else if (a.category === 'transfer') prefix = '/chuyen-nhuong/';
+      pushNewsEntry(`${SITE_URL}${prefix}${slug}`, a.createdAt, a.title);
     }
   } catch (err) {
     console.error('[SitemapNews] Article load failed:', err.message);

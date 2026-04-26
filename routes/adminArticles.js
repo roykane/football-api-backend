@@ -85,6 +85,9 @@ function shapeListRow(doc, collectionKey) {
   } else if (collectionKey === 'article' && obj.category === 'analysis') {
     // Long-form analysis lives at /phan-tich/* (split from the news hub).
     url = obj.slug ? `/phan-tich/${obj.slug}` : '#';
+  } else if (collectionKey === 'article' && obj.category === 'transfer') {
+    // Transfer news lives at /chuyen-nhuong/* (split from the news hub).
+    url = obj.slug ? `/chuyen-nhuong/${obj.slug}` : '#';
   } else if (cfg?.urlPrefix) {
     url = obj.slug ? `${cfg.urlPrefix}${obj.slug}` : '#';
   }
