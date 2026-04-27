@@ -12,7 +12,7 @@ function siteHeader() {
         <a href="/lich-thi-dau" style="color:#fff;font-size:13px;font-weight:600;padding:10px 12px;text-decoration:none;display:flex;align-items:center;gap:5px;white-space:nowrap;">📅 Lịch thi đấu</a>
         <a href="/ket-qua-bong-da" style="color:#fff;font-size:13px;font-weight:600;padding:10px 12px;text-decoration:none;display:flex;align-items:center;gap:5px;white-space:nowrap;">✅ KQBĐ</a>
         <a href="/bang-xep-hang" style="color:#fff;font-size:13px;font-weight:600;padding:10px 12px;text-decoration:none;display:flex;align-items:center;gap:5px;white-space:nowrap;">📊 Xếp hạng</a>
-        <a href="/ty-le-keo" style="color:#fff;font-size:13px;font-weight:600;padding:10px 12px;text-decoration:none;display:flex;align-items:center;gap:5px;white-space:nowrap;">📈 Tỷ lệ</a>
+        <a href="/top-ghi-ban" style="color:#fff;font-size:13px;font-weight:600;padding:10px 12px;text-decoration:none;display:flex;align-items:center;gap:5px;white-space:nowrap;">👟 Vua phá lưới</a>
         <a href="/nhan-dinh" style="color:#fff;font-size:13px;font-weight:600;padding:10px 12px;text-decoration:none;display:flex;align-items:center;gap:5px;white-space:nowrap;">⚙️ Nhận Định</a>
       </nav>
     </div>
