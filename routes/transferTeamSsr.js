@@ -68,6 +68,12 @@ function baseStyles() {
   `;
 }
 
+// Bare /chuyen-nhuong/clb (no slug) — there's no separate hub page yet,
+// so 301 to the editorial transfer stream which lists tin chuyển nhượng
+// for every club rather than serving a 404/410.
+router.get('/chuyen-nhuong/clb', (req, res) => res.redirect(301, '/chuyen-nhuong'));
+router.get('/chuyen-nhuong/clb/', (req, res) => res.redirect(301, '/chuyen-nhuong'));
+
 router.get('/chuyen-nhuong/clb/:slug', async (req, res) => {
   const slug = req.params.slug;
 
