@@ -298,13 +298,23 @@ router.get('/', async (req, res) => {
           <a class="sidebar-link" href="/tin-bong-da">📰 Tin tức</a>
           <a class="sidebar-link" href="/chuyen-nhuong">💼 Chuyển nhượng</a>
           <a class="sidebar-link" href="/phan-tich">🔍 Phân tích chuyên sâu</a>
-          <a class="sidebar-link" href="/cau-thu">⚽ Cầu thủ Việt Nam</a>
-          <a class="sidebar-link" href="/huan-luyen-vien">👔 Huấn luyện viên</a>
-          <a class="sidebar-link" href="/kien-thuc-bong-da">📚 Kiến thức bóng đá</a>
+          <a class="sidebar-link" href="/top-kien-tao">🎯 Top kiến tạo</a>
+          <a class="sidebar-link" href="/giai-dau">🏆 Tất cả giải đấu</a>
+          <a class="sidebar-link" href="/lich-su-vo-dich">📅 Lịch sử vô địch</a>
         </div>
         <div class="sidebar-card">
-          <div class="sidebar-title">🌍 Sự kiện đặc biệt</div>
-          <a class="sidebar-link" href="/world-cup-2026">🏆 World Cup 2026</a>
+          <div class="sidebar-title">⚽ Cầu thủ & HLV</div>
+          <a class="sidebar-link" href="/cau-thu-the-gioi">🌟 Cầu thủ thế giới</a>
+          <a class="sidebar-link" href="/cau-thu">🇻🇳 Cầu thủ Việt Nam</a>
+          <a class="sidebar-link" href="/huan-luyen-vien">👔 Huấn luyện viên</a>
+          <a class="sidebar-link" href="/doi-tuyen">🌍 Đội tuyển QG</a>
+        </div>
+        <div class="sidebar-card">
+          <div class="sidebar-title">📚 Khám phá thêm</div>
+          <a class="sidebar-link" href="/san-van-dong">🏟️ Sân vận động</a>
+          <a class="sidebar-link" href="/giai-thuong">🏆 Giải thưởng cá nhân</a>
+          <a class="sidebar-link" href="/kien-thuc-bong-da">📚 Kiến thức bóng đá</a>
+          <a class="sidebar-link" href="/world-cup-2026">🌎 World Cup 2026</a>
           <a class="sidebar-link" href="/world-cup-2026/doi-tuyen-viet-nam">🇻🇳 ĐT Việt Nam WC 2026</a>
         </div>
       </aside>
