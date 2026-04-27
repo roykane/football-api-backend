@@ -293,8 +293,8 @@ router.get('/huan-luyen-vien', (req, res) => {
   <div class="container">
     <nav class="breadcrumb"><a href="/">Trang chủ</a> &rsaquo; <span>Huấn luyện viên</span></nav>
     <div class="card">
-      <h1 style="font-size:26px;font-weight:800;color:#0f172a;margin-bottom:8px">👔 Huấn Luyện Viên Việt Nam</h1>
-      <p style="color:#475569">Tiểu sử, sự nghiệp và thành tích của các HLV đã và đang dẫn dắt ĐT Việt Nam — từ Alfred Riedl huyền thoại đến Kim Sang-sik đương nhiệm.</p>
+      <h1 style="font-size:26px;font-weight:800;color:#0f172a;margin-bottom:8px">👔 Huấn Luyện Viên Bóng Đá</h1>
+      <p style="color:#475569">Tiểu sử, sự nghiệp và thành tích các HLV hàng đầu thế giới và Việt Nam — từ những huyền thoại như Sir Alex Ferguson, Pep Guardiola đến các HLV đương nhiệm tại ĐT Việt Nam.</p>
     </div>
     ${listHtml}
     <div class="footer"><a href="${SITE_URL}">ScoreLine.io</a> - Tỷ số trực tiếp, nhận định và thông tin bóng đá</div>

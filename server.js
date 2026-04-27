@@ -229,6 +229,13 @@ app.use('/coach-images', express.static(path.join(__dirname, 'public', 'coach-im
   immutable: true,
 }));
 
+// Local player photos — same story as coach-images, populated by
+// scripts/download-player-images.js.
+app.use('/player-images', express.static(path.join(__dirname, 'public', 'player-images'), {
+  maxAge: '30d',
+  immutable: true,
+}));
+
 // Public SEO endpoints (sitemap.xml, robots.txt) - no API key required
 app.use('/', require('./routes/sitemap'));
 
@@ -246,6 +253,17 @@ app.use('/', require('./routes/seoHubPages'));
 app.use('/', require('./routes/seoMatchPages'));
 app.use('/', require('./routes/spaShell'));
 app.use('/', require('./routes/matchOgImage'));
+
+// Data-layer SSR pages (standings, fixtures, results, top scorers, league
+// hubs, stats). Bot-only paths — nginx routes browser UA past these to the
+// SPA shell, so users keep getting React. Order matters: more specific
+// routes (e.g. /lich-thi-dau/:slug) must register before less specific ones.
+app.use('/', require('./routes/standingsSsr'));
+app.use('/', require('./routes/fixturesSsr'));
+app.use('/', require('./routes/teamsSsr'));
+app.use('/', require('./routes/topScorersSsr'));
+app.use('/', require('./routes/leaguesSsr'));
+app.use('/', require('./routes/statsSsr'));
 
 // Mount routers - ✅ Thứ tự quan trọng!
 app.use('/api/competitions', competitionsRouter);

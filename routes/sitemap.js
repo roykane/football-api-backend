@@ -47,6 +47,7 @@ const STATIC_PAGES = [
   { path: '/nhan-dinh', priority: '0.9', changefreq: 'daily' },
   { path: '/giai-dau', priority: '0.7', changefreq: 'weekly' },
   { path: '/top-ghi-ban', priority: '0.7', changefreq: 'daily' },
+  { path: '/thong-ke', priority: '0.7', changefreq: 'daily' },
   { path: '/world-cup-2026', priority: '0.9', changefreq: 'daily' },
   { path: '/lich-thi-dau/world-cup', priority: '0.9', changefreq: 'daily' },
   { path: '/giai-dau/world-cup', priority: '0.8', changefreq: 'weekly' },
@@ -222,9 +223,10 @@ async function generateSitemap() {
     console.error('[Sitemap] Failed to load auto articles:', err.message);
   }
 
-  // 5. Data-driven pages (schedule, standings, top scorers per league)
+  // 5. Data-driven pages (schedule, standings, results, top scorers per league)
   for (const league of LEAGUES) {
     addUrl(`${SITE_URL}/lich-thi-dau/${league.slug}`, today, 'daily', '0.7');
+    addUrl(`${SITE_URL}/ket-qua-bong-da/${league.slug}`, today, 'daily', '0.7');
     addUrl(`${SITE_URL}/bang-xep-hang/${league.slug}`, today, 'daily', '0.7');
     addUrl(`${SITE_URL}/top-ghi-ban/${league.slug}`, today, 'daily', '0.6');
   }
