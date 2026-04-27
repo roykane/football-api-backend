@@ -565,6 +565,93 @@ router.get('/top-score', async (req, res) => {
 });
 
 /**
+ * GET /api/standings/top-assists
+ * Get top assists for a league. Mirrors the /top-score handler shape so
+ * the FE can swap between the two endpoints with the same response type.
+ */
+router.get('/top-assists', async (req, res) => {
+  try {
+    const footballApi = req.app.locals.footballApi;
+    const { competitionId, seasonYear = new Date().getFullYear() } = req.query;
+
+    if (!competitionId) {
+      return res.status(400).json({ success: false, error: 'competitionId is required' });
+    }
+
+    const leagueId = competitionId.replace('league-', '');
+    if (!isLeagueAllowed(parseInt(leagueId))) {
+      return res.status(403).json({ success: false, error: 'League not supported' });
+    }
+
+    console.log(`\n🎯 GET /api/standings/top-assists`);
+    console.log(`   Competition: ${competitionId}, Season: ${seasonYear}`);
+
+    const cacheKey = `top-assists-${leagueId}-${seasonYear}`;
+    const cached = standingsCache.get(cacheKey);
+    if (cached && (Date.now() - cached.timestamp < STANDINGS_CACHE_DURATION)) {
+      console.log(`   ✅ Cache hit`);
+      return res.json({ success: true, data: cached.data });
+    }
+
+    const response = await footballApi.get('/players/topassists', {
+      params: { league: leagueId, season: seasonYear },
+    });
+
+    const players = response.data?.response || [];
+
+    const createSlug = (name) => name
+      .toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+
+    const transformedData = players.map((item, index) => {
+      const stats = item.statistics[0] || {};
+      const playerSlug = createSlug(item.player.name);
+      const teamSlug = createSlug(stats.team?.name || 'unknown');
+      const countryCode = (item.player.nationality || '').toLowerCase().slice(0, 3);
+      return {
+        _id: `player-${item.player.id}`,
+        rank: index + 1,
+        player: {
+          _id: `player-${item.player.id}`,
+          name: item.player.name,
+          slug: playerSlug,
+          image: item.player.photo,
+          thumbnail: item.player.photo,
+          position: stats.games?.position || 'Midfielder',
+          country: {
+            name: item.player.nationality,
+            code: countryCode,
+            flag: `https://flagicons.lipis.dev/flags/4x3/${countryCode}.svg`,
+          },
+        },
+        team: {
+          _id: `team-${stats.team?.id}`,
+          name: stats.team?.name,
+          code: teamSlug,
+          logo: stats.team?.logo,
+          image: stats.team?.logo,
+        },
+        sumGoals: stats.goals?.total || 0,
+        sumAssists: stats.goals?.assists || 0,
+        avgRating: parseFloat(stats.games?.rating || '0'),
+      };
+    });
+
+    const responseData = { items: transformedData };
+    standingsCache.set(cacheKey, { data: responseData, timestamp: Date.now() });
+    console.log(`   ✅ Returning ${transformedData.length} top assists\n`);
+    res.json({ success: true, data: responseData });
+  } catch (error) {
+    console.error('❌ Error:', error.message);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch top assists',
+      message: error.message,
+    });
+  }
+});
+
+/**
  * Calculate HT/FT statistics for a team
  */
 async function calculateHTFTStats(footballApi, teamId, leagueId, seasonYear) {
