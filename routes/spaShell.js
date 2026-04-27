@@ -78,31 +78,37 @@ function injectMeta(html, { title, description, canonical, ogImage, ogType }) {
   const img = escapeAttr(ogImage);
   const type = escapeAttr(ogType || 'article');
 
+  // Use [^>]* after the property/name match so tags carrying extra attrs
+  // (e.g. <meta property="og:url" content="..." id="og-url" />) still get
+  // matched and replaced. Without this, index.html's id-bearing OG tags
+  // were left intact and the canonical/og:url pointed to the homepage.
   html = replaceTag(html, /<title>[^<]*<\/title>/i, `<title>${t}</title>`);
-  html = replaceTag(html, /<meta\s+name=["']description["']\s+content=["'][^"']*["']\s*\/?>/i,
+  html = replaceTag(html, /<meta\s+name=["']description["'][^>]*>/i,
     `<meta name="description" content="${d}" />`);
-  html = replaceTag(html, /<link\s+rel=["']canonical["']\s+href=["'][^"']*["']\s*\/?>/i,
+  html = replaceTag(html, /<link\s+rel=["']canonical["'][^>]*>/i,
     `<link rel="canonical" href="${c}" />`);
-  html = replaceTag(html, /<link\s+rel=["']alternate["']\s+hreflang=["']vi["']\s+href=["'][^"']*["']\s*\/?>/i,
+  html = replaceTag(html, /<link\s+rel=["']alternate["']\s+hreflang=["']vi["'][^>]*>/i,
     `<link rel="alternate" hreflang="vi" href="${c}" />`);
-  html = replaceTag(html, /<link\s+rel=["']alternate["']\s+hreflang=["']x-default["']\s+href=["'][^"']*["']\s*\/?>/i,
+  html = replaceTag(html, /<link\s+rel=["']alternate["']\s+hreflang=["']x-default["'][^>]*>/i,
     `<link rel="alternate" hreflang="x-default" href="${c}" />`);
-  html = replaceTag(html, /<meta\s+property=["']og:type["']\s+content=["'][^"']*["']\s*\/?>/i,
+  html = replaceTag(html, /<meta\s+property=["']og:type["'][^>]*>/i,
     `<meta property="og:type" content="${type}" />`);
-  html = replaceTag(html, /<meta\s+property=["']og:url["']\s+content=["'][^"']*["']\s*\/?>/i,
+  html = replaceTag(html, /<meta\s+property=["']og:url["'][^>]*>/i,
     `<meta property="og:url" content="${c}" />`);
-  html = replaceTag(html, /<meta\s+property=["']og:title["']\s+content=["'][^"']*["']\s*\/?>/i,
+  html = replaceTag(html, /<meta\s+property=["']og:title["'][^>]*>/i,
     `<meta property="og:title" content="${t}" />`);
-  html = replaceTag(html, /<meta\s+property=["']og:description["']\s+content=["'][^"']*["']\s*\/?>/i,
+  html = replaceTag(html, /<meta\s+property=["']og:description["'][^>]*>/i,
     `<meta property="og:description" content="${d}" />`);
-  html = replaceTag(html, /<meta\s+name=["']twitter:title["']\s+content=["'][^"']*["']\s*\/?>/i,
+  html = replaceTag(html, /<meta\s+name=["']twitter:url["'][^>]*>/i,
+    `<meta name="twitter:url" content="${c}" />`);
+  html = replaceTag(html, /<meta\s+name=["']twitter:title["'][^>]*>/i,
     `<meta name="twitter:title" content="${t}" />`);
-  html = replaceTag(html, /<meta\s+name=["']twitter:description["']\s+content=["'][^"']*["']\s*\/?>/i,
+  html = replaceTag(html, /<meta\s+name=["']twitter:description["'][^>]*>/i,
     `<meta name="twitter:description" content="${d}" />`);
   if (img) {
-    html = replaceTag(html, /<meta\s+property=["']og:image["']\s+content=["'][^"']*["']\s*\/?>/i,
+    html = replaceTag(html, /<meta\s+property=["']og:image["'][^>]*>/i,
       `<meta property="og:image" content="${img}" />`);
-    html = replaceTag(html, /<meta\s+name=["']twitter:image["']\s+content=["'][^"']*["']\s*\/?>/i,
+    html = replaceTag(html, /<meta\s+name=["']twitter:image["'][^>]*>/i,
       `<meta name="twitter:image" content="${img}" />`);
   }
   return html;
