@@ -222,6 +222,13 @@ app.use('/article-images', express.static(path.join(__dirname, 'public', 'articl
   immutable: true,
 }));
 
+// Local coach photos — downloaded from Wikipedia by scripts/download-coach-images.js
+// so we don't depend on a third-party CDN that hotlink-blocks intermittently.
+app.use('/coach-images', express.static(path.join(__dirname, 'public', 'coach-images'), {
+  maxAge: '30d',
+  immutable: true,
+}));
+
 // Public SEO endpoints (sitemap.xml, robots.txt) - no API key required
 app.use('/', require('./routes/sitemap'));
 
