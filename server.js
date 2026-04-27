@@ -239,7 +239,17 @@ app.use('/player-images', express.static(path.join(__dirname, 'public', 'player-
 // Public SEO endpoints (sitemap.xml, robots.txt) - no API key required
 app.use('/', require('./routes/sitemap'));
 
-// SEO: Server-rendered HTML pages for search engine crawlers
+// SEO: Server-rendered HTML pages for search engine crawlers.
+//
+// Order matters: data-layer SSR (standings, fixtures, top scorers) must
+// register BEFORE seoContentPages — the latter has stale handlers for the
+// same paths that hit API-Sports directly and 5xx when the upstream rate-
+// limits. Express picks the first matching handler, so registering ours
+// first means seoContentPages's stale versions never run.
+app.use('/', require('./routes/standingsSsr'));
+app.use('/', require('./routes/fixturesSsr'));
+app.use('/', require('./routes/topScorersSsr'));
+
 app.use('/', require('./routes/seoPages'));
 app.use('/', require('./routes/seoContentPages'));
 app.use('/', require('./routes/vietnamesePlayers'));
@@ -254,14 +264,10 @@ app.use('/', require('./routes/seoMatchPages'));
 app.use('/', require('./routes/spaShell'));
 app.use('/', require('./routes/matchOgImage'));
 
-// Data-layer SSR pages (standings, fixtures, results, top scorers, league
-// hubs, stats). Bot-only paths — nginx routes browser UA past these to the
-// SPA shell, so users keep getting React. Order matters: more specific
-// routes (e.g. /lich-thi-dau/:slug) must register before less specific ones.
-app.use('/', require('./routes/standingsSsr'));
-app.use('/', require('./routes/fixturesSsr'));
+// Data-layer SSR — only the routers that don't conflict with
+// seoContentPages live here; the conflicting trio (standingsSsr/fixturesSsr/
+// topScorersSsr) is mounted earlier so it wins.
 app.use('/', require('./routes/teamsSsr'));
-app.use('/', require('./routes/topScorersSsr'));
 app.use('/', require('./routes/leaguesSsr'));
 app.use('/', require('./routes/statsSsr'));
 
