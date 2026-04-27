@@ -236,6 +236,31 @@ app.use('/player-images', express.static(path.join(__dirname, 'public', 'player-
   immutable: true,
 }));
 
+// World player photos (Messi, Ronaldo, Mbappé...) — populated by
+// scripts/download-world-player-images.js. Same self-host policy.
+app.use('/world-player-images', express.static(path.join(__dirname, 'public', 'world-player-images'), {
+  maxAge: '30d',
+  immutable: true,
+}));
+
+// National team flags — populated by scripts/download-team-flags.js.
+app.use('/team-flags', express.static(path.join(__dirname, 'public', 'team-flags'), {
+  maxAge: '30d',
+  immutable: true,
+}));
+
+// Stadium photos — populated by scripts/download-stadium-images.js.
+app.use('/stadium-images', express.static(path.join(__dirname, 'public', 'stadium-images'), {
+  maxAge: '30d',
+  immutable: true,
+}));
+
+// Trophy / award images — populated by scripts/download-trophy-images.js.
+app.use('/trophy-images', express.static(path.join(__dirname, 'public', 'trophy-images'), {
+  maxAge: '30d',
+  immutable: true,
+}));
+
 // Public SEO endpoints (sitemap.xml, robots.txt) - no API key required
 app.use('/', require('./routes/sitemap'));
 
@@ -246,6 +271,16 @@ app.use('/', require('./routes/sitemap'));
 // same paths that hit API-Sports directly and 5xx when the upstream rate-
 // limits. Express picks the first matching handler, so registering ours
 // first means seoContentPages's stale versions never run.
+// These two must register BEFORE the broader fixturesSsr / seoTransfersPages
+// routers because Express matches in order:
+//   - dailySchedSsr's /lich-thi-dau/ngay/:date would otherwise be eaten by
+//     fixturesSsr's /lich-thi-dau/:slug treating "ngay" as a league slug.
+//   - transferTeamSsr's /chuyen-nhuong/clb/:slug would otherwise be eaten
+//     by seoTransfersPages's /chuyen-nhuong/:slug treating "clb" as an
+//     article slug.
+app.use('/', require('./routes/dailySchedSsr'));
+app.use('/', require('./routes/transferTeamSsr'));
+
 app.use('/', require('./routes/standingsSsr'));
 app.use('/', require('./routes/fixturesSsr'));
 app.use('/', require('./routes/topScorersSsr'));
@@ -272,6 +307,17 @@ app.use('/', require('./routes/leaguesSsr'));
 app.use('/', require('./routes/statsSsr'));
 app.use('/', require('./routes/staticPagesSsr'));
 app.use('/', require('./routes/homeSsr'));
+
+// Batch added 2026-04: top-assist leaderboards, historical winners,
+// world players, national teams, stadiums and individual awards. Each
+// lives in its own router so touching one doesn't risk the others.
+// (dailySchedSsr + transferTeamSsr mounted earlier — see above.)
+app.use('/', require('./routes/topAssistsSsr'));
+app.use('/', require('./routes/winnersHistorySsr'));
+app.use('/', require('./routes/worldPlayersSsr'));
+app.use('/', require('./routes/nationalTeamsSsr'));
+app.use('/', require('./routes/stadiumsSsr'));
+app.use('/', require('./routes/awardsSsr'));
 
 // Mount routers - ✅ Thứ tự quan trọng!
 app.use('/api/competitions', competitionsRouter);

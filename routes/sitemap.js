@@ -132,10 +132,55 @@ async function generateSitemap() {
     addUrl(`${SITE_URL}/kien-thuc-bong-da/${article.slug}`, today, 'monthly', '0.7');
   }
 
+  // 1c. Batch 2026-04 — world players, national teams, stadiums, awards,
+  // historical winners. All static seed data so we know the slugs
+  // up front and can emit them straight from the data files.
+  try {
+    const { players: WORLD_PLAYERS } = require('../data/worldPlayers');
+    const { teams: NATIONAL_TEAMS } = require('../data/nationalTeams');
+    const { stadiums: STADIUMS } = require('../data/stadiums');
+    const { awards: AWARDS } = require('../data/awards');
+
+    addUrl(`${SITE_URL}/cau-thu-the-gioi`, today, 'weekly', '0.8');
+    for (const p of WORLD_PLAYERS) {
+      addUrl(`${SITE_URL}/cau-thu-the-gioi/${p.slug}`, today, 'weekly', '0.8');
+    }
+
+    addUrl(`${SITE_URL}/doi-tuyen`, today, 'weekly', '0.8');
+    for (const t of NATIONAL_TEAMS) {
+      addUrl(`${SITE_URL}/doi-tuyen/${t.slug}`, today, 'weekly', '0.7');
+    }
+
+    addUrl(`${SITE_URL}/san-van-dong`, today, 'monthly', '0.7');
+    for (const s of STADIUMS) {
+      addUrl(`${SITE_URL}/san-van-dong/${s.slug}`, today, 'monthly', '0.6');
+    }
+
+    addUrl(`${SITE_URL}/giai-thuong`, today, 'monthly', '0.7');
+    for (const a of AWARDS) {
+      addUrl(`${SITE_URL}/giai-thuong/${a.slug}`, today, 'monthly', '0.6');
+    }
+
+    addUrl(`${SITE_URL}/lich-su-vo-dich`, today, 'monthly', '0.7');
+  } catch (err) {
+    console.error('[Sitemap] Failed to load batch-2026-04 data files:', err.message);
+  }
+
   // 2. League hub pages
   for (const league of LEAGUES) {
     addUrl(`${SITE_URL}/giai-dau/${league.slug}`, today, 'daily', league.priority);
     addUrl(`${SITE_URL}/top-ghi-ban/${league.slug}`, today, 'daily', '0.7');
+    addUrl(`${SITE_URL}/top-kien-tao/${league.slug}`, today, 'daily', '0.6');
+    addUrl(`${SITE_URL}/lich-su-vo-dich/${league.slug}`, today, 'monthly', '0.6');
+  }
+
+  // Daily fixtures pages — emit ±7 days around today so Google has a
+  // shifting window to crawl. Using 'daily' changefreq for all.
+  for (let offset = -7; offset <= 14; offset++) {
+    const d = new Date(Date.now() + offset * 24 * 3600 * 1000);
+    const slug = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
+    const priority = offset === 0 ? '0.8' : (Math.abs(offset) <= 1 ? '0.7' : '0.5');
+    addUrl(`${SITE_URL}/lich-thi-dau/ngay/${slug}`, today, 'daily', priority);
   }
 
   // 3. Soi-keo articles + paired /tran-dau match-detail URLs.
