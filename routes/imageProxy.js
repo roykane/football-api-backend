@@ -82,13 +82,18 @@ router.get('/', async (req, res) => {
 
   const w = clamp(parseInt(req.query.w, 10) || DEFAULT_W, MIN_W, MAX_W);
   const q = clamp(parseInt(req.query.q, 10) || DEFAULT_Q, 40, 95);
-  const format = wantsWebp(req) ? 'webp' : 'png';
+  // SVG inputs (flagicons.lipis.dev country flags etc.) skip sharp's
+  // raster pipeline — sharp can't resize SVG without rasterising it,
+  // which would defeat the whole point of an SVG flag. Cache the raw
+  // SVG bytes and serve them with the same long-immutable header.
+  const isSvg = /\.svg(\?|$)/i.test(rawUrl);
+  const format = isSvg ? 'svg' : (wantsWebp(req) ? 'webp' : 'png');
   const key = cacheKey(rawUrl, w, format);
   const cachePath = path.join(CACHE_DIR, `${key}.${format}`);
 
   // Hit the disk cache first.
   if (fs.existsSync(cachePath)) {
-    res.type(format);
+    res.type(format === 'svg' ? 'image/svg+xml' : format);
     res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
     res.setHeader('X-Cache', 'HIT');
     return fs.createReadStream(cachePath).pipe(res);
@@ -102,6 +107,17 @@ router.get('/', async (req, res) => {
       // Some CDNs reject requests without a UA.
       headers: { 'User-Agent': 'Mozilla/5.0 ScoreLine-ImageProxy/1.0' },
     });
+
+    if (isSvg) {
+      // Pass SVG through unchanged — vector format already scales.
+      fs.writeFile(cachePath, buf, (err) => {
+        if (err) console.warn('[img-proxy] cache write failed:', err.message);
+      });
+      res.type('image/svg+xml');
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      res.setHeader('X-Cache', 'MISS');
+      return res.send(buf);
+    }
 
     let pipeline = sharp(Buffer.from(buf))
       .resize(w, w, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } });
