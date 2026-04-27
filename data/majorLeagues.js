@@ -179,6 +179,108 @@ const MAJOR_LEAGUES = [
       tier: 0,
       seq: 5,
       displayName: 'EURO'
+    },
+
+    // ============================================
+    // AMERICAS - TIER 3
+    // ============================================
+    {
+      id: 253,
+      code: 'MLS',
+      name: 'Major League Soccer',
+      country: 'USA',
+      countryCode: 'US',
+      tier: 3,
+      seq: 1,
+      displayName: 'MLS'
+    },
+    {
+      id: 262,
+      code: 'LIGAMX',
+      name: 'Liga MX',
+      country: 'Mexico',
+      countryCode: 'MX',
+      tier: 3,
+      seq: 2,
+      displayName: 'Liga MX'
+    },
+
+    // ============================================
+    // EUROPEAN 2ND TIERS
+    // ============================================
+    {
+      id: 40,
+      code: 'CHAMP',
+      name: 'Championship',
+      country: 'England',
+      countryCode: 'GB',
+      tier: 3,
+      seq: 3,
+      displayName: 'Championship'
+    },
+    {
+      id: 141,
+      code: 'LALIGA2',
+      name: 'LaLiga 2',
+      country: 'Spain',
+      countryCode: 'ES',
+      tier: 3,
+      seq: 4,
+      displayName: 'LaLiga 2'
+    },
+
+    // ============================================
+    // NORDIC / EASTERN EUROPE - TIER 4
+    // ============================================
+    {
+      id: 113,
+      code: 'ALLSVE',
+      name: 'Allsvenskan',
+      country: 'Sweden',
+      countryCode: 'SE',
+      tier: 4,
+      seq: 1,
+      displayName: 'Allsvenskan'
+    },
+    {
+      id: 103,
+      code: 'ELITES',
+      name: 'Eliteserien',
+      country: 'Norway',
+      countryCode: 'NO',
+      tier: 4,
+      seq: 2,
+      displayName: 'Eliteserien'
+    },
+    {
+      id: 179,
+      code: 'SCOTPR',
+      name: 'Scottish Premiership',
+      country: 'Scotland',
+      countryCode: 'GB-SCT',
+      tier: 4,
+      seq: 3,
+      displayName: 'Scottish Premiership'
+    },
+    {
+      id: 235,
+      code: 'RUSPL',
+      name: 'Russian Premier League',
+      country: 'Russia',
+      countryCode: 'RU',
+      tier: 4,
+      seq: 4,
+      displayName: 'Russian PL'
+    },
+    {
+      id: 119,
+      code: 'DANSUP',
+      name: 'Superliga',
+      country: 'Denmark',
+      countryCode: 'DK',
+      tier: 4,
+      seq: 5,
+      displayName: 'Danish Superliga'
     }
   ];
   
