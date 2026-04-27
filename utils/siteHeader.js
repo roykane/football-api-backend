@@ -4,7 +4,7 @@ function siteHeader() {
     <div style="max-width:1280px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:0 16px;">
       <a href="/" style="display:flex;align-items:center;gap:8px;text-decoration:none;padding:12px 0;flex-shrink:0;">
         <img src="/favicon.svg" alt="ScoreLine" width="32" height="32" style="border-radius:8px;">
-        <span style="font-size:18px;font-weight:800;color:#fff;letter-spacing:-0.5px;">Score<span style="color:#00D4FF;">Line</span></span>
+        <span style="font-size:18px;font-weight:800;color:#fff;letter-spacing:-0.5px;">Score<span style="color:#fbbf24;">Line</span></span>
       </a>
       <nav style="display:flex;align-items:center;gap:2px;overflow-x:auto;">
         <a href="/world-cup-2026" style="color:#fff;font-size:13px;font-weight:600;padding:10px 12px;text-decoration:none;display:flex;align-items:center;gap:5px;white-space:nowrap;">🌍 World Cup 2026</a>

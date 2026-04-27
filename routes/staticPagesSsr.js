@@ -504,25 +504,25 @@ router.get('/404', async (req, res) => {
     a{color:#0066FF;text-decoration:none}a:hover{text-decoration:underline}
     .pitch-bg{flex:1;position:relative;overflow:hidden;background:#0a1628;
       background-image:
-        radial-gradient(ellipse at center,rgba(0,212,255,0.08) 0%,transparent 60%),
+        radial-gradient(ellipse at center,rgba(251,191,36,0.08) 0%,transparent 60%),
         repeating-linear-gradient(0deg,transparent 0,transparent 80px,rgba(255,255,255,0.04) 80px,rgba(255,255,255,0.04) 81px),
         repeating-linear-gradient(90deg,transparent 0,transparent 80px,rgba(255,255,255,0.04) 80px,rgba(255,255,255,0.04) 81px);
     }
     .pitch-bg::before{content:'';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:480px;height:480px;border:2px solid rgba(255,255,255,0.06);border-radius:50%;pointer-events:none}
     .pitch-bg::after{content:'';position:absolute;left:0;right:0;top:50%;height:1px;background:rgba(255,255,255,0.08);pointer-events:none}
     .container{max-width:980px;margin:0 auto;padding:48px 20px;position:relative;z-index:2}
-    .scoreboard{background:linear-gradient(180deg,#1a2744,#0a1628);border:2px solid rgba(0,212,255,0.3);border-radius:20px;padding:36px 28px;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.06);margin-bottom:32px}
+    .scoreboard{background:linear-gradient(180deg,#1a2744,#0a1628);border:2px solid rgba(251,191,36,0.3);border-radius:20px;padding:36px 28px;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.06);margin-bottom:32px}
     .scoreboard-label{display:inline-block;background:rgba(255,68,68,0.18);color:#ff6b6b;font-size:12px;font-weight:800;letter-spacing:2px;text-transform:uppercase;padding:6px 14px;border-radius:20px;margin-bottom:18px;border:1px solid rgba(255,107,107,0.3)}
     .digits{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:18px;flex-wrap:wrap}
-    .digit{font-family:'Courier New',monospace;font-size:120px;font-weight:900;color:#00D4FF;text-shadow:0 0 20px rgba(0,212,255,0.5),0 0 40px rgba(0,212,255,0.25);background:linear-gradient(180deg,#001428,#000a16);border:2px solid #1a2744;border-radius:10px;padding:6px 22px;line-height:1;min-width:104px}
+    .digit{font-family:'Courier New',monospace;font-size:120px;font-weight:900;color:#fbbf24;text-shadow:0 0 20px rgba(251,191,36,0.5),0 0 40px rgba(251,191,36,0.25);background:linear-gradient(180deg,#001428,#000a16);border:2px solid #1a2744;border-radius:10px;padding:6px 22px;line-height:1;min-width:104px}
     .digit-ball{font-size:120px;line-height:1;display:inline-flex;align-items:center;justify-content:center;width:104px;height:140px;animation:spin 8s linear infinite}
     @keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
-    .title{color:#fff;font-size:36px;font-weight:900;letter-spacing:1px;margin-bottom:10px;text-shadow:0 2px 12px rgba(0,212,255,0.3)}
+    .title{color:#fff;font-size:36px;font-weight:900;letter-spacing:1px;margin-bottom:10px;text-shadow:0 2px 12px rgba(251,191,36,0.3)}
     .title em{color:#FFCC00;font-style:normal}
     .subtitle{color:#cbd5e1;font-size:16px;line-height:1.7;max-width:520px;margin:0 auto 22px}
     .actions{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;max-width:760px;margin:0 auto}
     .actions a{background:rgba(255,255,255,0.08);color:#fff;padding:14px 10px;border-radius:10px;font-weight:700;font-size:14px;border:1px solid rgba(255,255,255,0.12);transition:all .2s;display:flex;flex-direction:column;align-items:center;gap:4px;text-decoration:none}
-    .actions a:hover{background:rgba(0,212,255,0.18);border-color:rgba(0,212,255,0.5);transform:translateY(-2px);text-decoration:none}
+    .actions a:hover{background:rgba(251,191,36,0.18);border-color:rgba(251,191,36,0.5);transform:translateY(-2px);text-decoration:none}
     .actions a .icon{font-size:24px}
     .actions a .label{font-size:13px}
     .panel{background:#fff;border-radius:14px;padding:22px;margin-bottom:16px;box-shadow:0 4px 24px rgba(0,0,0,0.2)}
@@ -530,7 +530,7 @@ router.get('/404', async (req, res) => {
     .suggested-match{display:flex;gap:14px;padding:12px;border-radius:8px;border:1px solid #e2e8f0;margin-bottom:8px;color:#0f172a;align-items:center;transition:all .15s}
     .suggested-match:last-child{margin-bottom:0}
     .suggested-match:hover{border-color:#0066FF;background:#eff6ff;text-decoration:none}
-    .suggested-time{background:#0a1628;color:#00D4FF;padding:6px 12px;border-radius:6px;font-weight:800;font-size:13px;font-family:'Courier New',monospace;flex-shrink:0}
+    .suggested-time{background:#0a1628;color:#fbbf24;padding:6px 12px;border-radius:6px;font-weight:800;font-size:13px;font-family:'Courier New',monospace;flex-shrink:0}
     .suggested-teams{flex:1;font-weight:700;font-size:15px;color:#0f172a}
     .suggested-teams em{color:#94a3b8;font-style:normal;font-weight:400;margin:0 6px}
     .links-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}

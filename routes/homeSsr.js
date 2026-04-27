@@ -39,7 +39,7 @@ function baseStyles() {
     .hero .meta{font-size:14px;color:#cbd5e1}
     .hero .quick{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
     .hero .quick a{background:rgba(255,255,255,0.15);color:#fff;padding:6px 12px;border-radius:6px;font-size:13px;font-weight:600}
-    .hero .quick a:hover{background:rgba(0,212,255,0.3);text-decoration:none}
+    .hero .quick a:hover{background:rgba(251,191,36,0.3);text-decoration:none}
     .card{background:#fff;border-radius:8px;padding:20px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
     .card h2{font-size:18px;font-weight:800;color:#0f172a;margin:0 0 14px;padding-bottom:8px;border-bottom:2px solid #eff6ff}
     .card p{margin-bottom:10px;color:#334155;font-size:15px;line-height:1.7}
