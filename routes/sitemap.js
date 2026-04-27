@@ -13,6 +13,7 @@ const { players: VN_PLAYERS } = require('../data/vietnamesePlayers');
 const { sections: WC_SECTIONS } = require('../data/worldCup2026');
 const { articles: KNOWLEDGE_ARTICLES } = require('../data/footballKnowledge');
 const { coaches: COACHES } = require('../data/coaches');
+const { buildMatchSlug } = require('../utils/matchSlug');
 
 const SITE_URL = process.env.SITE_URL || 'https://scoreline.io';
 const CACHE_TTL = 15 * 60 * 1000; // 15 minutes
@@ -132,14 +133,18 @@ async function generateSitemap() {
     addUrl(`${SITE_URL}/top-ghi-ban/${league.slug}`, today, 'daily', '0.7');
   }
 
-  // 3. Soi-keo articles from DB (latest 500 published)
+  // 3. Soi-keo articles + paired /tran-dau match-detail URLs.
+  // Every published nhan-dinh article corresponds to a real fixture, so we
+  // emit BOTH /nhan-dinh/<slug> (the analysis page) and /tran-dau/<match-slug>
+  // (the match-detail page) so Google discovers them at the same rate.
   try {
     const articles = await SoiKeoArticle.find({ status: 'published' })
       .sort({ createdAt: -1 })
       .limit(500)
-      .select('slug createdAt updatedAt matchInfo.matchDate')
+      .select('slug createdAt updatedAt matchInfo')
       .lean();
 
+    let matchUrlsAdded = 0;
     for (const article of articles) {
       if (!article.slug) continue;
       const lastmod = (article.updatedAt || article.createdAt || new Date()).toISOString().split('T')[0];
@@ -147,16 +152,54 @@ async function generateSitemap() {
       const now = new Date();
       const isUpcoming = matchDate && matchDate > now;
       const isToday = matchDate && Math.abs(matchDate - now) < 36 * 3600 * 1000;
-      // Tighter priority bands so finished previews don't waste crawl budget:
-      //   today (live/imminent) → 0.8, upcoming future → 0.7, finished → 0.3
       const changefreq = isUpcoming ? (isToday ? 'hourly' : 'daily') : 'monthly';
       const priority = isUpcoming ? (isToday ? '0.8' : '0.7') : '0.3';
       addUrl(`${SITE_URL}/nhan-dinh/${article.slug}`, lastmod, changefreq, priority);
+
+      // Paired match-detail URL — same priority because the fixture is the
+      // same; only the page intent differs (analysis vs live data).
+      const homeName = article.matchInfo?.homeTeam?.name;
+      const awayName = article.matchInfo?.awayTeam?.name;
+      const matchSlug = buildMatchSlug(homeName, awayName, matchDate);
+      if (matchSlug) {
+        addUrl(`${SITE_URL}/tran-dau/${matchSlug}`, lastmod, changefreq, priority);
+        matchUrlsAdded++;
+      }
     }
 
-    console.log(`[Sitemap] ${articles.length} nhan-dinh articles added`);
+    console.log(`[Sitemap] ${articles.length} nhan-dinh articles + ${matchUrlsAdded} /tran-dau URLs added`);
   } catch (err) {
     console.error('[Sitemap] Failed to load nhan-dinh articles:', err.message);
+  }
+
+  // 3b. Recent finished match-detail URLs from MatchCache (last 14 days).
+  // Catches fixtures that don't have an editorial article but did get
+  // played — Google should still index those for past-result queries.
+  try {
+    const MatchCache = require('../models/MatchCache');
+    const cutoff = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
+    const recent = await MatchCache.find({
+      matchDate: { $gte: cutoff },
+      matchStatus: 'finished',
+    })
+      .sort({ matchDate: -1 })
+      .limit(500)
+      .select('matchDate matchData')
+      .lean();
+
+    let added = 0;
+    for (const m of recent) {
+      const home = m.matchData?.homeTeam?.name || m.matchData?.detail?.home?.name;
+      const away = m.matchData?.awayTeam?.name || m.matchData?.detail?.away?.name;
+      const slug = buildMatchSlug(home, away, m.matchDate);
+      if (!slug) continue;
+      const lastmod = (m.matchDate || new Date()).toISOString().split('T')[0];
+      addUrl(`${SITE_URL}/tran-dau/${slug}`, lastmod, 'monthly', '0.4');
+      added++;
+    }
+    console.log(`[Sitemap] ${added} recent finished /tran-dau URLs added from MatchCache`);
+  } catch (err) {
+    console.error('[Sitemap] Failed to load MatchCache fixtures:', err.message);
   }
 
   // 4. Auto articles (round previews, h2h)
