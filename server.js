@@ -270,6 +270,8 @@ app.use('/', require('./routes/matchOgImage'));
 app.use('/', require('./routes/teamsSsr'));
 app.use('/', require('./routes/leaguesSsr'));
 app.use('/', require('./routes/statsSsr'));
+app.use('/', require('./routes/staticPagesSsr'));
+app.use('/', require('./routes/homeSsr'));
 
 // Mount routers - ✅ Thứ tự quan trọng!
 app.use('/api/competitions', competitionsRouter);
