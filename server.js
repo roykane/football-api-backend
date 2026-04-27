@@ -271,16 +271,6 @@ app.use('/', require('./routes/sitemap'));
 // same paths that hit API-Sports directly and 5xx when the upstream rate-
 // limits. Express picks the first matching handler, so registering ours
 // first means seoContentPages's stale versions never run.
-// These two must register BEFORE the broader fixturesSsr / seoTransfersPages
-// routers because Express matches in order:
-//   - dailySchedSsr's /lich-thi-dau/ngay/:date would otherwise be eaten by
-//     fixturesSsr's /lich-thi-dau/:slug treating "ngay" as a league slug.
-//   - transferTeamSsr's /chuyen-nhuong/clb/:slug would otherwise be eaten
-//     by seoTransfersPages's /chuyen-nhuong/:slug treating "clb" as an
-//     article slug.
-app.use('/', require('./routes/dailySchedSsr'));
-app.use('/', require('./routes/transferTeamSsr'));
-
 app.use('/', require('./routes/standingsSsr'));
 app.use('/', require('./routes/fixturesSsr'));
 app.use('/', require('./routes/topScorersSsr'));
@@ -311,7 +301,6 @@ app.use('/', require('./routes/homeSsr'));
 // Batch added 2026-04: top-assist leaderboards, historical winners,
 // world players, national teams, stadiums and individual awards. Each
 // lives in its own router so touching one doesn't risk the others.
-// (dailySchedSsr + transferTeamSsr mounted earlier — see above.)
 app.use('/', require('./routes/topAssistsSsr'));
 app.use('/', require('./routes/winnersHistorySsr'));
 app.use('/', require('./routes/worldPlayersSsr'));

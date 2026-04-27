@@ -174,14 +174,6 @@ async function generateSitemap() {
     addUrl(`${SITE_URL}/lich-su-vo-dich/${league.slug}`, today, 'monthly', '0.6');
   }
 
-  // Daily fixtures pages — emit ±7 days around today so Google has a
-  // shifting window to crawl. Using 'daily' changefreq for all.
-  for (let offset = -7; offset <= 14; offset++) {
-    const d = new Date(Date.now() + offset * 24 * 3600 * 1000);
-    const slug = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
-    const priority = offset === 0 ? '0.8' : (Math.abs(offset) <= 1 ? '0.7' : '0.5');
-    addUrl(`${SITE_URL}/lich-thi-dau/ngay/${slug}`, today, 'daily', priority);
-  }
 
   // 3. Soi-keo articles + paired /tran-dau match-detail URLs.
   // Every published nhan-dinh article corresponds to a real fixture, so we
