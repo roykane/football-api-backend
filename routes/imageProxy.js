@@ -39,6 +39,8 @@ const ALLOWED_HOSTS = new Set([
   'media-3.api-sports.io',
   'media-2.api-sports.io',
   'media-1.api-sports.io',
+  // Country flag SVGs used by /top-ghi-ban + /top-kien-tao tables.
+  'flagicons.lipis.dev',
 ]);
 
 const MIN_W = 16;
