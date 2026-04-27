@@ -44,21 +44,18 @@ async function runJob() {
 }
 
 function startTransferNewsScheduler() {
-  console.log('\n🔁 ========== TRANSFER NEWS SCHEDULER ==========');
-  console.log(`📅 Schedule: ${SCHEDULE} (twice daily)`);
-  console.log(`📝 Max per run: ${MAX_PER_RUN} transfers`);
-  console.log('=================================================\n');
+  // DISABLED apr-2026 (freeze pass). Re-enable both blocks to resume.
+  // cron.schedule(SCHEDULE, () => {
+  //   console.log(`\n⏰ [TransferScheduler] Triggered at ${new Date().toISOString()}`);
+  //   runJob();
+  // }, { timezone: 'Asia/Ho_Chi_Minh' });
+  //
+  // setTimeout(() => {
+  //   console.log('\n🚀 [TransferScheduler] Initial run');
+  //   runJob();
+  // }, 5 * 60 * 1000);
 
-  cron.schedule(SCHEDULE, () => {
-    console.log(`\n⏰ [TransferScheduler] Triggered at ${new Date().toISOString()}`);
-    runJob();
-  }, { timezone: 'Asia/Ho_Chi_Minh' });
-
-  // Initial run 5 minutes after boot (after match-report at 3 min)
-  setTimeout(() => {
-    console.log('\n🚀 [TransferScheduler] Initial run');
-    runJob();
-  }, 5 * 60 * 1000);
+  console.log('⏸  Transfer News scheduler FROZEN (no new generation)');
 }
 
 async function triggerManualRun(maxArticles = MAX_PER_RUN, daysBack = 30) {

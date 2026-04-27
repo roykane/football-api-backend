@@ -57,22 +57,18 @@ async function runJob() {
 }
 
 function startMatchReportScheduler() {
-  console.log('\n📰 ========== MATCH REPORT SCHEDULER ==========');
-  console.log(`📅 Schedule: every 30 minutes (${SCHEDULE})`);
-  console.log(`📝 Max per run: ${MAX_PER_RUN} reports`);
-  console.log(`🚦 Status: reports saved as DRAFT (trial period)`);
-  console.log('===============================================\n');
+  // DISABLED apr-2026 (freeze pass). Re-enable both blocks to resume.
+  // cron.schedule(SCHEDULE, () => {
+  //   console.log(`\n⏰ [MatchReportScheduler] Triggered at ${new Date().toISOString()}`);
+  //   runJob();
+  // }, { timezone: 'Asia/Ho_Chi_Minh' });
+  //
+  // setTimeout(() => {
+  //   console.log('\n🚀 [MatchReportScheduler] Initial run');
+  //   runJob();
+  // }, 3 * 60 * 1000);
 
-  cron.schedule(SCHEDULE, () => {
-    console.log(`\n⏰ [MatchReportScheduler] Triggered at ${new Date().toISOString()}`);
-    runJob();
-  }, { timezone: 'Asia/Ho_Chi_Minh' });
-
-  // Initial run 3 minutes after start (after soi-keo initial at 2 min)
-  setTimeout(() => {
-    console.log('\n🚀 [MatchReportScheduler] Initial run');
-    runJob();
-  }, 3 * 60 * 1000);
+  console.log('⏸  Match Report scheduler FROZEN (no new generation)');
 }
 
 function getSchedulerStatus() {

@@ -75,25 +75,19 @@ function startSoiKeoScheduler() {
   console.log(`   - Per run: ${MAX_ARTICLES_PER_RUN} articles`);
   console.log('==========================================\n');
 
-  // 5 minutes past every 4 hours: 0:05, 4:05, 8:05, 12:05, 16:05, 20:05.
-  // Offset off the xx:00 boundary so this doesn't fire alongside h2h
-  // (xx:35) or any other top-of-hour cron — keeps Claude's parallel
-  // request count from spiking.
-  cron.schedule('5 */4 * * *', () => {
-    const now = new Date();
-    console.log(`\n⏰ [SoiKeoScheduler] Job triggered at ${now.toLocaleTimeString('vi-VN')}`);
-    runGenerationJob();
-  }, {
-    timezone: 'Asia/Ho_Chi_Minh'
-  });
+  // DISABLED apr-2026 (freeze pass). Re-enable by uncommenting both blocks.
+  // cron.schedule('5 */4 * * *', () => {
+  //   const now = new Date();
+  //   console.log(`\n⏰ [SoiKeoScheduler] Job triggered at ${now.toLocaleTimeString('vi-VN')}`);
+  //   runGenerationJob();
+  // }, { timezone: 'Asia/Ho_Chi_Minh' });
+  //
+  // setTimeout(() => {
+  //   console.log('\n🚀 [SoiKeoScheduler] Running initial generation...');
+  //   runGenerationJob();
+  // }, 120000);
 
-  console.log('✅ Soi Kèo scheduler started');
-
-  // Run initial generation 2 minutes after server start
-  setTimeout(() => {
-    console.log('\n🚀 [SoiKeoScheduler] Running initial generation...');
-    runGenerationJob();
-  }, 120000);
+  console.log('⏸  Soi Kèo scheduler FROZEN (no new generation)');
 }
 
 /**
