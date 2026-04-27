@@ -236,6 +236,7 @@ app.use('/', require('./routes/seoNewsPages'));
 app.use('/', require('./routes/seoAnalysisPages'));
 app.use('/', require('./routes/seoTransfersPages'));
 app.use('/', require('./routes/seoHubPages'));
+app.use('/', require('./routes/spaShell'));
 
 // Mount routers - ✅ Thứ tự quan trọng!
 app.use('/api/competitions', competitionsRouter);
