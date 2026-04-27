@@ -557,7 +557,7 @@ router.get('/404', async (req, res) => {
   <div class="pitch-bg">
     <div class="container">
       <div class="scoreboard">
-        <span class="scoreboard-label">⚠ Trận đấu bị huỷ</span>
+        <span class="scoreboard-label">⚠ Đường dẫn việt vị</span>
         <div class="digits" aria-label="404">
           <span class="digit">4</span>
           <span class="digit-ball" aria-hidden="true">⚽</span>
