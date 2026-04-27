@@ -353,6 +353,10 @@ router.get('/spa-shell/tran-dau/:slug', async (req, res) => {
     title,
     description,
     canonical: `${SITE_URL}/tran-dau/${req.params.slug}`,
+    // Per-match OG image (lazy-generated). FB/Twitter/Slack hits the
+    // /og/match endpoint which composes & caches a 1200×630 PNG with
+    // the two team names — replaces the site-wide og-image.jpg logo.
+    ogImage: `${SITE_URL}/og/match/${req.params.slug}.png`,
     ogType: 'article',
   }));
 });

@@ -238,6 +238,7 @@ app.use('/', require('./routes/seoTransfersPages'));
 app.use('/', require('./routes/seoHubPages'));
 app.use('/', require('./routes/seoMatchPages'));
 app.use('/', require('./routes/spaShell'));
+app.use('/', require('./routes/matchOgImage'));
 
 // Mount routers - ✅ Thứ tự quan trọng!
 app.use('/api/competitions', competitionsRouter);
