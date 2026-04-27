@@ -603,11 +603,33 @@ router.get('/top-assists', async (req, res) => {
       .toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
       .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 
+    // ISO 3166-1 alpha-2 codes for the country names API-Sports returns.
+    // Same map used in /top-score above; flag URLs at flagicons.lipis.dev
+    // 404 for anything that isn't the correct 2-letter code.
+    const getCountryFlagCode = (countryName) => {
+      const countryMap = {
+        'France': 'fr', 'Poland': 'pl', 'Croatia': 'hr', 'Norway': 'no',
+        'Spain': 'es', 'Brazil': 'br', 'Argentina': 'ar', 'Belgium': 'be',
+        'Uruguay': 'uy', 'Portugal': 'pt', 'England': 'gb-eng', 'Germany': 'de',
+        'Italy': 'it', 'Netherlands': 'nl', 'Morocco': 'ma', 'Senegal': 'sn',
+        'Colombia': 'co', 'Ecuador': 'ec', 'Nigeria': 'ng', 'Ghana': 'gh',
+        'Egypt': 'eg', 'Algeria': 'dz', 'Cameroon': 'cm', 'Ivory-Coast': 'ci',
+        'Mali': 'ml', 'Guinea': 'gn', 'Burkina-Faso': 'bf', 'Gabon': 'ga',
+        'South-Korea': 'kr', 'Japan': 'jp', 'Australia': 'au', 'USA': 'us',
+        'Mexico': 'mx', 'Canada': 'ca', 'Vietnam': 'vn', 'Thailand': 'th',
+        'Iran': 'ir', 'Saudi-Arabia': 'sa', 'Denmark': 'dk', 'Sweden': 'se',
+        'Scotland': 'gb-sct', 'Wales': 'gb-wls', 'Russia': 'ru', 'Turkey': 'tr',
+        'Austria': 'at', 'Switzerland': 'ch', 'Czech-Republic': 'cz',
+        'Serbia': 'rs', 'Ukraine': 'ua', 'Greece': 'gr',
+      };
+      return countryMap[countryName] || (countryName || '').toLowerCase().replace(/\s+/g, '-') || 'un';
+    };
+
     const transformedData = players.map((item, index) => {
       const stats = item.statistics[0] || {};
       const playerSlug = createSlug(item.player.name);
       const teamSlug = createSlug(stats.team?.name || 'unknown');
-      const countryCode = (item.player.nationality || '').toLowerCase().slice(0, 3);
+      const countryCode = getCountryFlagCode(item.player.nationality);
       return {
         _id: `player-${item.player.id}`,
         rank: index + 1,
