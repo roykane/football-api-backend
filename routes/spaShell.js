@@ -298,4 +298,57 @@ function autoArticleHandler(type, hubPath, hubLabel) {
 router.get('/spa-shell/preview/:slug', autoArticleHandler('round-preview', '/preview', 'Preview vòng đấu'));
 router.get('/spa-shell/doi-dau/:slug', autoArticleHandler('h2h-analysis', '/doi-dau', 'Đối đầu H2H'));
 
+// ─── /tran-dau/:slug — match detail (no DB, parse slug) ──────────────
+// Slug pattern: <home-kebab>-vs-<away-kebab>-HHhMM-ngay-DD-MM-YYYY
+// All meta is derived from the slug itself; no API call → fast and won't
+// fail if API-Sports is rate-limiting. SPA hydrates as usual, real match
+// data + scores come in via the regular /api/matches/:id/detail call.
+function parseMatchSlug(slug) {
+  const m = slug.match(/^(.+?)-vs-(.+?)-(\d{2})h(\d{2})-ngay-(\d{2})-(\d{2})-(\d{4})$/);
+  if (!m) return null;
+  const [, homeKebab, awayKebab, hh, mi, dd, mo, yy] = m;
+  const titleCase = (s) => s.replace(/-/g, ' ').replace(/\b([a-z])/g, (_, c) => c.toUpperCase());
+  const homeName = titleCase(homeKebab);
+  const awayName = titleCase(awayKebab);
+  // Slug times are UTC; convert to Vietnam time (UTC+7) for human-readable
+  // copy because that's the audience.
+  const utcMs = Date.UTC(parseInt(yy, 10), parseInt(mo, 10) - 1, parseInt(dd, 10), parseInt(hh, 10), parseInt(mi, 10));
+  const vnMs = utcMs + 7 * 3600 * 1000;
+  const vn = new Date(vnMs);
+  const vnHour = String(vn.getUTCHours()).padStart(2, '0');
+  const vnMin = String(vn.getUTCMinutes()).padStart(2, '0');
+  const vnDay = String(vn.getUTCDate()).padStart(2, '0');
+  const vnMon = String(vn.getUTCMonth() + 1).padStart(2, '0');
+  const vnYear = vn.getUTCFullYear();
+  return {
+    homeName, awayName,
+    isoDate: new Date(utcMs).toISOString(),
+    vnDateLabel: `${vnHour}h${vnMin} ngày ${vnDay}/${vnMon}/${vnYear}`,
+    fullTitle: `${homeName} vs ${awayName}`,
+  };
+}
+
+router.get('/spa-shell/tran-dau/:slug', async (req, res) => {
+  const tpl = loadTemplate();
+  const parsed = parseMatchSlug(req.params.slug);
+  if (!parsed) {
+    return send(res, injectMeta(tpl, {
+      title: 'Chi tiết trận đấu | ScoreLine',
+      description: 'Tỷ số trực tiếp, đội hình, thống kê và H2H trên ScoreLine.',
+      canonical: `${SITE_URL}/tran-dau/${req.params.slug}`,
+    }));
+  }
+  const { homeName, awayName, vnDateLabel, fullTitle } = parsed;
+  const title = `${fullTitle} ${vnDateLabel} — Tỷ số, đội hình, H2H | ScoreLine`;
+  const description = trimDesc(
+    `${homeName} vs ${awayName} ${vnDateLabel}: tỷ số trực tiếp, đội hình ra sân, thống kê chi tiết, lịch sử đối đầu và phân tích trên ScoreLine.`
+  );
+  send(res, injectMeta(tpl, {
+    title,
+    description,
+    canonical: `${SITE_URL}/tran-dau/${req.params.slug}`,
+    ogType: 'article',
+  }));
+});
+
 module.exports = router;

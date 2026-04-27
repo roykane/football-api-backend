@@ -1,0 +1,243 @@
+/**
+ * SEO match-detail SSR.
+ *
+ * Bots crawling /tran-dau/<slug> previously got match.html, which is a
+ * Vite static shell with a single hardcoded title/description for every
+ * match — no h1, no schema, ~40 words → unindexable. This handler
+ * answers /tran-dau/<slug> with a real SEO HTML: title that names the
+ * teams + date, SportsEvent + Breadcrumb schema, h1, internal links to
+ * relevant hubs.
+ *
+ * Designed for cheap rendering: the slug itself carries enough info
+ * (teams + UTC kickoff) to build everything; we don't hit API-Sports.
+ * The rich match content (score, lineups, H2H) still comes from the SPA
+ * after hydration — Google Read-the-Content rendering picks it up on
+ * second pass.
+ */
+
+const express = require('express');
+const router = express.Router();
+
+const SITE_URL = process.env.SITE_URL || 'https://scoreline.io';
+
+function escapeHtml(s) {
+  if (s == null) return '';
+  return String(s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function titleCase(slug) {
+  return slug.replace(/-/g, ' ').replace(/\b([a-z])/g, (_, c) => c.toUpperCase());
+}
+
+// Slug → { homeName, awayName, isoDate, vnDateLabel, ... } or null.
+// Tolerates both the readable form (-HHhMM-ngay-DD-MM-YYYY) and the legacy
+// timestamp form (-<13-digit-ms>) so nginx can route both here without
+// having to inspect the URL.
+function parseSlug(slug) {
+  const readable = slug.match(/^(.+?)-vs-(.+?)-(\d{2})h(\d{2})-ngay-(\d{2})-(\d{2})-(\d{4})$/);
+  if (readable) {
+    const [, h, a, hh, mi, dd, mo, yy] = readable;
+    const utcMs = Date.UTC(+yy, +mo - 1, +dd, +hh, +mi);
+    return shapeFromUtc(h, a, utcMs);
+  }
+  const ts = slug.match(/^(.+?)-vs-(.+?)-(\d{13})$/);
+  if (ts) {
+    const [, h, a, ms] = ts;
+    return shapeFromUtc(h, a, parseInt(ms, 10));
+  }
+  return null;
+}
+
+function shapeFromUtc(homeKebab, awayKebab, utcMs) {
+  if (!Number.isFinite(utcMs)) return null;
+  const vn = new Date(utcMs + 7 * 3600 * 1000);
+  const pad = (n) => String(n).padStart(2, '0');
+  const vnH = pad(vn.getUTCHours());
+  const vnM = pad(vn.getUTCMinutes());
+  const vnD = pad(vn.getUTCDate());
+  const vnMo = pad(vn.getUTCMonth() + 1);
+  const vnY = vn.getUTCFullYear();
+  return {
+    homeName: titleCase(homeKebab),
+    awayName: titleCase(awayKebab),
+    isoDate: new Date(utcMs).toISOString(),
+    vnDateLabel: `${vnH}h${vnM} ngày ${vnD}/${vnMo}/${vnY}`,
+    vnDayLabel: `${vnD}/${vnMo}/${vnY}`,
+    vnTimeLabel: `${vnH}h${vnM}`,
+  };
+}
+
+router.get('/tran-dau/:slug', async (req, res) => {
+  const slug = req.params.slug;
+  const parsed = parseSlug(slug);
+
+  // If the slug isn't a match slug we can parse, return a minimal stub
+  // so nginx's @ssr_404 handler can take over rather than 500-ing.
+  if (!parsed) {
+    res.status(404).set('Content-Type', 'text/html; charset=utf-8');
+    return res.send(`<!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8"><title>Trận đấu không tồn tại | ScoreLine</title><meta name="robots" content="noindex"></head><body><h1>Không tìm thấy trận đấu</h1><p><a href="/lich-thi-dau">Xem lịch thi đấu</a></p></body></html>`);
+  }
+
+  const { homeName, awayName, isoDate, vnDateLabel, vnDayLabel, vnTimeLabel } = parsed;
+  const fullTitle = `${homeName} vs ${awayName}`;
+  const canonical = `${SITE_URL}/tran-dau/${slug}`;
+
+  const title = `${fullTitle} ${vnDateLabel} — Tỷ số, đội hình, H2H | ScoreLine`;
+  const description = `${fullTitle} ${vnDateLabel}: theo dõi tỷ số trực tiếp, đội hình ra sân, thống kê chi tiết, lịch sử đối đầu và dự đoán kết quả trên ScoreLine.`;
+
+  // SportsEvent schema lets Google render a rich-result card with kickoff
+  // time + competitors. Status = "EventScheduled" by default; the SPA
+  // overrides client-side once it knows the live status.
+  const sportsEvent = {
+    '@context': 'https://schema.org',
+    '@type': 'SportsEvent',
+    name: fullTitle,
+    description: `${fullTitle} ${vnDateLabel}`,
+    startDate: isoDate,
+    eventStatus: 'https://schema.org/EventScheduled',
+    eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+    sport: 'Football',
+    url: canonical,
+    competitor: [
+      { '@type': 'SportsTeam', name: homeName },
+      { '@type': 'SportsTeam', name: awayName },
+    ],
+    location: { '@type': 'Place', name: 'Stadium', address: 'TBD' },
+  };
+  const breadcrumb = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Trang chủ', item: SITE_URL },
+      { '@type': 'ListItem', position: 2, name: 'Lịch thi đấu', item: `${SITE_URL}/lich-thi-dau` },
+      { '@type': 'ListItem', position: 3, name: fullTitle, item: canonical },
+    ],
+  };
+  const organization = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: 'ScoreLine',
+    url: SITE_URL,
+    logo: `${SITE_URL}/logo.png`,
+  };
+
+  const safeTitle = escapeHtml(title);
+  const safeDesc = escapeHtml(description);
+  const safeCanonical = escapeHtml(canonical);
+  const safeFullTitle = escapeHtml(fullTitle);
+  const safeHome = escapeHtml(homeName);
+  const safeAway = escapeHtml(awayName);
+  const safeVnDate = escapeHtml(vnDateLabel);
+  const safeVnDay = escapeHtml(vnDayLabel);
+  const safeVnTime = escapeHtml(vnTimeLabel);
+
+  res.set('Content-Type', 'text/html; charset=utf-8');
+  res.set('Cache-Control', 'public, max-age=300, s-maxage=600, stale-while-revalidate=86400');
+  res.send(`<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>${safeTitle}</title>
+  <meta name="description" content="${safeDesc}">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="${safeCanonical}">
+  <link rel="alternate" hreflang="vi" href="${safeCanonical}">
+  <link rel="alternate" hreflang="x-default" href="${safeCanonical}">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="${safeCanonical}">
+  <meta property="og:title" content="${safeTitle}">
+  <meta property="og:description" content="${safeDesc}">
+  <meta property="og:image" content="${SITE_URL}/og-image.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:locale" content="vi_VN">
+  <meta property="og:site_name" content="ScoreLine">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="${safeTitle}">
+  <meta name="twitter:description" content="${safeDesc}">
+  <meta name="twitter:image" content="${SITE_URL}/og-image.jpg">
+  <script type="application/ld+json">${JSON.stringify(sportsEvent)}</script>
+  <script type="application/ld+json">${JSON.stringify(breadcrumb)}</script>
+  <script type="application/ld+json">${JSON.stringify(organization)}</script>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.7;color:#1e293b;background:#f1f5f9}
+    a{color:#2563eb;text-decoration:none}a:hover{text-decoration:underline}
+    .container{max-width:1200px;margin:0 auto;padding:16px}
+    .breadcrumb{font-size:13px;color:#64748b;margin-bottom:12px}
+    .match-hero{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:24px;margin-bottom:16px}
+    .match-hero h1{font-size:26px;font-weight:800;color:#0f172a;margin-bottom:6px;letter-spacing:-.3px}
+    .match-hero .meta{font-size:14px;color:#475569;margin-bottom:16px}
+    .match-grid{display:grid;grid-template-columns:1fr auto 1fr;gap:16px;align-items:center;padding:18px 0;border-top:1px solid #f1f5f9;border-bottom:1px solid #f1f5f9}
+    .team{text-align:center}.team .name{font-size:18px;font-weight:700;color:#0f172a;margin-top:8px}
+    .team-logo{width:64px;height:64px;background:#f1f5f9;border-radius:50%;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:24px}
+    .vs{font-size:20px;font-weight:800;color:#94a3b8}
+    .info-row{display:flex;gap:8px;padding:12px 0;font-size:14px;color:#475569}
+    .info-row .k{font-weight:700;color:#0f172a;min-width:120px}
+    .seo-block{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:24px;margin-bottom:16px}
+    .seo-block h2{font-size:18px;font-weight:800;color:#0f172a;margin-bottom:12px}
+    .seo-block p{font-size:15px;color:#334155;margin-bottom:10px}
+    .related{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+    .related a{padding:8px 14px;background:#eff6ff;border-radius:6px;font-size:13px;font-weight:600;color:#1e40af}
+    .footer{text-align:center;padding:16px;font-size:12px;color:#94a3b8}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <nav class="breadcrumb">
+      <a href="/">Trang chủ</a> &rsaquo;
+      <a href="/lich-thi-dau">Lịch thi đấu</a> &rsaquo;
+      <span>${safeFullTitle}</span>
+    </nav>
+
+    <div class="match-hero">
+      <h1>${safeFullTitle}</h1>
+      <div class="meta">${safeVnDate} · Tỷ số trực tiếp, đội hình, thống kê và H2H</div>
+
+      <div class="match-grid">
+        <div class="team">
+          <div class="team-logo">⚽</div>
+          <div class="name">${safeHome}</div>
+        </div>
+        <div class="vs">VS</div>
+        <div class="team">
+          <div class="team-logo">⚽</div>
+          <div class="name">${safeAway}</div>
+        </div>
+      </div>
+
+      <div class="info-row"><span class="k">Thời gian:</span><span>${safeVnTime} (giờ Việt Nam)</span></div>
+      <div class="info-row"><span class="k">Ngày:</span><span>${safeVnDay}</span></div>
+    </div>
+
+    <div class="seo-block">
+      <h2>Theo dõi trận ${safeFullTitle}</h2>
+      <p>Trận đấu giữa <strong>${safeHome}</strong> và <strong>${safeAway}</strong> diễn ra vào lúc <strong>${safeVnDate}</strong> (giờ Việt Nam). ScoreLine cập nhật tỷ số trực tiếp, đội hình ra sân, thống kê thi đấu (kiểm soát bóng, sút, phạt góc, thẻ phạt) và lịch sử đối đầu giữa hai đội.</p>
+      <p>Sau trận, trang sẽ tự động bổ sung diễn biến chi tiết, video bàn thắng, bình luận chuyên môn và bảng xếp hạng giải đấu cập nhật.</p>
+      <p>Truy cập trang nhận định <strong>${safeFullTitle}</strong> để xem dự đoán tỷ số, kèo châu Á, tài/xỉu và phân tích phong độ chuyên sâu trước trận.</p>
+    </div>
+
+    <div class="seo-block">
+      <h2>Liên kết liên quan</h2>
+      <div class="related">
+        <a href="/lich-thi-dau">📅 Lịch thi đấu</a>
+        <a href="/ket-qua-bong-da">🏁 Kết quả</a>
+        <a href="/nhan-dinh">📊 Nhận định bóng đá</a>
+        <a href="/preview">🏆 Preview vòng đấu</a>
+        <a href="/tin-bong-da">📰 Tin bóng đá</a>
+      </div>
+    </div>
+
+    <div class="footer">
+      <a href="${SITE_URL}">ScoreLine.io</a> — Tỷ số trực tiếp & nhận định bóng đá
+    </div>
+  </div>
+</body>
+</html>`);
+});
+
+module.exports = router;
