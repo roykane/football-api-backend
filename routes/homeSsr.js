@@ -217,8 +217,6 @@ router.get('/', async (req, res) => {
 
   const og = pickOgImage({}, { alt: 'ScoreLine - Tỷ số trực tiếp bóng đá' });
 
-  const leagueGrid = LEAGUES.map(l => `<a href="/giai-dau/${l.slug}">🏆 ${escapeHtml(l.viName)}</a>`).join('');
-
   const html = `<!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -282,11 +280,6 @@ router.get('/', async (req, res) => {
           <p style="margin-top:10px"><a href="/tin-bong-da">Xem tin tức bóng đá đầy đủ →</a></p>
         </div>` : ''}
 
-        <div class="card">
-          <h2>🏆 Các giải đấu</h2>
-          <p>Theo dõi BXH, lịch thi đấu, kết quả và top ghi bàn các giải đấu hàng đầu thế giới và Việt Nam:</p>
-          <div class="league-grid">${leagueGrid}</div>
-        </div>
       </div>
 
       <aside class="sidebar">
