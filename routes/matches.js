@@ -2008,10 +2008,24 @@ router.get('/:id/odds', async (req, res) => {
         });
 
         if (fixturesResponse.data?.response && fixturesResponse.data.response.length > 0) {
-          const fixture = fixturesResponse.data.response.find(f => {
+          let fixture = fixturesResponse.data.response.find(f => {
             const fixtureTimestamp = new Date(f.fixture.date).getTime();
             return fixtureTimestamp === timestamp;
           });
+
+          // Fallback: search by team names if timestamp doesn't match.
+          // Necessary because slug timestamps generated in different
+          // timezones can differ from API-Sports' UTC stamp by ±hours
+          // (legacy local-time slugs that used to ship to users).
+          if (!fixture) {
+            const slugWithoutTimestamp = parts.slice(0, -1).join('-');
+            fixture = fixturesResponse.data.response.find(f => {
+              const homeSlug = (f.teams?.home?.name || '').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+              const awaySlug = (f.teams?.away?.name || '').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+              return homeSlug && awaySlug && slugWithoutTimestamp.includes(homeSlug) && slugWithoutTimestamp.includes(awaySlug);
+            });
+            if (fixture) console.log(`   ✅ Found via team-name fallback`);
+          }
 
           if (fixture) {
             fixtureId = fixture.fixture.id;
@@ -2165,10 +2179,21 @@ router.get('/:id/forms', async (req, res) => {
         });
 
         if (fixturesResponse.data?.response && fixturesResponse.data.response.length > 0) {
-          const fixture = fixturesResponse.data.response.find(f => {
+          let fixture = fixturesResponse.data.response.find(f => {
             const fixtureTimestamp = new Date(f.fixture.date).getTime();
             return fixtureTimestamp === timestamp;
           });
+
+          // Fallback by team names — same rationale as /odds handler above.
+          if (!fixture) {
+            const slugWithoutTimestamp = parts.slice(0, -1).join('-');
+            fixture = fixturesResponse.data.response.find(f => {
+              const homeSlug = (f.teams?.home?.name || '').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+              const awaySlug = (f.teams?.away?.name || '').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+              return homeSlug && awaySlug && slugWithoutTimestamp.includes(homeSlug) && slugWithoutTimestamp.includes(awaySlug);
+            });
+            if (fixture) console.log(`   ✅ Found via team-name fallback`);
+          }
 
           if (fixture) {
             fixtureId = fixture.fixture.id;
