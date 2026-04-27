@@ -337,6 +337,11 @@ app.use('/api/players', require('./routes/playersApi'));
 app.use('/api/football-knowledge', require('./routes/knowledgeApi'));
 app.use('/api/world-cup-2026', require('./routes/worldCupApi'));
 app.use('/api/coaches', require('./routes/coachesApi'));
+app.use('/api/world-players', require('./routes/worldPlayersApi'));
+app.use('/api/national-teams', require('./routes/nationalTeamsApi'));
+app.use('/api/stadiums', require('./routes/stadiumsApi'));
+app.use('/api/awards', require('./routes/awardsApi'));
+app.use('/api/winners', require('./routes/winnersApi'));
 app.use('/api/img', require('./routes/imageProxy'));
 
 // Admin (single-user, cookie session) — keep mounted LAST so any more
