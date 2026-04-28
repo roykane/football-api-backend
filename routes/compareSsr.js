@@ -155,31 +155,35 @@ function baseStyles() {
     .featH2HTotal{text-align:center;font-size:13px;color:#cbd5e1;margin:8px 0 16px}
     .featH2HTotal strong{color:#fff;font-size:16px;font-weight:900;margin-left:4px}
     .featLastLabel{font-size:11px;font-weight:800;color:#fbbf24;text-align:center;letter-spacing:.5px;margin-bottom:8px;text-transform:uppercase}
-    .featLastMeeting{display:grid;grid-template-columns:auto 1fr auto 1fr auto;gap:8px;align-items:center;background:rgba(15,23,42,0.5);border-radius:6px;padding:8px;font-size:12px;color:#fff}
-    .featLastMeeting img{width:18px;height:18px;object-fit:contain}
-    .featLastMeeting .name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .featLastMeeting .score{background:#fbbf24;color:#0f172a;padding:2px 6px;border-radius:3px;font-weight:800;font-family:monospace}
+    .featLastMeeting{display:grid;grid-template-columns:auto 1fr auto 1fr auto;gap:10px;align-items:center;background:rgba(15,23,42,0.5);border-radius:6px;padding:10px 8px;font-size:12px;color:#fff;line-height:1.25}
+    .featLastMeeting img{width:22px;height:22px;object-fit:contain}
+    .featLastMeeting .name{font-weight:700;word-break:break-word}
+    .featLastMeeting .score{background:#fbbf24;color:#0f172a;padding:3px 8px;border-radius:4px;font-weight:800;font-family:monospace;font-size:13px}
     .featCta{display:block;text-align:center;background:linear-gradient(135deg,#3b82f6,#1d4ed8);color:#fff;padding:10px 12px;border-radius:6px;text-decoration:none;font-size:12px;font-weight:800;letter-spacing:.5px;margin-top:14px;text-transform:uppercase;border:1px solid rgba(255,255,255,0.15)}
     .featCta:hover{filter:brightness(1.1)}
-    .featFormCols{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    .featFormHead{text-align:center;font-size:12px;font-weight:800;color:#fbbf24;letter-spacing:.5px;margin-bottom:10px;text-transform:uppercase}
-    .featFormMatches{display:flex;flex-direction:column;gap:6px}
-    .featFormRow{display:grid;grid-template-columns:1fr auto 1fr auto;gap:6px;align-items:center;font-size:11px;background:rgba(15,23,42,0.5);border-radius:4px;padding:6px 8px}
-    .featFormTeam{color:#cbd5e1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .featFormScore{background:#fbbf24;color:#0f172a;font-weight:800;padding:2px 6px;border-radius:3px;font-size:11px;font-family:monospace}
-    .featFormResult{width:18px;height:18px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff}
-    .featFormResult.W{background:#16a34a}.featFormResult.L{background:#dc2626}.featFormResult.D{background:#f59e0b}
+    .featFormCols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    .featFormHead{display:flex;align-items:center;gap:8px;justify-content:center;text-align:center;font-size:12px;font-weight:800;color:#fbbf24;letter-spacing:.3px;margin-bottom:12px;text-transform:uppercase;line-height:1.2}
+    .featFormHead img{width:24px;height:24px;object-fit:contain;flex-shrink:0}
+    .featFormHead span{word-break:break-word}
+    .featFormStrip{display:flex;gap:6px;justify-content:center;margin-bottom:14px;flex-wrap:wrap}
+    .featFormBadge{width:32px;height:32px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:#fff;box-shadow:0 2px 6px rgba(0,0,0,0.25)}
+    .featFormBadge.W{background:#16a34a}.featFormBadge.L{background:#dc2626}.featFormBadge.D{background:#f59e0b}
+    .featFormStats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;text-align:center}
+    .featFormStat{background:rgba(15,23,42,0.5);border-radius:6px;padding:8px 4px}
+    .featFormStat .num{display:block;font-size:18px;font-weight:900;color:#fff;line-height:1}
+    .featFormStat .lbl{display:block;font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;margin-top:4px;font-weight:700}
     @media(max-width:1024px){.featCardsRow{grid-template-columns:1fr}}
     /* Bottom pair selector */
     .selectorWrap{background:linear-gradient(180deg,#0f172a,#1e293b);border-radius:10px;padding:18px 16px;border:1px solid rgba(251,191,36,0.25);margin-bottom:14px}
     .selectorTitle{font-size:13px;font-weight:800;color:#fbbf24;text-align:center;letter-spacing:1px;text-transform:uppercase;margin-bottom:14px}
     .selectorGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
-    .pairChip{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;background:rgba(15,23,42,0.6);border:1px solid rgba(251,191,36,0.2);border-radius:8px;text-decoration:none;color:#e2e8f0;transition:all .2s;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+    .pairChip{position:relative;display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start;padding:12px 14px;background:rgba(15,23,42,0.6);border:1px solid rgba(251,191,36,0.2);border-radius:8px;text-decoration:none;color:#e2e8f0;transition:all .2s}
     .pairChip:hover{background:rgba(251,191,36,0.1);border-color:#fbbf24;color:#fff;text-decoration:none}
+    .pairChip::after{content:"VS";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(251,191,36,0.95);color:#0f172a;font-size:9px;font-weight:900;padding:2px 5px;border-radius:3px;letter-spacing:.5px;line-height:1;pointer-events:none}
     .pairChip.active{background:linear-gradient(135deg,rgba(251,191,36,0.2),rgba(245,158,11,0.15));border-color:#fbbf24;color:#fff;box-shadow:0 0 0 2px rgba(251,191,36,0.3)}
-    .chipLogo{width:22px;height:22px;object-fit:contain;flex-shrink:0}
-    .chipVs{color:#94a3b8;font-size:9px;font-weight:900}
-    .chipTeam{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;text-align:center}
+    .chipSide{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;min-width:0}
+    .chipLogo{width:30px;height:30px;object-fit:contain;flex-shrink:0}
+    .chipTeam{font-size:11px;font-weight:700;color:#e2e8f0;line-height:1.25;word-break:break-word;hyphens:auto}
     .heroEnh{position:relative;background:linear-gradient(135deg,#0a1628 0%,#1a2744 50%,#0f172a 100%);color:#fff;padding:32px 28px;border-radius:14px;margin-bottom:20px;overflow:hidden;border:1px solid rgba(251,191,36,0.35)}
     .heroEnh::before{content:"";position:absolute;top:-30%;right:-10%;width:280px;height:280px;background:radial-gradient(circle,rgba(251,191,36,0.18) 0%,transparent 70%);pointer-events:none}
     .heroEnh::after{content:"";position:absolute;bottom:-30%;left:-5%;width:200px;height:200px;background:radial-gradient(circle,rgba(59,130,246,0.12) 0%,transparent 70%);pointer-events:none}
@@ -269,7 +273,6 @@ router.get('/so-sanh', async (req, res) => {
       })),
     };
 
-    const shortName = (n) => (n || '').replace(/^FC\s+|^AC\s+|^AS\s+|^RC\s+|^Atlético\s+/i, '');
     const formatDate = (iso) => iso ? new Date(iso).toLocaleDateString('vi-VN') : '';
 
     // Featured-pair hero + 3 info cards (rendered if data resolved)
@@ -284,7 +287,7 @@ router.get('/so-sanh', async (req, res) => {
         <div>
           <div class="featTeamHead">
             ${t.logo ? `<img src="${escapeHtml(proxyImg(t.logo, 56))}" alt="">` : ''}
-            <div class="name">${escapeHtml(shortName(t.name))}</div>
+            <div class="name">${escapeHtml(t.name)}</div>
           </div>
           <ul class="featFacts">
             ${t.founded ? `<li><span class="featFactLabel">📅 Năm thành lập</span><span class="featFactVal">${t.founded}</span></li>` : ''}
@@ -295,19 +298,24 @@ router.get('/so-sanh', async (req, res) => {
         </div>
       `;
 
-      const formCol = (label, slug, teamForm) => `
+      const formCol = (t, teamForm) => `
         <div>
-          <div class="featFormHead">${escapeHtml(shortName(label))}</div>
-          <div class="featFormMatches">
-            ${teamForm?.last5?.length ? teamForm.last5.slice(0, 5).map((r, i) => `
-              <div class="featFormRow">
-                <span class="featFormTeam">${escapeHtml(shortName(label))}</span>
-                <span class="featFormResult ${r}">${r === 'W' ? 'T' : r === 'L' ? 'B' : 'H'}</span>
-                <span class="featFormTeam" style="text-align:right">${i + 1} trận trước</span>
-                <span class="featFormScore">${r}</span>
-              </div>
-            `).join('') : '<div style="color:#94a3b8;font-size:12px;text-align:center">Chưa có dữ liệu</div>'}
+          <div class="featFormHead">
+            ${t.logo ? `<img src="${escapeHtml(proxyImg(t.logo, 56))}" alt="">` : ''}
+            <span>${escapeHtml(t.name)}</span>
           </div>
+          ${teamForm?.last5?.length ? `
+            <div class="featFormStrip">
+              ${teamForm.last5.slice(0, 5).map(r => `
+                <div class="featFormBadge ${r}">${r === 'W' ? 'T' : r === 'L' ? 'B' : 'H'}</div>
+              `).join('')}
+            </div>
+            <div class="featFormStats">
+              <div class="featFormStat"><span class="num">${teamForm.points}</span><span class="lbl">Điểm</span></div>
+              <div class="featFormStat"><span class="num">${teamForm.scored}</span><span class="lbl">Ghi bàn</span></div>
+              <div class="featFormStat"><span class="num">${teamForm.conceded}</span><span class="lbl">Thủng lưới</span></div>
+            </div>
+          ` : '<div style="color:#94a3b8;font-size:12px;text-align:center;padding:16px 0">Chưa có dữ liệu</div>'}
         </div>
       `;
 
@@ -336,8 +344,8 @@ router.get('/so-sanh', async (req, res) => {
           <div class="featCard">
             <div class="featCardTitle">Phong độ 5 trận gần nhất</div>
             <div class="featFormCols">
-              ${formCol(A.name, A.slug, form?.teamA)}
-              ${formCol(B.name, B.slug, form?.teamB)}
+              ${formCol(A, form?.teamA)}
+              ${formCol(B, form?.teamB)}
             </div>
           </div>
           <div class="featCard">
@@ -352,11 +360,11 @@ router.get('/so-sanh', async (req, res) => {
               ${last ? `
                 <div class="featLastLabel">Trận gần nhất</div>
                 <div class="featLastMeeting">
-                  ${last.homeLogo ? `<img src="${escapeHtml(proxyImg(last.homeLogo, 32))}" alt="">` : ''}
-                  <span class="name">${escapeHtml(shortName(last.homeName))}</span>
+                  ${last.homeLogo ? `<img src="${escapeHtml(proxyImg(last.homeLogo, 48))}" alt="">` : ''}
+                  <span class="name">${escapeHtml(last.homeName)}</span>
                   <span class="score">${last.homeScore} - ${last.awayScore}</span>
-                  <span class="name" style="text-align:right">${escapeHtml(shortName(last.awayName))}</span>
-                  ${last.awayLogo ? `<img src="${escapeHtml(proxyImg(last.awayLogo, 32))}" alt="">` : ''}
+                  <span class="name" style="text-align:right">${escapeHtml(last.awayName)}</span>
+                  ${last.awayLogo ? `<img src="${escapeHtml(proxyImg(last.awayLogo, 48))}" alt="">` : ''}
                 </div>
                 <div style="font-size:10px;color:#94a3b8;text-align:center;margin-top:6px">${formatDate(last.date)}${last.league ? ` · ${escapeHtml(last.league)}` : ''}</div>
               ` : ''}
@@ -374,11 +382,14 @@ router.get('/so-sanh', async (req, res) => {
         <div class="selectorGrid">
           ${items.map(p => `
             <a href="/so-sanh/${escapeHtml(p.slug)}" class="pairChip${featured && p.slug === featured.slug ? ' active' : ''}">
-              ${p.teamA.logo ? `<img class="chipLogo" src="${escapeHtml(proxyImg(p.teamA.logo, 48))}" alt="" loading="lazy">` : ''}
-              <span class="chipTeam">${escapeHtml(shortName(p.teamA.name))}</span>
-              <span class="chipVs">VS</span>
-              <span class="chipTeam">${escapeHtml(shortName(p.teamB.name))}</span>
-              ${p.teamB.logo ? `<img class="chipLogo" src="${escapeHtml(proxyImg(p.teamB.logo, 48))}" alt="" loading="lazy">` : ''}
+              <div class="chipSide">
+                ${p.teamA.logo ? `<img class="chipLogo" src="${escapeHtml(proxyImg(p.teamA.logo, 60))}" alt="" loading="lazy">` : ''}
+                <span class="chipTeam">${escapeHtml(p.teamA.name)}</span>
+              </div>
+              <div class="chipSide">
+                ${p.teamB.logo ? `<img class="chipLogo" src="${escapeHtml(proxyImg(p.teamB.logo, 60))}" alt="" loading="lazy">` : ''}
+                <span class="chipTeam">${escapeHtml(p.teamB.name)}</span>
+              </div>
             </a>
           `).join('')}
         </div>
