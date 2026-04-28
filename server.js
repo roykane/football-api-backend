@@ -263,6 +263,13 @@ app.use('/sanvandong', express.static(path.join(__dirname, 'public', 'sanvandong
   immutable: true,
 }));
 
+// Vietnamese player photos — slug-named .jpg/.png.
+// Used by data/vietnamesePlayers.js → image: "/vn-player-images/<slug>.<ext>".
+app.use('/vn-player-images', express.static(path.join(__dirname, 'public', 'vn-player-images'), {
+  maxAge: '30d',
+  immutable: true,
+}));
+
 // Trophy / award images — populated by scripts/download-trophy-images.js.
 app.use('/trophy-images', express.static(path.join(__dirname, 'public', 'trophy-images'), {
   maxAge: '30d',
