@@ -162,6 +162,18 @@ async function generateSitemap() {
     }
 
     addUrl(`${SITE_URL}/lich-su-vo-dich`, today, 'monthly', '0.7');
+
+    // /so-sanh hub + curated derby comparisons.
+    // Pulls from compare router so the list stays in lockstep with FE pairs.
+    try {
+      const { POPULAR_PAIRS } = require('./compare');
+      addUrl(`${SITE_URL}/so-sanh`, today, 'weekly', '0.7');
+      for (const p of POPULAR_PAIRS || []) {
+        addUrl(`${SITE_URL}/so-sanh/${p.slugA}-vs-${p.slugB}`, today, 'weekly', '0.6');
+      }
+    } catch (err) {
+      console.warn('[Sitemap] /so-sanh pairs skipped:', err.message);
+    }
   } catch (err) {
     console.error('[Sitemap] Failed to load batch-2026-04 data files:', err.message);
   }

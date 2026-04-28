@@ -731,6 +731,31 @@ router.get('/doi-bong/:slug', async (req, res) => {
       return res.status(404).send(`<!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8"><title>Không tìm thấy đội bóng | ScoreLine</title><meta name="robots" content="noindex"></head><body><h1>Đội bóng không tồn tại</h1><p><a href="/">Trang chủ</a></p></body></html>`);
     }
 
+    // Find popular comparisons that include this team — internal links
+    // boost crawl discovery of /so-sanh pages from established team pages.
+    let comparePairs = [];
+    try {
+      const { POPULAR_PAIRS } = require('../services/compareData');
+      const matches = POPULAR_PAIRS
+        .filter(p => p.slugA === team.slug || p.slugB === team.slug)
+        .slice(0, 5);
+      if (matches.length) {
+        const oppSlugs = matches.map(p => p.slugA === team.slug ? p.slugB : p.slugA);
+        const oppTeams = await Team.find({ slug: { $in: oppSlugs } })
+          .select('slug name').lean();
+        const nameBySlug = new Map(oppTeams.map(t => [t.slug, t.name]));
+        comparePairs = matches.map(p => {
+          const opponentSlug = p.slugA === team.slug ? p.slugB : p.slugA;
+          return {
+            opponentSlug,
+            opponentName: nameBySlug.get(opponentSlug) || opponentSlug,
+            compareSlug: `${p.slugA}-vs-${p.slugB}`,
+            label: p.label,
+          };
+        });
+      }
+    } catch { /* compareData missing → silently skip section */ }
+
     const SITE_URL_LOCAL = process.env.SITE_URL || 'https://scoreline.io';
     const title = escapeHtml(`${team.name} - Thông tin, BXH & Phân tích | ${team.league?.name || ''}`);
     const description = escapeHtml(`Trang thông tin ${team.name}: vị trí BXH #${team.standings?.rank || '?'}, ${team.standings?.points || 0} điểm, phong độ ${team.standings?.form || 'N/A'}. Lịch sử, sân vận động ${team.venue?.name || ''} và phân tích chi tiết.`);
@@ -1032,6 +1057,12 @@ router.get('/doi-bong/:slug', async (req, res) => {
       </main>
 
       <aside class="sidebar">
+        ${comparePairs.length > 0 ? `
+        <div class="sidebar-card">
+          <div class="sidebar-title">⚔️ So sánh ${escapeHtml(team.name)} với đối thủ</div>
+          ${comparePairs.map(p => `<a href="/so-sanh/${escapeHtml(p.compareSlug)}" class="sidebar-link">vs ${escapeHtml(p.opponentName)} <span style="color:#94a3b8;font-size:11px">(${escapeHtml(p.label)})</span></a>`).join('')}
+          <a href="/so-sanh" class="sidebar-link" style="font-weight:600;color:#0f172a">Xem tất cả cặp so sánh →</a>
+        </div>` : ''}
         <div class="sidebar-card">
           <div class="sidebar-title">🔗 Truy cập nhanh</div>
           <a href="/nhan-dinh" class="sidebar-link">Nhận Định Bóng Đá</a>

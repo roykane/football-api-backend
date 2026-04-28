@@ -308,6 +308,7 @@ app.use('/', require('./routes/worldPlayersSsr'));
 app.use('/', require('./routes/nationalTeamsSsr'));
 app.use('/', require('./routes/stadiumsSsr'));
 app.use('/', require('./routes/awardsSsr'));
+app.use('/', require('./routes/compareSsr'));
 
 // Mount routers - ✅ Thứ tự quan trọng!
 app.use('/api/competitions', competitionsRouter);
@@ -332,6 +333,7 @@ app.use('/api/national-teams', require('./routes/nationalTeamsApi'));
 app.use('/api/stadiums', require('./routes/stadiumsApi'));
 app.use('/api/awards', require('./routes/awardsApi'));
 app.use('/api/winners', require('./routes/winnersApi'));
+app.use('/api/compare', require('./routes/compare'));
 app.use('/api/img', require('./routes/imageProxy'));
 
 // Admin (single-user, cookie session) — keep mounted LAST so any more
