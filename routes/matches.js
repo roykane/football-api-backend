@@ -16,6 +16,87 @@ const Odds = require('../models/Odds'); // MongoDB Odds model for direct queries
 // Default fallback image for broken logos
 const DEFAULT_FALLBACK_IMAGE = 'https://media.api-sports.io/football/teams/5297.png';
 
+/**
+ * Resolve a match identifier to a numeric API-Sports fixture ID.
+ *
+ * Accepted shapes:
+ *   - Numeric (e.g. 1492231): used directly.
+ *   - Readable slug ending in 13-digit UTC timestamp (e.g.
+ *     "nice-vs-lens-1777748700000"): query API-Sports across a ±1-day
+ *     UTC window (handles Bangkok timezone shifts), then match by
+ *     exact timestamp, falling back to bidirectional team-name match.
+ *
+ * Returns: numeric fixtureId | null
+ *
+ * Used by /:id/detail, /:id/odds, /:id/forms, /:id/events, /:id/lineups —
+ * keeping the logic in one place avoids the past pattern where each
+ * endpoint had a slightly different (and sometimes broken) version.
+ */
+async function resolveFixtureId(id, footballApi) {
+  if (id == null) return null;
+
+  const numericId = parseInt(id);
+  if (!isNaN(numericId) && /^\d+$/.test(String(id))) return numericId;
+
+  if (typeof id !== 'string') return null;
+  const parts = id.split('-');
+  const timestamp = parseInt(parts[parts.length - 1]);
+  if (isNaN(timestamp) || timestamp < 1_000_000_000_000) return null;
+
+  const dayMs = 86_400_000;
+  const baseDay = new Date(timestamp).toISOString().split('T')[0];
+  const baseMs = new Date(baseDay + 'T00:00:00.000Z').getTime();
+  const dates = [
+    new Date(baseMs - dayMs).toISOString().split('T')[0],
+    baseDay,
+    new Date(baseMs + dayMs).toISOString().split('T')[0],
+  ];
+
+  const responses = await Promise.allSettled(
+    dates.map(d => footballApi.get('/fixtures', { params: { date: d } }))
+  );
+  const fixturesById = new Map();
+  for (const r of responses) {
+    if (r.status !== 'fulfilled') continue;
+    for (const f of (r.value.data?.response || [])) {
+      if (f?.fixture?.id != null) fixturesById.set(f.fixture.id, f);
+    }
+  }
+  const allFixtures = Array.from(fixturesById.values());
+  if (allFixtures.length === 0) return null;
+
+  // Exact timestamp match
+  const exact = allFixtures.find(f => new Date(f.fixture.date).getTime() === timestamp);
+  if (exact) return exact.fixture.id;
+
+  // Bidirectional team-name fallback — handles "porto" vs "fc-porto" and
+  // home/away swap.
+  const slugWithoutTimestamp = parts.slice(0, -1).join('-');
+  const userParts = slugWithoutTimestamp.split('-vs-');
+  const slugify = (name) =>
+    (name || '').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+  const teamMatches = (apiSlug, userToken) => {
+    if (!apiSlug || !userToken) return false;
+    if (apiSlug === userToken) return true;
+    if (apiSlug.includes(userToken) || userToken.includes(apiSlug)) return true;
+    const apiTokens = apiSlug.split('-').filter(t => t.length >= 4);
+    const userTokens = userToken.split('-').filter(t => t.length >= 4);
+    return apiTokens.some(at => userTokens.some(ut => at === ut));
+  };
+
+  const found = allFixtures.find(f => {
+    const homeSlug = slugify(f.teams?.home?.name);
+    const awaySlug = slugify(f.teams?.away?.name);
+    if (userParts.length === 2) {
+      return (teamMatches(homeSlug, userParts[0]) && teamMatches(awaySlug, userParts[1]))
+        || (teamMatches(homeSlug, userParts[1]) && teamMatches(awaySlug, userParts[0]));
+    }
+    return slugWithoutTimestamp.includes(homeSlug) && slugWithoutTimestamp.includes(awaySlug);
+  });
+
+  return found ? found.fixture.id : null;
+}
+
 // ========================================
 // HELPER FUNCTIONS - Reusable
 // ========================================
@@ -2018,71 +2099,16 @@ router.get('/:id/odds', async (req, res) => {
     console.log(`\n🎰 GET /api/matches/:id/odds`);
     console.log(`   Requested ID/Slug: ${id}`);
 
-    let fixtureId = null;
-    let matchDate = null;
-
-    // Try to parse as numeric ID first
-    const numericId = parseInt(id);
-    if (!isNaN(numericId)) {
-      console.log(`   📊 Using numeric fixture ID: ${numericId}`);
-      fixtureId = numericId;
-    } else {
-      // Try to extract timestamp from slug
-      console.log(`   📊 Parsing slug to extract timestamp`);
-      const parts = id.split('-');
-      const lastPart = parts[parts.length - 1];
-      const timestamp = parseInt(lastPart);
-
-      if (!isNaN(timestamp) && timestamp > 1000000000000) {
-        const date = new Date(timestamp);
-        matchDate = date.toISOString().split('T')[0];
-        console.log(`   📅 Extracted date: ${matchDate} from timestamp ${timestamp}`);
-
-        // Need to fetch fixtures to get the fixture ID
-        console.log(`   📥 Fetching fixtures for ${matchDate} to find fixture ID...`);
-        const fixturesResponse = await footballApi.get('/fixtures', {
-          params: {
-            date: matchDate,
-            timezone: 'Asia/Bangkok'
-          }
-        });
-
-        if (fixturesResponse.data?.response && fixturesResponse.data.response.length > 0) {
-          let fixture = fixturesResponse.data.response.find(f => {
-            const fixtureTimestamp = new Date(f.fixture.date).getTime();
-            return fixtureTimestamp === timestamp;
-          });
-
-          // Fallback: search by team names if timestamp doesn't match.
-          // Necessary because slug timestamps generated in different
-          // timezones can differ from API-Sports' UTC stamp by ±hours
-          // (legacy local-time slugs that used to ship to users).
-          if (!fixture) {
-            const slugWithoutTimestamp = parts.slice(0, -1).join('-');
-            fixture = fixturesResponse.data.response.find(f => {
-              const homeSlug = (f.teams?.home?.name || '').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-              const awaySlug = (f.teams?.away?.name || '').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-              return homeSlug && awaySlug && slugWithoutTimestamp.includes(homeSlug) && slugWithoutTimestamp.includes(awaySlug);
-            });
-            if (fixture) console.log(`   ✅ Found via team-name fallback`);
-          }
-
-          if (fixture) {
-            fixtureId = fixture.fixture.id;
-            console.log(`   ✅ Found fixture ID: ${fixtureId}`);
-          }
-        }
-      }
-    }
-
+    const fixtureId = await resolveFixtureId(id, footballApi);
     if (!fixtureId) {
-      console.log(`   ❌ Could not determine fixture ID`);
-      return res.status(400).json({
+      console.log(`   ❌ Could not resolve fixture ID`);
+      return res.status(404).json({
         success: false,
-        error: 'Invalid match identifier',
-        message: `Could not extract fixture ID from: ${id}`
+        error: 'Match not found',
+        message: `Could not resolve fixture from: ${id}`,
       });
     }
+    console.log(`   ✅ Resolved fixture ID: ${fixtureId}`);
 
     // Try to get from MongoDB cache first
     console.log(`   🔍 Checking MongoDB cache for fixture ${fixtureId}...`);
@@ -2190,66 +2216,15 @@ router.get('/:id/forms', async (req, res) => {
     console.log(`\n📊 GET /api/matches/:id/forms`);
     console.log(`   Requested ID/Slug: ${id}`);
 
-    let fixtureId = null;
-
-    // Try to parse as numeric ID first
-    const numericId = parseInt(id);
-    if (!isNaN(numericId)) {
-      console.log(`   📊 Using numeric fixture ID: ${numericId}`);
-      fixtureId = numericId;
-    } else {
-      // Try to extract timestamp from slug
-      console.log(`   📊 Parsing slug to extract timestamp`);
-      const parts = id.split('-');
-      const lastPart = parts[parts.length - 1];
-      const timestamp = parseInt(lastPart);
-
-      if (!isNaN(timestamp) && timestamp > 1000000000000) {
-        const date = new Date(timestamp);
-        const matchDate = date.toISOString().split('T')[0];
-        console.log(`   📅 Extracted date: ${matchDate} from timestamp ${timestamp}`);
-
-        // Need to fetch fixtures to get the fixture ID
-        console.log(`   📥 Fetching fixtures for ${matchDate} to find fixture ID...`);
-        const fixturesResponse = await footballApi.get('/fixtures', {
-          params: {
-            date: matchDate,
-            timezone: 'Asia/Bangkok'
-          }
-        });
-
-        if (fixturesResponse.data?.response && fixturesResponse.data.response.length > 0) {
-          let fixture = fixturesResponse.data.response.find(f => {
-            const fixtureTimestamp = new Date(f.fixture.date).getTime();
-            return fixtureTimestamp === timestamp;
-          });
-
-          // Fallback by team names — same rationale as /odds handler above.
-          if (!fixture) {
-            const slugWithoutTimestamp = parts.slice(0, -1).join('-');
-            fixture = fixturesResponse.data.response.find(f => {
-              const homeSlug = (f.teams?.home?.name || '').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-              const awaySlug = (f.teams?.away?.name || '').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-              return homeSlug && awaySlug && slugWithoutTimestamp.includes(homeSlug) && slugWithoutTimestamp.includes(awaySlug);
-            });
-            if (fixture) console.log(`   ✅ Found via team-name fallback`);
-          }
-
-          if (fixture) {
-            fixtureId = fixture.fixture.id;
-            console.log(`   ✅ Found fixture ID: ${fixtureId}`);
-          }
-        }
-      }
-    }
-
+    const fixtureId = await resolveFixtureId(id, footballApi);
     if (!fixtureId) {
-      return res.status(400).json({
+      return res.status(404).json({
         success: false,
-        error: 'Invalid match identifier',
-        message: `Could not extract fixture ID from: ${id}`
+        error: 'Match not found',
+        message: `Could not resolve fixture from: ${id}`,
       });
     }
+    console.log(`   ✅ Resolved fixture ID: ${fixtureId}`);
 
     // Get fixture details first to get team IDs
     console.log(`   📥 Fetching fixture details for ${fixtureId}...`);
@@ -2378,22 +2353,17 @@ router.get('/:id/events', async (req, res) => {
     console.log(`\n⚽ GET /api/matches/${id}/events`);
 
     if (!id) {
-      return res.status(400).json({
-        success: false,
-        error: 'Missing match ID'
-      });
+      return res.status(400).json({ success: false, error: 'Missing match ID' });
     }
 
-    // Extract numeric ID from slug format
-    const extractMatchId = (matchId) => {
-      if (typeof matchId === 'string' && matchId.includes('-')) {
-        const parts = matchId.split('-');
-        return parts[parts.length - 1];
-      }
-      return matchId;
-    };
-
-    const numericMatchId = extractMatchId(id);
+    const numericMatchId = await resolveFixtureId(id, footballApi);
+    if (!numericMatchId) {
+      return res.status(404).json({
+        success: false,
+        error: 'Match not found',
+        message: `Could not resolve fixture from: ${id}`,
+      });
+    }
     console.log(`   Match ID: ${numericMatchId}`);
 
     // Fetch events from API-Football
@@ -2461,22 +2431,17 @@ router.get('/:id/lineups', async (req, res) => {
     console.log(`\n👥 GET /api/matches/${id}/lineups`);
 
     if (!id) {
-      return res.status(400).json({
-        success: false,
-        error: 'Missing match ID'
-      });
+      return res.status(400).json({ success: false, error: 'Missing match ID' });
     }
 
-    // Extract numeric ID from slug format
-    const extractMatchId = (matchId) => {
-      if (typeof matchId === 'string' && matchId.includes('-')) {
-        const parts = matchId.split('-');
-        return parts[parts.length - 1];
-      }
-      return matchId;
-    };
-
-    const numericMatchId = extractMatchId(id);
+    const numericMatchId = await resolveFixtureId(id, footballApi);
+    if (!numericMatchId) {
+      return res.status(404).json({
+        success: false,
+        error: 'Match not found',
+        message: `Could not resolve fixture from: ${id}`,
+      });
+    }
     console.log(`   Match ID: ${numericMatchId}`);
 
     // Fetch both lineups and player statistics in parallel
