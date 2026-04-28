@@ -72,7 +72,11 @@ router.get('/san-van-dong/:slug', (req, res) => {
   const description = `Sân ${stadium.name} (${stadium.aliases}) tại ${stadium.city}, ${stadium.country}. Sức chứa ${stadium.capacity.toLocaleString('vi-VN')} chỗ, khánh thành ${stadium.opened}. Sân nhà của ${stadium.homeTeam}.`;
 
   const { datePublished, dateModified } = getEntityDates({});
-  const og = pickOgImage({ image: stadium.image }, { alt: `Sân ${stadium.name}` });
+  // pickOgImage requires absolute URL — convert local /sanvandong/... path.
+  const ogCandidate = stadium.image && /^https?:\/\//.test(stadium.image)
+    ? stadium.image
+    : `${SITE_URL}${stadium.image}`;
+  const og = pickOgImage({ image: ogCandidate }, { alt: `Sân ${stadium.name}` });
 
   const placeSchema = {
     '@context': 'https://schema.org',
