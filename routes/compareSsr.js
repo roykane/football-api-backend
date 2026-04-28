@@ -100,15 +100,31 @@ function baseStyles() {
     .relatedCard{display:flex;align-items:center;gap:8px;padding:10px;background:#fafbfc;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;font-weight:600;color:#1e293b}
     .relatedLogo{width:24px;height:24px;object-fit:contain;flex-shrink:0}
     .relatedVs{font-size:10px;color:#94a3b8;font-weight:700}
-    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
-    .pairCard{background:#fff;border-radius:8px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,0.06);text-decoration:none;color:#1e293b;display:block}
-    .pairCard:hover{text-decoration:none;background:#fffbeb}
-    .pair{display:flex;align-items:center;gap:12px;margin-bottom:8px}
-    .pairSide{display:flex;align-items:center;gap:6px;flex:1;min-width:0}
-    .pairLogo{width:32px;height:32px;object-fit:contain;flex-shrink:0}
-    .pairTeam{font-size:13px;font-weight:700;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .pairVs{font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:1px}
-    .pairLabel{font-size:12px;color:#64748b;text-transform:uppercase;letter-spacing:.5px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+    .pairCard{position:relative;background:#fff;border-radius:12px;padding:18px 14px 16px;text-decoration:none;color:#1e293b;border:1px solid #e2e8f0;overflow:hidden;display:block;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
+    .pairCard:hover{transform:translateY(-3px);box-shadow:0 12px 28px rgba(15,23,42,0.12);border-color:#fbbf24;text-decoration:none}
+    .pairCard::before{content:"";position:absolute;inset:0 0 auto 0;height:4px;background:linear-gradient(90deg,#fbbf24,#f59e0b);transform:scaleX(0);transform-origin:left;transition:transform .25s ease}
+    .pairCard:hover::before{transform:scaleX(1)}
+    .pairBadge{display:inline-block;background:linear-gradient(90deg,#fef3c7,#fde68a);color:#92400e;padding:4px 10px;border-radius:999px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px}
+    .pairVersus{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;margin-bottom:12px}
+    .pairSide{display:flex;flex-direction:column;align-items:center;gap:8px;min-width:0}
+    .pairLogoFrame{width:64px;height:64px;border-radius:50%;background:#f8fafc;display:flex;align-items:center;justify-content:center;border:2px solid #fef3c7;flex-shrink:0}
+    .pairLogo{width:48px;height:48px;object-fit:contain}
+    .pairTeam{font-size:14px;font-weight:800;color:#0f172a;text-align:center;line-height:1.2;width:100%;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+    .pairVsBadge{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#0a1628,#1e293b);color:#fbbf24;font-size:13px;font-weight:900;display:flex;align-items:center;justify-content:center;border:2px solid #fbbf24;flex-shrink:0}
+    .pairFooter{display:flex;align-items:center;justify-content:center;gap:6px;font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.5px;border-top:1px dashed #e2e8f0;padding-top:10px;margin-top:6px;font-weight:600}
+    .sectionTitle{font-size:13px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin:24px 0 10px;display:flex;align-items:center;gap:8px}
+    .sectionTitle::before{content:"";width:24px;height:3px;background:linear-gradient(90deg,#fbbf24,transparent);border-radius:2px}
+    .heroEnh{position:relative;background:linear-gradient(135deg,#0a1628 0%,#1a2744 50%,#0f172a 100%);color:#fff;padding:32px 28px;border-radius:14px;margin-bottom:20px;overflow:hidden;border:1px solid rgba(251,191,36,0.35)}
+    .heroEnh::before{content:"";position:absolute;top:-30%;right:-10%;width:280px;height:280px;background:radial-gradient(circle,rgba(251,191,36,0.18) 0%,transparent 70%);pointer-events:none}
+    .heroEnh::after{content:"";position:absolute;bottom:-30%;left:-5%;width:200px;height:200px;background:radial-gradient(circle,rgba(59,130,246,0.12) 0%,transparent 70%);pointer-events:none}
+    .heroInner{position:relative;z-index:1}
+    .heroH1{font-size:32px;font-weight:900;color:#fbbf24;margin-bottom:8px;letter-spacing:-0.5px}
+    .heroP{font-size:15px;color:#cbd5e1;line-height:1.7;margin-bottom:18px;max-width:700px}
+    .heroStats{display:flex;gap:24px;flex-wrap:wrap;font-size:13px;color:#94a3b8}
+    .heroStats div strong{color:#fbbf24;font-weight:800;font-size:18px;display:block;line-height:1}
+    .heroStats div span{display:block;text-transform:uppercase;letter-spacing:.5px;margin-top:4px;font-size:11px}
+    @media(max-width:768px){.heroEnh{padding:22px 18px}.heroH1{font-size:24px}}
     .footer{text-align:center;margin-top:24px;padding:16px;color:#94a3b8;font-size:13px}
     @media(max-width:1024px){.layout{grid-template-columns:1fr}}
     @media(max-width:640px){
@@ -174,22 +190,39 @@ router.get('/so-sanh', async (_req, res) => {
       })),
     };
 
-    const cardsHtml = items.map(it => `
+    const renderCard = (it) => `
       <a class="pairCard" href="/so-sanh/${escapeHtml(it.slug)}">
-        <div class="pair">
+        <span class="pairBadge">${escapeHtml(it.label)}</span>
+        <div class="pairVersus">
           <div class="pairSide">
-            ${it.teamA.logo ? `<img class="pairLogo" src="${escapeHtml(proxyImg(it.teamA.logo, 64))}" alt="Logo ${escapeHtml(it.teamA.name)}" loading="lazy" width="32" height="32">` : ''}
-            <span class="pairTeam">${escapeHtml(it.teamA.name)}</span>
+            <div class="pairLogoFrame">
+              ${it.teamA.logo ? `<img class="pairLogo" src="${escapeHtml(proxyImg(it.teamA.logo, 96))}" alt="Logo ${escapeHtml(it.teamA.name)}" loading="lazy" width="48" height="48">` : ''}
+            </div>
+            <div class="pairTeam">${escapeHtml(it.teamA.name)}</div>
           </div>
-          <span class="pairVs">VS</span>
-          <div class="pairSide" style="justify-content:flex-end">
-            <span class="pairTeam">${escapeHtml(it.teamB.name)}</span>
-            ${it.teamB.logo ? `<img class="pairLogo" src="${escapeHtml(proxyImg(it.teamB.logo, 64))}" alt="Logo ${escapeHtml(it.teamB.name)}" loading="lazy" width="32" height="32">` : ''}
+          <div class="pairVsBadge">VS</div>
+          <div class="pairSide">
+            <div class="pairLogoFrame">
+              ${it.teamB.logo ? `<img class="pairLogo" src="${escapeHtml(proxyImg(it.teamB.logo, 96))}" alt="Logo ${escapeHtml(it.teamB.name)}" loading="lazy" width="48" height="48">` : ''}
+            </div>
+            <div class="pairTeam">${escapeHtml(it.teamB.name)}</div>
           </div>
         </div>
-        <div class="pairLabel">${escapeHtml(it.label)}</div>
+        <div class="pairFooter">⚔️ Xem đối đầu chi tiết →</div>
       </a>
-    `).join('');
+    `;
+
+    // Categorise: derby quốc nội vs đại chiến châu Âu
+    const isEuropean = (label) => /châu âu|champions|europa|conference|đại chiến/i.test(label);
+    const national = items.filter(it => !isEuropean(it.label));
+    const european = items.filter(it => isEuropean(it.label));
+    const cardsHtml = [
+      national.length ? `<div class="sectionTitle">🏟️ Derby quốc gia kinh điển</div><div class="grid">${national.map(renderCard).join('')}</div>` : '',
+      european.length ? `<div class="sectionTitle">🏆 Đại chiến châu Âu</div><div class="grid">${european.map(renderCard).join('')}</div>` : '',
+    ].join('');
+
+    const teamsCount = new Set(items.flatMap(it => [it.teamA.slug, it.teamB.slug])).size;
+    const countriesCount = new Set(items.flatMap(it => [it.teamA.country, it.teamB.country].filter(Boolean))).size;
 
     const faqHtml = hubFaqs.map(f => `
       <div class="faqItem">
@@ -230,12 +263,22 @@ router.get('/so-sanh', async (_req, res) => {
   <div class="container">
     <nav class="breadcrumb"><a href="/">Trang chủ</a> &rsaquo; <span>So sánh CLB</span></nav>
 
-    <div class="card">
-      <h1 style="font-size:26px;font-weight:800;color:#0f172a;margin-bottom:6px">⚔️ So Sánh CLB Bóng Đá</h1>
-      <p style="color:#475569">Thống kê đối đầu lịch sử, phong độ hiện tại, lịch sử thành tích — ${items.length} cặp đối thủ kinh điển. Dữ liệu cập nhật từ API-Sports.</p>
+    <div class="heroEnh">
+      <div class="heroInner">
+        <h1 class="heroH1">⚔️ So Sánh CLB Bóng Đá</h1>
+        <p class="heroP">Đối đầu lịch sử, phong độ 5 trận gần nhất, thông tin CLB — chọn cặp dưới để xem chi tiết đầy đủ thống kê, lịch sử cuộc chiến và các lần gặp gần nhất.</p>
+        ${items.length > 0 ? `
+          <div class="heroStats">
+            <div><strong>${items.length}</strong><span>Cặp đối đầu</span></div>
+            <div><strong>${teamsCount}</strong><span>CLB</span></div>
+            <div><strong>${countriesCount}</strong><span>Quốc gia</span></div>
+            <div><strong>6h</strong><span>Tần suất cập nhật</span></div>
+          </div>
+        ` : ''}
+      </div>
     </div>
 
-    <div class="grid">${cardsHtml}</div>
+    ${cardsHtml}
 
     <div class="card">
       <h2>❓ Câu hỏi thường gặp về so sánh CLB</h2>
