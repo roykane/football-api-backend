@@ -122,6 +122,43 @@ router.get('/cau-thu-the-gioi/:slug', (req, res) => {
     ],
   };
 
+  const dobVi = formatDob(player.dob);
+  const positionLower = (player.position || '').toLowerCase();
+  const footLower = (player.foot || '').toLowerCase();
+
+  const faqs = [
+    {
+      question: `${player.name} sinh năm bao nhiêu?`,
+      answer: `${player.name} sinh ngày ${dobVi} tại ${player.birthplace}, hiện ${age} tuổi.`,
+    },
+    {
+      question: `${player.name} cao bao nhiêu?`,
+      answer: `${player.name} cao ${player.height}cm và nặng ${player.weight}kg.`,
+    },
+    {
+      question: `${player.name} chơi cho đội nào?`,
+      answer: `${player.name} hiện thi đấu cho ${player.currentClub} ở vị trí ${positionLower}, mang áo số ${player.shirtNumber}. Tại đội tuyển quốc gia, anh khoác áo ${player.nationalTeam}.`,
+    },
+    {
+      question: `${player.name} đã ghi bao nhiêu bàn cho ĐTQG?`,
+      answer: `${player.name} đã ghi ${player.goals} bàn sau ${player.caps} trận khoác áo đội tuyển ${player.nationalTeam}.`,
+    },
+    {
+      question: `${player.name} chơi ở vị trí nào?`,
+      answer: `${player.name} là ${positionLower}, chân thuận ${footLower}.`,
+    },
+  ];
+
+  const faqSchema = {
+    '@context': 'https://schema.org', '@type': 'FAQPage',
+    mainEntity: faqs.map(f => ({
+      '@type': 'Question', name: f.question,
+      acceptedAnswer: { '@type': 'Answer', text: f.answer },
+    })),
+  };
+
+  const quickAnswer = `${player.name} (sinh ${dobVi}, ${age} tuổi) là ${positionLower} người ${player.nationalTeam}, hiện thi đấu cho ${player.currentClub} với áo số ${player.shirtNumber}. Cao ${player.height}cm, nặng ${player.weight}kg, chân thuận ${footLower}. Đã ra sân ${player.caps} trận và ghi ${player.goals} bàn cho ĐTQG.`;
+
   const others = players.filter(p => p.slug !== player.slug).slice(0, 5);
   const sidebarPlayers = others.map(p => `
     <a href="/cau-thu-the-gioi/${p.slug}" class="player-link">
@@ -163,6 +200,7 @@ router.get('/cau-thu-the-gioi/:slug', (req, res) => {
   <meta property="og:site_name" content="ScoreLine">
   <script type="application/ld+json">${JSON.stringify(personSchema)}</script>
   <script type="application/ld+json">${JSON.stringify(breadcrumbSchema)}</script>
+  <script type="application/ld+json">${JSON.stringify(faqSchema)}</script>
   <style>${baseStyles()}</style>
 </head>
 <body>
@@ -177,6 +215,8 @@ router.get('/cau-thu-the-gioi/:slug', (req, res) => {
         <div class="meta">${escapeHtml(player.position)} · ${escapeHtml(player.currentClub)} · ĐT ${escapeHtml(player.nationalTeam)} · #${player.shirtNumber}</div>
       </div>
     </div>
+
+    <div style="background:#fffbeb;border-left:4px solid #fbbf24;border-radius:6px;padding:14px 16px;margin-bottom:16px;color:#1e293b;font-size:15px;line-height:1.7;">${escapeHtml(quickAnswer)}</div>
 
     <div class="layout">
       <main class="main">
@@ -216,6 +256,11 @@ router.get('/cau-thu-the-gioi/:slug', (req, res) => {
           <h2>📊 Thống kê mùa giải hiện tại</h2>
           ${statsTable}
         </div>` : ''}
+
+        <div class="card">
+          <h2>❓ Câu hỏi thường gặp về ${escapeHtml(player.name)}</h2>
+          ${faqs.map(f => `<div style="margin-bottom:14px"><h3 style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:6px">${escapeHtml(f.question)}</h3><p style="color:#334155;font-size:14px;line-height:1.7;margin:0">${escapeHtml(f.answer)}</p></div>`).join('')}
+        </div>
 
         <div class="card">
           <h2>🔗 Liên kết liên quan</h2>
