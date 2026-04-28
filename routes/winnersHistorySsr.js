@@ -248,40 +248,33 @@ router.get('/lich-su-vo-dich/:slug', (req, res) => {
 });
 
 // Brand styles per league — kept in sync with the SPA's LEAGUE_STYLE map
-// in football-frontend/src/app/lich-su-vo-dich/page.tsx.
+// in football-frontend/src/app/lich-su-vo-dich/page.tsx. Trophy graphics
+// are self-hosted webp files served from the backend's /images route.
 const LEAGUE_STYLE = {
-  'premier-league': { gradient: 'linear-gradient(135deg,#3d1a78 0%,#1e3a8a 60%,#0a1628 100%)', accent: '#a78bfa', logo: 'https://media.api-sports.io/football/leagues/39.png' },
-  'la-liga':        { gradient: 'linear-gradient(135deg,#7f1d1d 0%,#450a0a 60%,#1a1a1a 100%)', accent: '#fca5a5', logo: 'https://media.api-sports.io/football/leagues/140.png' },
-  'serie-a':        { gradient: 'linear-gradient(135deg,#0c4a6e 0%,#1e293b 50%,#7f1d1d 100%)', accent: '#22d3ee', logo: 'https://media.api-sports.io/football/leagues/135.png' },
-  'bundesliga':     { gradient: 'linear-gradient(135deg,#991b1b 0%,#1f2937 60%,#0f172a 100%)', accent: '#fbbf24', logo: 'https://media.api-sports.io/football/leagues/78.png' },
-  'ligue-1':        { gradient: 'linear-gradient(135deg,#1e3a8a 0%,#0c4a6e 50%,#854d0e 100%)', accent: '#facc15', logo: 'https://media.api-sports.io/football/leagues/61.png' },
+  'premier-league': { gradient: 'linear-gradient(135deg,#3d1a78 0%,#1e3a8a 60%,#0a1628 100%)', accent: '#a78bfa', glow: 'rgba(167,139,250,0.35)', trophy: '/images/premier-league.webp' },
+  'la-liga':        { gradient: 'linear-gradient(135deg,#7f1d1d 0%,#450a0a 60%,#1a1a1a 100%)', accent: '#fca5a5', glow: 'rgba(252,165,165,0.35)', trophy: '/images/la-liga.webp' },
+  'serie-a':        { gradient: 'linear-gradient(135deg,#0c4a6e 0%,#1e293b 50%,#7f1d1d 100%)', accent: '#22d3ee', glow: 'rgba(34,211,238,0.35)',  trophy: '/images/serie-a.webp' },
+  'bundesliga':     { gradient: 'linear-gradient(135deg,#991b1b 0%,#1f2937 60%,#0f172a 100%)', accent: '#fbbf24', glow: 'rgba(251,191,36,0.35)',  trophy: '/images/bundesliga.webp' },
+  'ligue-1':        { gradient: 'linear-gradient(135deg,#1e3a8a 0%,#0c4a6e 50%,#854d0e 100%)', accent: '#facc15', glow: 'rgba(250,204,21,0.35)',  trophy: '/images/ligue-1.webp' },
 };
-const FALLBACK_STYLE = { gradient: 'linear-gradient(135deg,#1e293b,#0f172a)', accent: '#fbbf24', logo: '' };
+const FALLBACK_STYLE = { gradient: 'linear-gradient(135deg,#1e293b,#0f172a)', accent: '#fbbf24', glow: 'rgba(251,191,36,0.3)', trophy: '' };
 
 function hubStyles() {
   return `
-    .hub-hero{position:relative;background:radial-gradient(circle at 80% 50%,#1e3a8a 0%,#0a1628 70%),linear-gradient(135deg,#0a1628,#1a2744);border:1px solid rgba(251,191,36,0.3);border-radius:16px;padding:36px 28px;margin-bottom:28px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,0.45)}
-    .hub-hero-pattern{position:absolute;inset:0;opacity:0.06;background-image:radial-gradient(circle at 20% 30%,#fbbf24 1px,transparent 1px),radial-gradient(circle at 70% 80%,#fff 1px,transparent 1px);background-size:40px 40px,30px 30px;pointer-events:none}
-    .hub-hero-grid{position:relative;display:grid;grid-template-columns:1fr auto;gap:24px;align-items:center}
-    .hub-hero-eyebrow{display:inline-flex;align-items:center;gap:8px;background:rgba(251,191,36,0.15);border:1px solid rgba(251,191,36,0.4);color:#fbbf24;padding:5px 12px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:14px}
-    .hub-hero-title{font-size:42px;font-weight:900;line-height:1.05;margin-bottom:12px;color:#fff;letter-spacing:-0.5px}
-    .hub-hero-title span{color:#fbbf24;display:block;text-shadow:0 4px 24px rgba(251,191,36,0.4)}
-    .hub-hero-sub{font-size:15px;color:#cbd5e1;line-height:1.5;max-width:560px}
-    .hub-hero-trophy{font-size:140px;line-height:1;filter:drop-shadow(0 0 24px rgba(251,191,36,0.6))}
+    .hub-hero{width:100%;border-radius:16px;overflow:hidden;margin-bottom:28px;background:#0a1628;line-height:0;box-shadow:0 12px 40px rgba(0,0,0,0.45)}
+    .hub-hero img{display:block;width:100%;height:auto}
     .hub-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
-    .hub-card{position:relative;display:block;border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:22px;text-decoration:none;color:#fff;overflow:hidden;min-height:200px;box-shadow:0 8px 24px rgba(0,0,0,0.35)}
+    .hub-card{position:relative;display:block;border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:22px 22px 70px;text-decoration:none;color:#fff;overflow:hidden;min-height:240px;box-shadow:0 8px 24px rgba(0,0,0,0.35)}
     .hub-card::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;opacity:0.7}
-    .hub-card-trophy{position:absolute;top:50%;right:-10px;transform:translateY(-50%);font-size:130px;line-height:1;opacity:0.18;pointer-events:none}
-    .hub-card-header{position:relative;display:flex;align-items:center;gap:12px;margin-bottom:18px}
-    .hub-card-logo{width:54px;height:54px;border-radius:12px;background:rgba(255,255,255,0.95);display:flex;align-items:center;justify-content:center;flex-shrink:0}
-    .hub-card-logo img{width:38px;height:38px;object-fit:contain}
-    .hub-card-name{font-size:20px;font-weight:900;letter-spacing:0.3px;line-height:1.15;text-transform:uppercase}
-    .hub-card-country{font-size:11px;color:rgba(255,255,255,0.65);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-top:3px}
-    .hub-card-champ{position:relative;font-size:14px;color:rgba(255,255,255,0.92);margin-bottom:12px;line-height:1.4}
-    .hub-card-meta{position:relative;display:flex;align-items:center;gap:14px;font-size:12px;color:rgba(255,255,255,0.75);font-weight:600;margin-bottom:18px;flex-wrap:wrap}
-    .hub-card-arrow{position:absolute;bottom:18px;right:18px;width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;transform:rotate(-45deg)}
+    .hub-card-trophy{position:absolute;top:50%;right:-12px;transform:translateY(-50%);height:78%;max-height:200px;width:auto;pointer-events:none}
+    .hub-card-inner{position:relative;max-width:60%}
+    .hub-card-name{font-size:22px;font-weight:900;letter-spacing:0.3px;line-height:1.1;text-transform:uppercase;margin-bottom:4px}
+    .hub-card-country{font-size:11px;color:rgba(255,255,255,0.65);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:18px}
+    .hub-card-champ{font-size:14px;color:rgba(255,255,255,0.92);margin-bottom:12px;line-height:1.4}
+    .hub-card-meta{display:flex;flex-direction:column;gap:6px;font-size:12px;color:rgba(255,255,255,0.78);font-weight:600}
+    .hub-card-arrow{position:absolute;bottom:18px;right:18px;width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;transform:rotate(-45deg);z-index:2}
     @media(max-width:1024px){.hub-grid{grid-template-columns:repeat(2,1fr)}}
-    @media(max-width:640px){.hub-hero{padding:24px 18px}.hub-hero-grid{grid-template-columns:1fr}.hub-hero-title{font-size:30px}.hub-hero-trophy{font-size:90px;align-self:center}.hub-grid{grid-template-columns:1fr}.hub-card-name{font-size:17px}}
+    @media(max-width:640px){.hub-grid{grid-template-columns:1fr}.hub-card-name{font-size:18px}.hub-card-trophy{max-height:160px;right:-20px;opacity:0.7}.hub-card-inner{max-width:62%}}
   `;
 }
 
@@ -291,7 +284,7 @@ router.get('/lich-su-vo-dich', (req, res) => {
   const description = 'Tổng hợp lịch sử vô địch các giải đấu hàng đầu: Ngoại Hạng Anh, La Liga, Serie A, Bundesliga, Ligue 1. CLB nào vô địch nhiều nhất qua các năm.';
 
   const { datePublished, dateModified } = getEntityDates({});
-  const og = pickOgImage({}, { alt: title });
+  const og = pickOgImage({}, { alt: title, preferred: `${SITE_URL}/images/lich-su-vo-dich.webp` });
   const breadcrumbSchema = {
     '@context': 'https://schema.org', '@type': 'BreadcrumbList',
     itemListElement: [
@@ -310,16 +303,13 @@ router.get('/lich-su-vo-dich', (req, res) => {
     const country = l.country || '';
     return `<a href="/lich-su-vo-dich/${escapeHtml(l.slug)}" class="hub-card" style="background:${style.gradient}">
       <span style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,${style.accent},transparent);opacity:0.7"></span>
-      <div class="hub-card-trophy">🏆</div>
-      <div class="hub-card-header">
-        <div class="hub-card-logo">${style.logo ? `<img src="${escapeHtml(proxyImg(style.logo, 80))}" alt="Logo ${escapeHtml(l.name)}" loading="lazy">` : ''}</div>
-        <div>
-          <div class="hub-card-name">${escapeHtml(l.name)}</div>
-          ${country ? `<div class="hub-card-country">${escapeHtml(country)}</div>` : ''}
-        </div>
+      ${style.trophy ? `<img src="${escapeHtml(style.trophy)}" alt="Cúp vô địch ${escapeHtml(l.name)}" class="hub-card-trophy" style="filter:drop-shadow(0 6px 14px ${style.glow})" loading="lazy">` : ''}
+      <div class="hub-card-inner">
+        <div class="hub-card-name">${escapeHtml(l.name)}</div>
+        ${country ? `<div class="hub-card-country">${escapeHtml(country)}</div>` : ''}
+        <div class="hub-card-champ">Đương kim: <strong style="color:${style.accent};font-weight:900">${escapeHtml(latest.name)}</strong> (${seasonTag})</div>
+        <div class="hub-card-meta"><span>📅 ${years.length} mùa</span><span>⏰ ${years[years.length-1]} - ${years[0]}</span></div>
       </div>
-      <div class="hub-card-champ">Đương kim: <strong style="color:${style.accent};font-weight:900">${escapeHtml(latest.name)}</strong> (${seasonTag})</div>
-      <div class="hub-card-meta"><span>📅 ${years.length} mùa</span><span>⏰ ${years[years.length-1]} - ${years[0]}</span></div>
       <div class="hub-card-arrow" style="border:1px solid ${style.accent};color:${style.accent}">→</div>
     </a>`;
   }).join('');
@@ -348,16 +338,9 @@ router.get('/lich-su-vo-dich', (req, res) => {
   <div class="container">
     <nav class="breadcrumb"><a href="/">Trang chủ</a> &rsaquo; <span>Lịch sử vô địch</span></nav>
 
+    <h1 style="position:absolute;left:-9999px">Lịch Sử Vô Địch Bóng Đá</h1>
     <div class="hub-hero">
-      <div class="hub-hero-pattern"></div>
-      <div class="hub-hero-grid">
-        <div>
-          <div class="hub-hero-eyebrow">🏆 Hall of Champions</div>
-          <h1 class="hub-hero-title">LỊCH SỬ VÔ<span>ĐỊCH BÓNG ĐÁ</span></h1>
-          <div class="hub-hero-sub">Nhà vô địch ${leaguesWithData.length} giải đấu lớn qua các mùa — chọn giải để xem chi tiết danh hiệu, CLB giàu thành tích nhất và toàn bộ lịch sử.</div>
-        </div>
-        <div class="hub-hero-trophy">🏆</div>
-      </div>
+      <img src="/images/lich-su-vo-dich.webp" alt="Lịch sử vô địch bóng đá — nhà vô địch các giải đấu lớn" width="1200" height="300">
     </div>
 
     <div class="hub-grid">${cardsHtml}</div>
