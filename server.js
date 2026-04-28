@@ -270,6 +270,13 @@ app.use('/vn-player-images', express.static(path.join(__dirname, 'public', 'vn-p
   immutable: true,
 }));
 
+// Page banners + decorative graphics (e.g. /images/doi-tuyen.webp,
+// /images/thong-ke.webp). Manually curated, committed to git.
+app.use('/images', express.static(path.join(__dirname, 'public', 'images'), {
+  maxAge: '30d',
+  immutable: true,
+}));
+
 // Trophy / award images — populated by scripts/download-trophy-images.js.
 app.use('/trophy-images', express.static(path.join(__dirname, 'public', 'trophy-images'), {
   maxAge: '30d',

@@ -219,61 +219,47 @@ router.get('/doi-tuyen/:slug', (req, res) => {
   res.send(html);
 });
 
-// Confederation accent colors — matches SPA hub-page palette.
+// Confederation accent colors — light-theme palette matching the SPA.
 const CONF_COLOR = {
-  UEFA:     { c: '#3b82f6', g: 'rgba(59,130,246,0.5)' },
-  CONMEBOL: { c: '#10b981', g: 'rgba(16,185,129,0.5)' },
-  CONCACAF: { c: '#fbbf24', g: 'rgba(251,191,36,0.5)' },
-  AFC:      { c: '#a78bfa', g: 'rgba(167,139,250,0.5)' },
-  CAF:      { c: '#f97316', g: 'rgba(249,115,22,0.5)' },
-  OFC:      { c: '#06b6d4', g: 'rgba(6,182,212,0.5)' },
+  UEFA:     { c: '#3b82f6' },
+  CONMEBOL: { c: '#10b981' },
+  CONCACAF: { c: '#f59e0b' },
+  AFC:      { c: '#8b5cf6' },
+  CAF:      { c: '#f97316' },
+  OFC:      { c: '#0891b2' },
 };
 
 function listStyles() {
   return `
     *{margin:0;padding:0;box-sizing:border-box}
-    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.6;color:#e2e8f0;background:#0a0e1a;min-height:100vh}
-    a{color:#94a3b8;text-decoration:none}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.6;color:#1e293b;background:#f1f5f9;min-height:100vh}
+    a{color:#0f172a;text-decoration:none}
     .container{max-width:1280px;margin:0 auto;padding:16px}
-    .breadcrumb{font-size:13px;color:#64748b;margin-bottom:12px}.breadcrumb a{color:#94a3b8}
+    .breadcrumb{font-size:13px;color:#64748b;margin-bottom:12px}.breadcrumb a{color:#0f172a}
 
-    @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
-    @keyframes glow{0%,100%{filter:drop-shadow(0 0 24px rgba(59,130,246,0.5)) drop-shadow(0 0 48px rgba(251,191,36,0.3))}50%{filter:drop-shadow(0 0 36px rgba(59,130,246,0.7)) drop-shadow(0 0 72px rgba(251,191,36,0.5))}}
-    @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+    /* Hero is a pre-baked banner image — no CSS hero needed */
+    .heroBanner{width:100%;border-radius:14px;overflow:hidden;margin-bottom:20px;background:#0a1628;line-height:0}
+    .heroBanner img{display:block;width:100%;height:auto}
 
-    .hero{position:relative;background:linear-gradient(135deg,#0a1628 0%,#1a2744 50%,#0f172a 100%);border-radius:14px;padding:36px 32px;margin-bottom:24px;overflow:hidden;border:1px solid rgba(251,191,36,0.25);min-height:200px;display:flex;align-items:center;gap:24px}
-    .heroBg{position:absolute;inset:0;opacity:.35;background:radial-gradient(circle at 80% 50%,rgba(59,130,246,0.6) 0%,transparent 40%),radial-gradient(circle at 90% 50%,rgba(251,191,36,0.4) 0%,transparent 50%);pointer-events:none}
-    .heroBall{position:absolute;right:-40px;top:50%;transform:translateY(-50%);font-size:200px;line-height:1;animation:float 4s ease-in-out infinite,glow 3s ease-in-out infinite;pointer-events:none}
-    .heroGlobe{width:84px;height:84px;border-radius:50%;background:radial-gradient(circle at 30% 30%,#60a5fa,#1e3a8a 70%);display:flex;align-items:center;justify-content:center;font-size:48px;animation:spin 30s linear infinite;flex-shrink:0;border:2px solid rgba(96,165,250,0.4);box-shadow:0 0 32px rgba(59,130,246,0.4);position:relative;z-index:1}
-    .heroContent{position:relative;z-index:1;flex:1;min-width:0}
-    .heroH1{font-size:36px;font-weight:900;color:#fbbf24;letter-spacing:1px;text-transform:uppercase;line-height:1;margin-bottom:8px}
-    .heroSub{font-size:14px;color:#cbd5e1;line-height:1.7;max-width:560px}
-    .heroSub strong{color:#fbbf24;font-weight:700}
-    @media(max-width:768px){.hero{padding:24px 20px;min-height:140px;gap:16px}.heroH1{font-size:24px;letter-spacing:.5px}.heroSub{font-size:12px}.heroBall{font-size:120px;right:-20px;opacity:.5}.heroGlobe{width:60px;height:60px;font-size:32px}}
-    @media(max-width:480px){.heroBall{display:none}.heroGlobe{width:48px;height:48px;font-size:24px}}
-
-    .confSection{margin-bottom:32px}
-    .confHeader{display:inline-flex;align-items:center;gap:14px;padding:10px 22px 10px 14px;background:rgba(15,23,42,0.7);border-radius:999px;margin-bottom:18px}
-    .confLogo{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;border:2px solid #0a0e1a;flex-shrink:0;font-weight:900;letter-spacing:.5px}
-    .confName{font-size:18px;font-weight:900;letter-spacing:2px;text-transform:uppercase;line-height:1}
-    @media(max-width:480px){.confName{font-size:14px;letter-spacing:1px}}
+    .confSection{margin-bottom:28px}
+    .confHeader{display:inline-flex;align-items:center;gap:12px;padding:8px 18px 8px 10px;background:#fff;border-radius:999px;margin-bottom:16px;box-shadow:0 4px 12px rgba(15,23,42,0.06)}
+    .confLogo{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;flex-shrink:0;font-weight:900;letter-spacing:.5px}
+    .confName{font-size:15px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;line-height:1}
+    @media(max-width:480px){.confName{font-size:13px;letter-spacing:.8px}}
 
     .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
     @media(max-width:1024px){.grid{grid-template-columns:repeat(2,1fr)}}
     @media(max-width:480px){.grid{grid-template-columns:1fr}}
-    .card{display:flex;align-items:center;gap:14px;padding:14px 16px;background:linear-gradient(135deg,rgba(15,23,42,0.85),rgba(10,14,26,0.85));border-radius:10px;text-decoration:none;color:#e2e8f0;transition:all .2s;position:relative;overflow:hidden}
-    .card:hover{transform:translateY(-2px);text-decoration:none}
-    .card::before{content:"";position:absolute;inset:0;pointer-events:none}
-    .flagFrame{width:44px;height:54px;flex-shrink:0;display:flex;align-items:center;justify-content:center;position:relative;z-index:1}
-    .flagFrame img{width:100%;height:100%;object-fit:cover;border-radius:6px;clip-path:polygon(0 0,100% 0,100% 70%,50% 100%,0 70%);box-shadow:0 4px 12px rgba(0,0,0,0.4)}
-    .cardBody{min-width:0;flex:1;position:relative;z-index:1}
-    .cardName{font-size:18px;font-weight:900;color:#fbbf24;letter-spacing:.5px;text-transform:uppercase;line-height:1.1;margin-bottom:4px;word-break:break-word}
-    .cardNick{font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;font-weight:600;line-height:1.3}
-    @media(max-width:480px){.cardName{font-size:16px}}
-
-    .ctaCenter{display:flex;justify-content:center}
-    .cta{display:inline-flex;align-items:center;gap:10px;margin-top:18px;padding:12px 28px;background:rgba(15,23,42,0.7);border-radius:999px;color:#fff;text-decoration:none;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;transition:all .2s}
-    @media(max-width:480px){.cta{padding:10px 18px;font-size:11px}}
+    .card{position:relative;display:flex;align-items:center;gap:14px;padding:14px 16px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;text-decoration:none;color:#0f172a;transition:all .18s;overflow:hidden}
+    .card:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(15,23,42,0.08);text-decoration:none}
+    .card::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;transform:scaleX(0);transform-origin:left;transition:transform .25s}
+    .card:hover::before{transform:scaleX(1)}
+    .flagFrame{width:42px;height:52px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+    .flagFrame img{width:100%;height:100%;object-fit:cover;border-radius:6px;clip-path:polygon(0 0,100% 0,100% 70%,50% 100%,0 70%);box-shadow:0 4px 10px rgba(15,23,42,0.15)}
+    .cardBody{min-width:0;flex:1}
+    .cardName{font-size:17px;font-weight:900;color:#0f172a;letter-spacing:.3px;text-transform:uppercase;line-height:1.1;margin-bottom:4px;word-break:break-word}
+    .cardNick{font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.5px;font-weight:600;line-height:1.3}
+    @media(max-width:480px){.cardName{font-size:15px}}
 
     .footer{text-align:center;margin-top:24px;padding:16px;color:#94a3b8;font-size:13px}
   `;
@@ -313,9 +299,9 @@ router.get('/doi-tuyen', (req, res) => {
   const confOrder = ['UEFA', 'CONMEBOL', 'CONCACAF', 'AFC', 'CAF', 'OFC'];
 
   const sectionsHtml = confOrder.filter(c => grouped[c]).map(c => {
-    const palette = CONF_COLOR[c] || { c: '#94a3b8', g: 'rgba(148,163,184,0.5)' };
+    const palette = CONF_COLOR[c] || { c: '#94a3b8' };
     const cardsHtml = grouped[c].map(t => `
-      <a href="/doi-tuyen/${escapeHtml(t.slug)}" class="card" style="border:1.5px solid ${palette.c}55">
+      <a href="/doi-tuyen/${escapeHtml(t.slug)}" class="card" style="--accent:${palette.c}">
         <div class="flagFrame">
           ${t.flag ? `<img src="${escapeHtml(t.flag)}" alt="Cờ ${escapeHtml(t.name)}" loading="lazy">` : ''}
         </div>
@@ -327,19 +313,17 @@ router.get('/doi-tuyen', (req, res) => {
     `).join('');
     return `
       <section class="confSection" id="${c.toLowerCase()}">
-        <div class="confHeader" style="border:1.5px solid ${palette.c};box-shadow:0 0 24px ${palette.g},inset 0 0 12px ${palette.g}">
-          <div class="confLogo" style="background:linear-gradient(135deg,${palette.c}88,${palette.c})">${escapeHtml(c.slice(0, 4))}</div>
+        <div class="confHeader" style="border:1.5px solid ${palette.c}">
+          <div class="confLogo" style="background:linear-gradient(135deg,${palette.c}cc,${palette.c})">${escapeHtml(c.slice(0, 4))}</div>
           <div class="confName" style="color:${palette.c}">${escapeHtml(CONF_VI[c] || c)}</div>
         </div>
         <div class="grid">${cardsHtml}</div>
-        <div class="ctaCenter">
-          <a href="#${c.toLowerCase()}" class="cta" style="border:1.5px solid ${palette.c}">
-            🏆 Xem chi tiết tất cả đội tuyển ${escapeHtml((CONF_VI[c] || c).replace(/\s*\([^)]+\)\s*/, ''))} →
-          </a>
-        </div>
       </section>
     `;
   }).join('');
+
+  // Hover-stripe color via CSS custom property
+  const cardHoverStyle = `<style>.card{border-color:#e2e8f0}.card:hover{border-color:var(--accent)}.card::before{background:var(--accent)}</style>`;
 
   const html = `<!DOCTYPE html>
 <html lang="vi">
@@ -361,20 +345,15 @@ router.get('/doi-tuyen', (req, res) => {
   <script type="application/ld+json">${JSON.stringify(breadcrumbSchema)}</script>
   <script type="application/ld+json">${JSON.stringify(itemListSchema)}</script>
   <style>${listStyles()}</style>
+  ${cardHoverStyle}
 </head>
 <body>
   ${siteHeader()}
   <div class="container">
     <nav class="breadcrumb"><a href="/">Trang chủ</a> &rsaquo; <span>Đội tuyển QG</span></nav>
 
-    <div class="hero">
-      <div class="heroBg"></div>
-      <div class="heroBall" aria-hidden="true">⚽</div>
-      <div class="heroGlobe" aria-hidden="true">🌍</div>
-      <div class="heroContent">
-        <h1 class="heroH1">Đội Tuyển Quốc Gia</h1>
-        <p class="heroSub"><strong>${teams.length} đội tuyển</strong> – lịch sử, thành tích, cầu thủ chủ chốt và HLV trưởng. Tổ chức theo 5 liên đoàn lớn của FIFA.</p>
-      </div>
+    <div class="heroBanner">
+      <img src="/images/doi-tuyen.webp" alt="Đội Tuyển Quốc Gia — 48 đội World Cup 2026" width="1200" height="300">
     </div>
 
     ${sectionsHtml}
