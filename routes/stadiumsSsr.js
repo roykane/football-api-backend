@@ -108,8 +108,11 @@ router.get('/san-van-dong/:slug', (req, res) => {
 
   const matchesHtml = stadium.famousMatches.map(m => `<li>${escapeHtml(m)}</li>`).join('');
 
+  // Always fill the 5-row sidebar — start with same-country stadiums for
+  // local relevance, then top up with rest-of-world if we run short.
   const sameCountry = stadiums.filter(s => s.slug !== stadium.slug && s.country === stadium.country);
-  const others = (sameCountry.length ? sameCountry : stadiums.filter(s => s.slug !== stadium.slug)).slice(0, 5);
+  const elsewhere = stadiums.filter(s => s.slug !== stadium.slug && s.country !== stadium.country);
+  const others = [...sameCountry, ...elsewhere].slice(0, 5);
   // Thumb + name + city per row instead of plain text link — visual sidebar.
   const othersHtml = others.map(s => `
     <a class="stadium-row" href="/san-van-dong/${escapeHtml(s.slug)}">
