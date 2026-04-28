@@ -115,6 +115,71 @@ function baseStyles() {
     .pairFooter{display:flex;align-items:center;justify-content:center;gap:6px;font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.5px;border-top:1px dashed #e2e8f0;padding-top:10px;margin-top:6px;font-weight:600}
     .sectionTitle{font-size:13px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin:24px 0 10px;display:flex;align-items:center;gap:8px}
     .sectionTitle::before{content:"";width:24px;height:3px;background:linear-gradient(90deg,#fbbf24,transparent);border-radius:2px}
+    /* Featured-pair hero banner (El Clasico-style, matches SPA) */
+    .featHero{position:relative;background:radial-gradient(circle at 20% 30%,rgba(59,130,246,.18),transparent 60%),radial-gradient(circle at 80% 70%,rgba(251,191,36,.18),transparent 60%),linear-gradient(135deg,#0a1628 0%,#1a2744 100%);border-radius:14px;padding:28px 24px 22px;margin-bottom:14px;border:1px solid rgba(251,191,36,0.3);overflow:hidden}
+    .featHeroTop{display:grid;grid-template-columns:120px 1fr 120px;gap:18px;align-items:center;margin-bottom:18px}
+    .featHeroLogo{width:120px;height:120px;display:flex;align-items:center;justify-content:center}
+    .featHeroLogo img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 4px 16px rgba(0,0,0,0.4))}
+    .featHeroCenter{text-align:center;color:#fff}
+    .featHeroH1{font-size:30px;font-weight:900;color:#fbbf24;letter-spacing:1px;line-height:1.05;margin-bottom:8px;text-transform:uppercase}
+    .featHeroSub{font-size:13px;color:#cbd5e1;line-height:1.6;max-width:540px;margin:0 auto}
+    .featVsRow{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:center;background:rgba(15,23,42,0.55);border:1px solid rgba(251,191,36,0.2);border-radius:8px;padding:12px 16px}
+    .featPanel{display:flex;align-items:center;justify-content:center;color:#fbbf24;font-weight:900;font-size:22px;letter-spacing:1px;text-transform:uppercase;text-align:center;line-height:1.1;border-radius:6px;padding:10px}
+    .featPanelL{background:linear-gradient(90deg,rgba(15,23,42,0.6),rgba(30,58,138,0.4))}
+    .featPanelR{background:linear-gradient(90deg,rgba(220,38,38,0.4),rgba(15,23,42,0.6))}
+    .featVsBadge{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#0f172a;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;letter-spacing:1px;flex-shrink:0;border:3px solid #0f172a}
+    @media(max-width:768px){
+      .featHeroTop{grid-template-columns:60px 1fr 60px;gap:10px}
+      .featHeroLogo{width:60px;height:60px}
+      .featHeroH1{font-size:18px;letter-spacing:.5px}
+      .featHeroSub{font-size:11px}
+      .featPanel{font-size:14px;padding:8px}
+      .featVsBadge{width:38px;height:38px;font-size:12px}
+    }
+    /* 3-info-card row */
+    .featCardsRow{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px}
+    .featCard{background:linear-gradient(180deg,#0f172a,#1e293b);color:#e2e8f0;border-radius:10px;padding:18px;border:1px solid rgba(251,191,36,0.25);min-height:280px}
+    .featCardTitle{font-size:13px;font-weight:800;color:#fbbf24;text-align:center;letter-spacing:1px;text-transform:uppercase;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid rgba(251,191,36,0.25)}
+    .featTwoCol{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    .featTeamHead{display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid rgba(251,191,36,0.2)}
+    .featTeamHead img{width:28px;height:28px;object-fit:contain;flex-shrink:0}
+    .featTeamHead .name{font-size:13px;font-weight:800;color:#fff;letter-spacing:.5px;text-transform:uppercase}
+    .featFacts{display:flex;flex-direction:column;gap:8px;font-size:12px;list-style:none;padding:0;margin:0}
+    .featFacts li{list-style:none}
+    .featFactLabel{color:#94a3b8;font-size:11px;display:block;margin-bottom:2px}
+    .featFactVal{color:#fff;font-weight:700;font-size:13px}
+    .featH2H{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;text-align:center;margin-bottom:14px}
+    .featH2HNum{font-size:34px;font-weight:900;line-height:1}
+    .featH2HNum.win{color:#3b82f6}.featH2HNum.draw{color:#fbbf24}.featH2HNum.loss{color:#ef4444}
+    .featH2HLabel{font-size:11px;color:#cbd5e1;text-transform:uppercase;letter-spacing:.5px;margin-top:4px;font-weight:700}
+    .featH2HTotal{text-align:center;font-size:13px;color:#cbd5e1;margin:8px 0 16px}
+    .featH2HTotal strong{color:#fff;font-size:16px;font-weight:900;margin-left:4px}
+    .featLastLabel{font-size:11px;font-weight:800;color:#fbbf24;text-align:center;letter-spacing:.5px;margin-bottom:8px;text-transform:uppercase}
+    .featLastMeeting{display:grid;grid-template-columns:auto 1fr auto 1fr auto;gap:8px;align-items:center;background:rgba(15,23,42,0.5);border-radius:6px;padding:8px;font-size:12px;color:#fff}
+    .featLastMeeting img{width:18px;height:18px;object-fit:contain}
+    .featLastMeeting .name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .featLastMeeting .score{background:#fbbf24;color:#0f172a;padding:2px 6px;border-radius:3px;font-weight:800;font-family:monospace}
+    .featCta{display:block;text-align:center;background:linear-gradient(135deg,#3b82f6,#1d4ed8);color:#fff;padding:10px 12px;border-radius:6px;text-decoration:none;font-size:12px;font-weight:800;letter-spacing:.5px;margin-top:14px;text-transform:uppercase;border:1px solid rgba(255,255,255,0.15)}
+    .featCta:hover{filter:brightness(1.1)}
+    .featFormCols{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .featFormHead{text-align:center;font-size:12px;font-weight:800;color:#fbbf24;letter-spacing:.5px;margin-bottom:10px;text-transform:uppercase}
+    .featFormMatches{display:flex;flex-direction:column;gap:6px}
+    .featFormRow{display:grid;grid-template-columns:1fr auto 1fr auto;gap:6px;align-items:center;font-size:11px;background:rgba(15,23,42,0.5);border-radius:4px;padding:6px 8px}
+    .featFormTeam{color:#cbd5e1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .featFormScore{background:#fbbf24;color:#0f172a;font-weight:800;padding:2px 6px;border-radius:3px;font-size:11px;font-family:monospace}
+    .featFormResult{width:18px;height:18px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff}
+    .featFormResult.W{background:#16a34a}.featFormResult.L{background:#dc2626}.featFormResult.D{background:#f59e0b}
+    @media(max-width:1024px){.featCardsRow{grid-template-columns:1fr}}
+    /* Bottom pair selector */
+    .selectorWrap{background:linear-gradient(180deg,#0f172a,#1e293b);border-radius:10px;padding:18px 16px;border:1px solid rgba(251,191,36,0.25);margin-bottom:14px}
+    .selectorTitle{font-size:13px;font-weight:800;color:#fbbf24;text-align:center;letter-spacing:1px;text-transform:uppercase;margin-bottom:14px}
+    .selectorGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+    .pairChip{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;background:rgba(15,23,42,0.6);border:1px solid rgba(251,191,36,0.2);border-radius:8px;text-decoration:none;color:#e2e8f0;transition:all .2s;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+    .pairChip:hover{background:rgba(251,191,36,0.1);border-color:#fbbf24;color:#fff;text-decoration:none}
+    .pairChip.active{background:linear-gradient(135deg,rgba(251,191,36,0.2),rgba(245,158,11,0.15));border-color:#fbbf24;color:#fff;box-shadow:0 0 0 2px rgba(251,191,36,0.3)}
+    .chipLogo{width:22px;height:22px;object-fit:contain;flex-shrink:0}
+    .chipVs{color:#94a3b8;font-size:9px;font-weight:900}
+    .chipTeam{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;text-align:center}
     .heroEnh{position:relative;background:linear-gradient(135deg,#0a1628 0%,#1a2744 50%,#0f172a 100%);color:#fff;padding:32px 28px;border-radius:14px;margin-bottom:20px;overflow:hidden;border:1px solid rgba(251,191,36,0.35)}
     .heroEnh::before{content:"";position:absolute;top:-30%;right:-10%;width:280px;height:280px;background:radial-gradient(circle,rgba(251,191,36,0.18) 0%,transparent 70%);pointer-events:none}
     .heroEnh::after{content:"";position:absolute;bottom:-30%;left:-5%;width:200px;height:200px;background:radial-gradient(circle,rgba(59,130,246,0.12) 0%,transparent 70%);pointer-events:none}
@@ -134,9 +199,23 @@ function baseStyles() {
   `;
 }
 
-router.get('/so-sanh', async (_req, res) => {
+router.get('/so-sanh', async (req, res) => {
   try {
     const items = await getPopularComparisons();
+
+    // Pre-fetch the featured pair (El Clasico → fall back to first item).
+    // Bots get a fully populated hero with hard data they can index;
+    // browsers immediately see SSR markup + then hydrate React.
+    const featured = items.find(p => p.slug === 'real-madrid-vs-barcelona') || items[0] || null;
+    let featuredData = null;
+    if (featured) {
+      const r = await getCompareTeamsData({
+        slugA: featured.slugA, slugB: featured.slugB,
+        footballApi: req.app.locals.footballApi,
+      });
+      if (!r.error) featuredData = r.data;
+    }
+
     const url = `${SITE_URL}/so-sanh`;
     const title = 'So Sánh CLB Bóng Đá - Đối Đầu, Phong Độ, Lịch Sử';
     const description = `So sánh trực tiếp ${items.length} cặp đối thủ kinh điển: thống kê đối đầu lịch sử, phong độ 5 trận gần nhất, lịch sử CLB. Tổng hợp từ dữ liệu API-Sports.`;
@@ -190,36 +269,121 @@ router.get('/so-sanh', async (_req, res) => {
       })),
     };
 
-    const renderCard = (it) => `
-      <a class="pairCard" href="/so-sanh/${escapeHtml(it.slug)}">
-        <span class="pairBadge">${escapeHtml(it.label)}</span>
-        <div class="pairVersus">
-          <div class="pairSide">
-            <div class="pairLogoFrame">
-              ${it.teamA.logo ? `<img class="pairLogo" src="${escapeHtml(proxyImg(it.teamA.logo, 96))}" alt="Logo ${escapeHtml(it.teamA.name)}" loading="lazy" width="48" height="48">` : ''}
-            </div>
-            <div class="pairTeam">${escapeHtml(it.teamA.name)}</div>
+    const shortName = (n) => (n || '').replace(/^FC\s+|^AC\s+|^AS\s+|^RC\s+|^Atlético\s+/i, '');
+    const formatDate = (iso) => iso ? new Date(iso).toLocaleDateString('vi-VN') : '';
+
+    // Featured-pair hero + 3 info cards (rendered if data resolved)
+    const featuredHtml = (featured && featuredData) ? (() => {
+      const A = featuredData.teamA;
+      const B = featuredData.teamB;
+      const h2h = featuredData.h2h;
+      const form = featuredData.form;
+      const last = h2h?.lastMeetings?.[0];
+
+      const factsCol = (t) => `
+        <div>
+          <div class="featTeamHead">
+            ${t.logo ? `<img src="${escapeHtml(proxyImg(t.logo, 56))}" alt="">` : ''}
+            <div class="name">${escapeHtml(shortName(t.name))}</div>
           </div>
-          <div class="pairVsBadge">VS</div>
-          <div class="pairSide">
-            <div class="pairLogoFrame">
-              ${it.teamB.logo ? `<img class="pairLogo" src="${escapeHtml(proxyImg(it.teamB.logo, 96))}" alt="Logo ${escapeHtml(it.teamB.name)}" loading="lazy" width="48" height="48">` : ''}
-            </div>
-            <div class="pairTeam">${escapeHtml(it.teamB.name)}</div>
+          <ul class="featFacts">
+            ${t.founded ? `<li><span class="featFactLabel">📅 Năm thành lập</span><span class="featFactVal">${t.founded}</span></li>` : ''}
+            ${t.venue?.name ? `<li><span class="featFactLabel">🏟️ Sân nhà</span><span class="featFactVal">${escapeHtml(t.venue.name)}</span></li>` : ''}
+            ${t.venue?.capacity ? `<li><span class="featFactLabel">👥 Sức chứa</span><span class="featFactVal">${t.venue.capacity.toLocaleString('vi-VN')}</span></li>` : ''}
+            ${t.country ? `<li><span class="featFactLabel">🌍 Quốc gia</span><span class="featFactVal">${escapeHtml(t.country)}</span></li>` : ''}
+          </ul>
+        </div>
+      `;
+
+      const formCol = (label, slug, teamForm) => `
+        <div>
+          <div class="featFormHead">${escapeHtml(shortName(label))}</div>
+          <div class="featFormMatches">
+            ${teamForm?.last5?.length ? teamForm.last5.slice(0, 5).map((r, i) => `
+              <div class="featFormRow">
+                <span class="featFormTeam">${escapeHtml(shortName(label))}</span>
+                <span class="featFormResult ${r}">${r === 'W' ? 'T' : r === 'L' ? 'B' : 'H'}</span>
+                <span class="featFormTeam" style="text-align:right">${i + 1} trận trước</span>
+                <span class="featFormScore">${r}</span>
+              </div>
+            `).join('') : '<div style="color:#94a3b8;font-size:12px;text-align:center">Chưa có dữ liệu</div>'}
           </div>
         </div>
-        <div class="pairFooter">⚔️ Xem đối đầu chi tiết →</div>
-      </a>
-    `;
+      `;
 
-    // Categorise: derby quốc nội vs đại chiến châu Âu
-    const isEuropean = (label) => /châu âu|champions|europa|conference|đại chiến/i.test(label);
-    const national = items.filter(it => !isEuropean(it.label));
-    const european = items.filter(it => isEuropean(it.label));
-    const cardsHtml = [
-      national.length ? `<div class="sectionTitle">🏟️ Derby quốc gia kinh điển</div><div class="grid">${national.map(renderCard).join('')}</div>` : '',
-      european.length ? `<div class="sectionTitle">🏆 Đại chiến châu Âu</div><div class="grid">${european.map(renderCard).join('')}</div>` : '',
-    ].join('');
+      return `
+        <div class="featHero">
+          <div class="featHeroTop">
+            <div class="featHeroLogo">${A.logo ? `<img src="${escapeHtml(proxyImg(A.logo, 240))}" alt="Logo ${escapeHtml(A.name)}">` : ''}</div>
+            <div class="featHeroCenter">
+              <h1 class="featHeroH1">⚔️ So Sánh CLB Bóng Đá</h1>
+              <p class="featHeroSub">Đối đầu lịch sử, phong độ 5 trận gần nhất, thông tin CLB — chọn cặp dưới để xem chi tiết đầy đủ thống kê, lịch sử cuộc chiến và các lần gặp gần nhất.</p>
+            </div>
+            <div class="featHeroLogo">${B.logo ? `<img src="${escapeHtml(proxyImg(B.logo, 240))}" alt="Logo ${escapeHtml(B.name)}">` : ''}</div>
+          </div>
+          <div class="featVsRow">
+            <div class="featPanel featPanelL">${escapeHtml(A.name)}</div>
+            <div class="featVsBadge">VS</div>
+            <div class="featPanel featPanelR">${escapeHtml(B.name)}</div>
+          </div>
+        </div>
+
+        <div class="featCardsRow">
+          <div class="featCard">
+            <div class="featCardTitle">Thông tin CLB</div>
+            <div class="featTwoCol">${factsCol(A)}${factsCol(B)}</div>
+          </div>
+          <div class="featCard">
+            <div class="featCardTitle">Phong độ 5 trận gần nhất</div>
+            <div class="featFormCols">
+              ${formCol(A.name, A.slug, form?.teamA)}
+              ${formCol(B.name, B.slug, form?.teamB)}
+            </div>
+          </div>
+          <div class="featCard">
+            <div class="featCardTitle">Thống kê đối đầu</div>
+            ${h2h && h2h.total > 0 ? `
+              <div class="featH2H">
+                <div><div class="featH2HNum win">${h2h.teamAWins}</div><div class="featH2HLabel">Thắng</div></div>
+                <div><div class="featH2HNum draw">${h2h.draws}</div><div class="featH2HLabel">Hòa</div></div>
+                <div><div class="featH2HNum loss">${h2h.teamBWins}</div><div class="featH2HLabel">Thắng</div></div>
+              </div>
+              <div class="featH2HTotal">Tổng số trận:<strong>${h2h.total}</strong></div>
+              ${last ? `
+                <div class="featLastLabel">Trận gần nhất</div>
+                <div class="featLastMeeting">
+                  ${last.homeLogo ? `<img src="${escapeHtml(proxyImg(last.homeLogo, 32))}" alt="">` : ''}
+                  <span class="name">${escapeHtml(shortName(last.homeName))}</span>
+                  <span class="score">${last.homeScore} - ${last.awayScore}</span>
+                  <span class="name" style="text-align:right">${escapeHtml(shortName(last.awayName))}</span>
+                  ${last.awayLogo ? `<img src="${escapeHtml(proxyImg(last.awayLogo, 32))}" alt="">` : ''}
+                </div>
+                <div style="font-size:10px;color:#94a3b8;text-align:center;margin-top:6px">${formatDate(last.date)}${last.league ? ` · ${escapeHtml(last.league)}` : ''}</div>
+              ` : ''}
+            ` : '<div style="color:#94a3b8;font-size:13px;text-align:center;padding:24px 0">Chưa có dữ liệu đối đầu</div>'}
+            <a href="/so-sanh/${escapeHtml(featured.slug)}" class="featCta">Xem chi tiết lịch sử đối đầu →</a>
+          </div>
+        </div>
+      `;
+    })() : '';
+
+    // Bottom pair selector (chips, link to detail page for bot crawlability)
+    const selectorHtml = items.length > 0 ? `
+      <div class="selectorWrap">
+        <div class="selectorTitle">⚡ Chọn cặp để so sánh</div>
+        <div class="selectorGrid">
+          ${items.map(p => `
+            <a href="/so-sanh/${escapeHtml(p.slug)}" class="pairChip${featured && p.slug === featured.slug ? ' active' : ''}">
+              ${p.teamA.logo ? `<img class="chipLogo" src="${escapeHtml(proxyImg(p.teamA.logo, 48))}" alt="" loading="lazy">` : ''}
+              <span class="chipTeam">${escapeHtml(shortName(p.teamA.name))}</span>
+              <span class="chipVs">VS</span>
+              <span class="chipTeam">${escapeHtml(shortName(p.teamB.name))}</span>
+              ${p.teamB.logo ? `<img class="chipLogo" src="${escapeHtml(proxyImg(p.teamB.logo, 48))}" alt="" loading="lazy">` : ''}
+            </a>
+          `).join('')}
+        </div>
+      </div>
+    ` : '';
 
     const teamsCount = new Set(items.flatMap(it => [it.teamA.slug, it.teamB.slug])).size;
     const countriesCount = new Set(items.flatMap(it => [it.teamA.country, it.teamB.country].filter(Boolean))).size;
@@ -263,22 +427,24 @@ router.get('/so-sanh', async (_req, res) => {
   <div class="container">
     <nav class="breadcrumb"><a href="/">Trang chủ</a> &rsaquo; <span>So sánh CLB</span></nav>
 
-    <div class="heroEnh">
-      <div class="heroInner">
-        <h1 class="heroH1">⚔️ So Sánh CLB Bóng Đá</h1>
-        <p class="heroP">Đối đầu lịch sử, phong độ 5 trận gần nhất, thông tin CLB — chọn cặp dưới để xem chi tiết đầy đủ thống kê, lịch sử cuộc chiến và các lần gặp gần nhất.</p>
-        ${items.length > 0 ? `
-          <div class="heroStats">
-            <div><strong>${items.length}</strong><span>Cặp đối đầu</span></div>
-            <div><strong>${teamsCount}</strong><span>CLB</span></div>
-            <div><strong>${countriesCount}</strong><span>Quốc gia</span></div>
-            <div><strong>6h</strong><span>Tần suất cập nhật</span></div>
-          </div>
-        ` : ''}
+    ${featuredHtml || `
+      <div class="heroEnh">
+        <div class="heroInner">
+          <h1 class="heroH1">⚔️ So Sánh CLB Bóng Đá</h1>
+          <p class="heroP">Đối đầu lịch sử, phong độ 5 trận gần nhất, thông tin CLB — chọn cặp dưới để xem chi tiết đầy đủ thống kê, lịch sử cuộc chiến và các lần gặp gần nhất.</p>
+          ${items.length > 0 ? `
+            <div class="heroStats">
+              <div><strong>${items.length}</strong><span>Cặp đối đầu</span></div>
+              <div><strong>${teamsCount}</strong><span>CLB</span></div>
+              <div><strong>${countriesCount}</strong><span>Quốc gia</span></div>
+              <div><strong>6h</strong><span>Tần suất cập nhật</span></div>
+            </div>
+          ` : ''}
+        </div>
       </div>
-    </div>
+    `}
 
-    ${cardsHtml}
+    ${selectorHtml}
 
     <div class="card">
       <h2>❓ Câu hỏi thường gặp về so sánh CLB</h2>
