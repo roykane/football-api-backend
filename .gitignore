@@ -53,3 +53,7 @@ coverage/
 # Build outputs (if any)
 dist/
 build/
+
+# Runtime image cache from /api/img proxy — regenerates on demand,
+# must NOT be committed (causes "untracked working tree files" pull conflicts).
+public/img-cache/
