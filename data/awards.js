@@ -11,7 +11,7 @@ const awards = [
     nameEn: 'Ballon d\'Or',
     organizer: 'France Football',
     foundedYear: 1956,
-    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/db/Ballon_d%27Or_trophy.png/800px-Ballon_d%27Or_trophy.png',
+    image: '/trophy-images/qua-bong-vang.svg',
     bio: 'Quả Bóng Vàng (Ballon d\'Or) là giải thưởng cá nhân danh giá nhất bóng đá nam thế giới, do tạp chí Pháp France Football tổ chức từ 1956. Ban đầu chỉ dành cho cầu thủ Châu Âu, mở rộng toàn cầu từ 1995.',
     description: 'Trao thường niên cho cầu thủ xuất sắc nhất thế giới dựa trên màn trình diễn năm trước. Hội đồng nhà báo bóng đá quốc tế bình chọn — danh sách đề cử rút gọn còn 30 người, sau đó chấm điểm chi tiết.',
     recentWinners: [
@@ -40,7 +40,7 @@ const awards = [
     nameEn: 'The Best FIFA Men\'s Player',
     organizer: 'FIFA',
     foundedYear: 2016,
-    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/The_Best_FIFA_Football_Awards_logo.png/800px-The_Best_FIFA_Football_Awards_logo.png',
+    image: '/trophy-images/fifa-the-best.svg',
     bio: 'FIFA The Best là giải thưởng do FIFA tổ chức thường niên từ 2016, kế thừa giải FIFA Ballon d\'Or (2010-2015) và FIFA World Player (1991-2009). Bình chọn từ HLV ĐTQG, đội trưởng ĐTQG, nhà báo và người hâm mộ — mỗi nhóm 25%.',
     description: 'Giải thưởng cá nhân hàng đầu của FIFA cho cầu thủ nam xuất sắc nhất năm. Khác với Ballon d\'Or (chỉ nhà báo bình chọn), FIFA The Best có sự tham gia của HLV và đội trưởng ĐTQG — góc nhìn từ người trong nghề.',
     recentWinners: [
@@ -66,7 +66,7 @@ const awards = [
     nameEn: 'European Golden Shoe',
     organizer: 'European Sports Media',
     foundedYear: 1968,
-    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/European_Golden_Shoe.png/800px-European_Golden_Shoe.png',
+    image: '/trophy-images/chiec-giay-vang.svg',
     bio: 'Chiếc Giày Vàng Châu Âu (European Golden Shoe) là giải thưởng dành cho cầu thủ ghi nhiều bàn nhất tại các giải vô địch quốc gia Châu Âu. Tính theo "hệ số" — mỗi bàn ở giải hạng cao có giá trị x2, hạng trung x1.5, hạng thấp x1.',
     description: 'Giải tính dựa trên số bàn × hệ số giải đấu, không tính cúp Châu Âu hay quốc gia. Hệ số giúp cân bằng giữa giải mạnh (Premier League, La Liga - x2) và giải yếu hơn.',
     recentWinners: [
@@ -90,7 +90,7 @@ const awards = [
     nameEn: 'FIFA Puskás Award',
     organizer: 'FIFA',
     foundedYear: 2009,
-    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/be/FIFA_Pusk%C3%A1s_Award_trophy.jpg/600px-FIFA_Pusk%C3%A1s_Award_trophy.jpg',
+    image: '/trophy-images/puskas-award.svg',
     bio: 'FIFA Puskás Award là giải thưởng cho bàn thắng đẹp nhất năm do FIFA tổ chức từ 2009. Tên giải đặt theo huyền thoại Hungary Ferenc Puskás. Ai cũng có thể chiến thắng — nam, nữ, chuyên nghiệp, nghiệp dư, mọi giải đấu.',
     description: 'Giải duy nhất nơi cầu thủ vô danh có thể chiến thắng siêu sao — vì chỉ tính riêng vẻ đẹp của bàn thắng. Top 3 bàn thắng được chọn từ shortlist 10 bàn, người hâm mộ bình chọn online.',
     recentWinners: [
@@ -114,7 +114,7 @@ const awards = [
     nameEn: 'Yashin Trophy',
     organizer: 'France Football',
     foundedYear: 2019,
-    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Yashin_Trophy.png/600px-Yashin_Trophy.png',
+    image: '/trophy-images/yashin-trophy.svg',
     bio: 'Yashin Trophy là giải thưởng cho thủ môn xuất sắc nhất năm, đặt tên theo huyền thoại Lev Yashin (Liên Xô) — thủ môn duy nhất từng đoạt Quả Bóng Vàng (1963). Giải do France Football tổ chức song hành với Ballon d\'Or từ 2019.',
     description: 'Trao thường niên cho thủ môn xuất sắc nhất thế giới. Tách riêng thay vì đưa vào Ballon d\'Or chung — thủ môn ít có cơ hội trong tổng giải vì đặc thù vị trí.',
     recentWinners: [

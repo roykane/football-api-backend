@@ -29,7 +29,7 @@ const players = [
     nationalTeam: 'Argentina',
     caps: 192,
     goals: 112,
-    image: 'https://upload.wikimedia.org/wikipedia/commons/c/c1/Lionel_Messi_20180626_%28cropped%29.jpg',
+    image: '/world-player-images/lionel-messi.jpg',
     tags: ['lionel messi', 'messi', 'tiền đạo', 'argentina', 'inter miami'],
     bio: 'Lionel Messi là một trong những cầu thủ vĩ đại nhất lịch sử bóng đá, sở hữu kỷ lục 8 Quả Bóng Vàng, vô địch World Cup 2022 với Argentina cùng vô số danh hiệu cấp CLB tại Barcelona, PSG và Inter Miami.',
     highlights: [
@@ -62,7 +62,7 @@ const players = [
     nationalTeam: 'Bồ Đào Nha',
     caps: 218,
     goals: 135,
-    image: 'https://upload.wikimedia.org/wikipedia/commons/8/8c/Cristiano_Ronaldo_2018.jpg',
+    image: '/world-player-images/cristiano-ronaldo.jpg',
     tags: ['cristiano ronaldo', 'ronaldo', 'cr7', 'tiền đạo', 'portugal', 'al-nassr'],
     bio: 'Cristiano Ronaldo là cầu thủ ghi bàn nhiều nhất lịch sử ĐTQG (135 bàn) và là một trong những huyền thoại của bóng đá hiện đại với 5 Quả Bóng Vàng, 5 Champions League và Euro 2016 cùng Bồ Đào Nha.',
     highlights: [
@@ -95,7 +95,7 @@ const players = [
     nationalTeam: 'Pháp',
     caps: 86,
     goals: 50,
-    image: 'https://upload.wikimedia.org/wikipedia/commons/d/dd/Kylian_Mbapp%C3%A9_2018.jpg',
+    image: '/world-player-images/kylian-mbappe.jpg',
     tags: ['kylian mbappe', 'mbappe', 'tiền đạo', 'pháp', 'real madrid'],
     bio: 'Kylian Mbappé là tiền đạo ngôi sao của tuyển Pháp và Real Madrid, vô địch World Cup 2018 ở tuổi 19, hattrick chung kết World Cup 2022, ứng cử viên hàng đầu cho Quả Bóng Vàng tương lai gần.',
     highlights: [
@@ -128,7 +128,7 @@ const players = [
     nationalTeam: 'Na Uy',
     caps: 38,
     goals: 38,
-    image: 'https://upload.wikimedia.org/wikipedia/commons/0/0a/Erling_Haaland_2023.jpg',
+    image: '/world-player-images/erling-haaland.jpg',
     tags: ['erling haaland', 'haaland', 'tiền đạo', 'norway', 'manchester city'],
     bio: 'Erling Haaland là máy ghi bàn xuất sắc của Manchester City và ĐT Na Uy, kỷ lục 36 bàn trong một mùa Premier League (2022/23) — vua phá lưới Châu Âu Chiếc Giày Vàng 2022/23.',
     highlights: [
@@ -160,7 +160,7 @@ const players = [
     nationalTeam: 'Anh',
     caps: 40,
     goals: 5,
-    image: 'https://upload.wikimedia.org/wikipedia/commons/c/c3/Jude_Bellingham_2023.jpg',
+    image: '/world-player-images/jude-bellingham.jpg',
     tags: ['jude bellingham', 'bellingham', 'tiền vệ', 'england', 'real madrid'],
     bio: 'Jude Bellingham là tiền vệ tấn công xuất sắc của Real Madrid và ĐT Anh, đoạt UEFA Champions League 2023/24 trong mùa đầu tại Bernabéu, được coi là biểu tượng thế hệ vàng tiếp theo của bóng đá Anh.',
     highlights: [
@@ -192,7 +192,7 @@ const players = [
     nationalTeam: 'Brazil',
     caps: 41,
     goals: 6,
-    image: 'https://upload.wikimedia.org/wikipedia/commons/4/4e/Vinicius_Junior_2024.jpg',
+    image: '/world-player-images/vinicius-junior.jpg',
     tags: ['vinicius junior', 'vinicius', 'tiền đạo cánh', 'brazil', 'real madrid'],
     bio: 'Vinícius Júnior là tiền đạo cánh trái xuất sắc của Real Madrid và ĐT Brazil, ghi bàn quyết định trong chung kết Champions League 2021/22, top 2 Quả Bóng Vàng 2024.',
     highlights: [
@@ -224,7 +224,7 @@ const players = [
     nationalTeam: 'Tây Ban Nha',
     caps: 60,
     goals: 4,
-    image: 'https://upload.wikimedia.org/wikipedia/commons/c/c2/Rodri_2023.jpg',
+    image: '/world-player-images/rodri.jpg',
     tags: ['rodri', 'tiền vệ phòng ngự', 'spain', 'manchester city'],
     bio: 'Rodri là tiền vệ phòng ngự xuất sắc nhất thế giới, đoạt Quả Bóng Vàng 2024, ghi bàn quyết định chung kết Champions League 2022/23 và Euro 2024.',
     highlights: [
@@ -256,7 +256,7 @@ const players = [
     nationalTeam: 'Ai Cập',
     caps: 100,
     goals: 60,
-    image: 'https://upload.wikimedia.org/wikipedia/commons/4/4e/Mohamed_Salah_2018.jpg',
+    image: '/world-player-images/mohamed-salah.jpg',
     tags: ['mohamed salah', 'salah', 'tiền đạo cánh', 'egypt', 'liverpool'],
     bio: 'Mohamed Salah là cầu thủ Ai Cập vĩ đại nhất lịch sử, vua phá lưới Premier League 3 lần, vô địch Champions League 2018/19 và Premier League 2019/20 cùng Liverpool.',
     highlights: [
@@ -288,7 +288,7 @@ const players = [
     nationalTeam: 'Bỉ',
     caps: 109,
     goals: 30,
-    image: 'https://upload.wikimedia.org/wikipedia/commons/5/57/Kevin_De_Bruyne_2018.jpg',
+    image: '/world-player-images/kevin-de-bruyne.jpg',
     tags: ['kevin de bruyne', 'de bruyne', 'tiền vệ tấn công', 'belgium', 'manchester city'],
     bio: 'Kevin De Bruyne là tiền vệ tấn công kiến tạo bậc nhất thế giới, "đại bàng" của Manchester City, kỷ lục 20 kiến tạo Premier League 2019/20 (cân bằng kỷ lục Henry).',
     highlights: [
@@ -320,7 +320,7 @@ const players = [
     nationalTeam: 'Ba Lan',
     caps: 158,
     goals: 85,
-    image: 'https://upload.wikimedia.org/wikipedia/commons/7/77/Robert_Lewandowski_2018.jpg',
+    image: '/world-player-images/robert-lewandowski.jpg',
     tags: ['robert lewandowski', 'lewandowski', 'lewy', 'tiền đạo', 'poland', 'barcelona'],
     bio: 'Robert Lewandowski là máy ghi bàn vĩ đại nhất lịch sử Bundesliga (Bayern), kỷ lục 41 bàn 1 mùa Bundesliga, FIFA Best 2 năm liên tiếp 2020-2021.',
     highlights: [
@@ -352,7 +352,7 @@ const players = [
     nationalTeam: 'Croatia',
     caps: 184,
     goals: 27,
-    image: 'https://upload.wikimedia.org/wikipedia/commons/d/d0/Luka_Modri%C4%87_2018.jpg',
+    image: '/world-player-images/luka-modric.jpg',
     tags: ['luka modric', 'modric', 'tiền vệ', 'croatia', 'real madrid'],
     bio: 'Luka Modrić là tiền vệ vĩ đại nhất lịch sử Croatia, Quả Bóng Vàng 2018, vô địch Champions League 6 lần cùng Real Madrid — biểu tượng tiền vệ trung tâm thế kỷ 21.',
     highlights: [
@@ -384,7 +384,7 @@ const players = [
     nationalTeam: 'Tây Ban Nha',
     caps: 30,
     goals: 4,
-    image: 'https://upload.wikimedia.org/wikipedia/commons/8/85/Pedri_2021.jpg',
+    image: '/world-player-images/pedri.jpg',
     tags: ['pedri', 'tiền vệ trung tâm', 'spain', 'barcelona'],
     bio: 'Pedri là tiền vệ trung tâm tài năng của Barcelona và ĐT Tây Ban Nha, đoạt Cầu thủ trẻ xuất sắc nhất Euro 2020 và 2024, biểu tượng thế hệ vàng La Masia mới.',
     highlights: [
@@ -416,7 +416,7 @@ const players = [
     nationalTeam: 'Tây Ban Nha',
     caps: 17,
     goals: 6,
-    image: 'https://upload.wikimedia.org/wikipedia/commons/c/c2/Lamine_Yamal_2024.jpg',
+    image: '/world-player-images/lamine-yamal.jpg',
     tags: ['lamine yamal', 'yamal', 'tiền đạo cánh', 'spain', 'barcelona'],
     bio: 'Lamine Yamal là tài năng trẻ siêu phàm của Barcelona và ĐT Tây Ban Nha, vô địch Euro 2024 ở tuổi 17 — Cầu thủ trẻ xuất sắc nhất giải, ứng cử viên Quả Bóng Vàng tương lai.',
     highlights: [
@@ -448,7 +448,7 @@ const players = [
     nationalTeam: 'Đức',
     caps: 27,
     goals: 6,
-    image: 'https://upload.wikimedia.org/wikipedia/commons/9/9e/Florian_Wirtz_2024.jpg',
+    image: '/world-player-images/florian-wirtz.jpg',
     tags: ['florian wirtz', 'wirtz', 'tiền vệ tấn công', 'germany', 'bayer leverkusen'],
     bio: 'Florian Wirtz là tiền vệ tấn công xuất sắc của Bayer Leverkusen và ĐT Đức, đoạt Bundesliga 2023/24 trong mùa giải bất bại lịch sử dưới HLV Xabi Alonso.',
     highlights: [
@@ -480,7 +480,7 @@ const players = [
     nationalTeam: 'Đức',
     caps: 35,
     goals: 11,
-    image: 'https://upload.wikimedia.org/wikipedia/commons/c/c2/Jamal_Musiala_2024.jpg',
+    image: '/world-player-images/jamal-musiala.jpg',
     tags: ['jamal musiala', 'musiala', 'tiền vệ tấn công', 'germany', 'bayern'],
     bio: 'Jamal Musiala là tiền vệ tấn công kỹ thuật của Bayern Munich và ĐT Đức, được mệnh danh "Bambi" vì lối đi bóng nhẹ nhàng, vô địch Bundesliga nhiều lần cùng Bayern.',
     highlights: [
@@ -512,7 +512,7 @@ const players = [
     nationalTeam: 'Anh',
     caps: 47,
     goals: 14,
-    image: 'https://upload.wikimedia.org/wikipedia/commons/4/45/Bukayo_Saka_2023.jpg',
+    image: '/world-player-images/bukayo-saka.jpg',
     tags: ['bukayo saka', 'saka', 'tiền đạo cánh', 'england', 'arsenal'],
     bio: 'Bukayo Saka là tiền đạo cánh ngôi sao của Arsenal và ĐT Anh, biểu tượng học viện Hale End, đeo băng đội phó Arsenal khi mới 22 tuổi.',
     highlights: [
@@ -544,7 +544,7 @@ const players = [
     nationalTeam: 'Anh',
     caps: 47,
     goals: 5,
-    image: 'https://upload.wikimedia.org/wikipedia/commons/4/4b/Phil_Foden_2023.jpg',
+    image: '/world-player-images/phil-foden.jpg',
     tags: ['phil foden', 'foden', 'tiền vệ tấn công', 'england', 'manchester city'],
     bio: 'Phil Foden là tiền vệ tấn công xuất sắc của Manchester City và ĐT Anh, PFA Players\' Player of the Year 2023/24, biểu tượng học viện Etihad.',
     highlights: [
@@ -576,7 +576,7 @@ const players = [
     nationalTeam: 'Bồ Đào Nha',
     caps: 79,
     goals: 28,
-    image: 'https://upload.wikimedia.org/wikipedia/commons/8/87/Bruno_Fernandes_2023.jpg',
+    image: '/world-player-images/bruno-fernandes.jpg',
     tags: ['bruno fernandes', 'fernandes', 'tiền vệ tấn công', 'portugal', 'manchester united'],
     bio: 'Bruno Fernandes là đội trưởng và linh hồn của Manchester United, tiền vệ tấn công ghi bàn và kiến tạo bậc nhất Premier League từ khi gia nhập 2020.',
     highlights: [
@@ -608,7 +608,7 @@ const players = [
     nationalTeam: 'Anh',
     caps: 100,
     goals: 71,
-    image: 'https://upload.wikimedia.org/wikipedia/commons/c/c3/Harry_Kane_2023.jpg',
+    image: '/world-player-images/harry-kane.jpg',
     tags: ['harry kane', 'kane', 'tiền đạo', 'england', 'bayern'],
     bio: 'Harry Kane là cầu thủ ghi bàn nhiều nhất lịch sử ĐT Anh (71 bàn), đội trưởng "Tam Sư", chuyển sang Bayern Munich 2023 và phá kỷ lục ghi bàn Bundesliga ngay mùa đầu.',
     highlights: [
@@ -640,7 +640,7 @@ const players = [
     nationalTeam: 'Brazil',
     caps: 30,
     goals: 7,
-    image: 'https://upload.wikimedia.org/wikipedia/commons/9/9c/Rodrygo_2024.jpg',
+    image: '/world-player-images/rodrygo.jpg',
     tags: ['rodrygo', 'tiền đạo cánh', 'brazil', 'real madrid'],
     bio: 'Rodrygo là tiền đạo cánh xuất sắc của Real Madrid và ĐT Brazil, ghi 2 bàn quyết định 2 trận liên tiếp giúp Real Madrid lội ngược dòng vào chung kết Champions League 2021/22.',
     highlights: [
@@ -672,7 +672,7 @@ const players = [
     nationalTeam: 'Bỉ',
     caps: 102,
     goals: 0,
-    image: 'https://upload.wikimedia.org/wikipedia/commons/8/87/Thibaut_Courtois_2023.jpg',
+    image: '/world-player-images/thibaut-courtois.jpg',
     tags: ['thibaut courtois', 'courtois', 'thủ môn', 'belgium', 'real madrid'],
     bio: 'Thibaut Courtois là thủ môn xuất sắc nhất thế giới của Real Madrid và ĐT Bỉ, đoạt Cầu thủ xuất sắc nhất chung kết Champions League 2021/22 với màn cứu thua không tưởng trước Liverpool.',
     highlights: [
@@ -704,7 +704,7 @@ const players = [
     nationalTeam: 'Brazil',
     caps: 71,
     goals: 1,
-    image: 'https://upload.wikimedia.org/wikipedia/commons/d/d6/Alisson_Becker_2018.jpg',
+    image: '/world-player-images/alisson-becker.jpg',
     tags: ['alisson becker', 'alisson', 'thủ môn', 'brazil', 'liverpool'],
     bio: 'Alisson Becker là thủ môn ngôi sao của Liverpool và ĐT Brazil, được nhiều chuyên gia đánh giá là thủ môn xuất sắc nhất thập kỷ 2020s.',
     highlights: [
@@ -736,7 +736,7 @@ const players = [
     nationalTeam: 'Hà Lan',
     caps: 78,
     goals: 9,
-    image: 'https://upload.wikimedia.org/wikipedia/commons/8/8b/Virgil_van_Dijk_2018.jpg',
+    image: '/world-player-images/virgil-van-dijk.jpg',
     tags: ['virgil van dijk', 'van dijk', 'vvd', 'trung vệ', 'netherlands', 'liverpool'],
     bio: 'Virgil van Dijk là trung vệ vĩ đại nhất Premier League thập kỷ 2020s, đội trưởng Liverpool và ĐT Hà Lan, top 2 Quả Bóng Vàng 2019.',
     highlights: [
@@ -768,7 +768,7 @@ const players = [
     nationalTeam: 'Pháp',
     caps: 137,
     goals: 44,
-    image: 'https://upload.wikimedia.org/wikipedia/commons/3/3a/Antoine_Griezmann_2022.jpg',
+    image: '/world-player-images/antoine-griezmann.jpg',
     tags: ['antoine griezmann', 'griezmann', 'tiền đạo', 'france', 'atletico'],
     bio: 'Antoine Griezmann là tiền đạo lùi thông minh của Atletico Madrid và ĐT Pháp, vô địch World Cup 2018, biểu tượng La Liga thế hệ Diego Simeone.',
     highlights: [
@@ -800,7 +800,7 @@ const players = [
     nationalTeam: 'Hàn Quốc',
     caps: 130,
     goals: 51,
-    image: 'https://upload.wikimedia.org/wikipedia/commons/0/01/Son_Heung-min_2018.jpg',
+    image: '/world-player-images/son-heung-min.jpg',
     tags: ['son heung min', 'son', 'tiền đạo cánh', 'south korea', 'tottenham'],
     bio: 'Son Heung-min là cầu thủ Châu Á vĩ đại nhất lịch sử Premier League, vua phá lưới Premier League 2021/22, đội trưởng Tottenham và ĐT Hàn Quốc.',
     highlights: [
@@ -832,7 +832,7 @@ const players = [
     nationalTeam: 'Na Uy',
     caps: 47,
     goals: 9,
-    image: 'https://upload.wikimedia.org/wikipedia/commons/c/cc/Martin_%C3%98degaard_2023.jpg',
+    image: '/world-player-images/martin-odegaard.jpg',
     tags: ['martin odegaard', 'odegaard', 'tiền vệ tấn công', 'norway', 'arsenal'],
     bio: 'Martin Ødegaard là đội trưởng Arsenal và ĐT Na Uy, tiền vệ tấn công thông minh, biểu tượng triết lý Mikel Arteta.',
     highlights: [
@@ -864,7 +864,7 @@ const players = [
     nationalTeam: 'Anh',
     caps: 59,
     goals: 4,
-    image: 'https://upload.wikimedia.org/wikipedia/commons/0/04/Declan_Rice_2024.jpg',
+    image: '/world-player-images/declan-rice.jpg',
     tags: ['declan rice', 'rice', 'tiền vệ trung tâm', 'england', 'arsenal'],
     bio: 'Declan Rice là tiền vệ trung tâm xuất sắc của Arsenal và ĐT Anh, ký hợp đồng kỷ lục 105 triệu bảng năm 2023, biểu tượng tiền vệ con thoi thế hệ mới Anh.',
     highlights: [
@@ -896,7 +896,7 @@ const players = [
     nationalTeam: 'Bồ Đào Nha',
     caps: 33,
     goals: 4,
-    image: 'https://upload.wikimedia.org/wikipedia/commons/c/c3/Rafael_Le%C3%A3o_2023.jpg',
+    image: '/world-player-images/rafael-leao.jpg',
     tags: ['rafael leao', 'leao', 'tiền đạo cánh', 'portugal', 'ac milan'],
     bio: 'Rafael Leão là tiền đạo cánh trái xuất sắc của AC Milan và ĐT Bồ Đào Nha, MVP Serie A 2021/22, biểu tượng Rossoneri thế hệ mới.',
     highlights: [
@@ -928,7 +928,7 @@ const players = [
     nationalTeam: 'Argentina',
     caps: 64,
     goals: 31,
-    image: 'https://upload.wikimedia.org/wikipedia/commons/8/85/Lautaro_Mart%C3%ADnez_2022.jpg',
+    image: '/world-player-images/lautaro-martinez.jpg',
     tags: ['lautaro martinez', 'lautaro', 'tiền đạo', 'argentina', 'inter milan'],
     bio: 'Lautaro Martínez là đội trưởng Inter Milan và là tiền đạo chủ lực của ĐT Argentina, vô địch World Cup 2022 và Copa America 2021, 2024.',
     highlights: [
@@ -964,7 +964,7 @@ const players = [
     nationalTeam: 'Uruguay',
     caps: 70,
     goals: 8,
-    image: 'https://upload.wikimedia.org/wikipedia/commons/d/df/Federico_Valverde_2023.jpg',
+    image: '/world-player-images/pep-guardiola-sample.jpg',
     tags: ['federico valverde', 'valverde', 'tiền vệ trung tâm', 'uruguay', 'real madrid'],
     bio: 'Federico Valverde là tiền vệ trung tâm năng lượng cao của Real Madrid và ĐT Uruguay, biểu tượng "El Pajarito" (chim nhỏ) — chạy không biết mệt mỏi.',
     highlights: [
