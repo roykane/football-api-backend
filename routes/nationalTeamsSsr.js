@@ -219,10 +219,74 @@ router.get('/doi-tuyen/:slug', (req, res) => {
   res.send(html);
 });
 
+// Confederation accent colors — matches SPA hub-page palette.
+const CONF_COLOR = {
+  UEFA:     { c: '#3b82f6', g: 'rgba(59,130,246,0.5)' },
+  CONMEBOL: { c: '#10b981', g: 'rgba(16,185,129,0.5)' },
+  CONCACAF: { c: '#fbbf24', g: 'rgba(251,191,36,0.5)' },
+  AFC:      { c: '#a78bfa', g: 'rgba(167,139,250,0.5)' },
+  CAF:      { c: '#f97316', g: 'rgba(249,115,22,0.5)' },
+  OFC:      { c: '#06b6d4', g: 'rgba(6,182,212,0.5)' },
+};
+
+function listStyles() {
+  return `
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.6;color:#e2e8f0;background:#0a0e1a;min-height:100vh}
+    a{color:#94a3b8;text-decoration:none}
+    .container{max-width:1280px;margin:0 auto;padding:16px}
+    .breadcrumb{font-size:13px;color:#64748b;margin-bottom:12px}.breadcrumb a{color:#94a3b8}
+
+    @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+    @keyframes glow{0%,100%{filter:drop-shadow(0 0 24px rgba(59,130,246,0.5)) drop-shadow(0 0 48px rgba(251,191,36,0.3))}50%{filter:drop-shadow(0 0 36px rgba(59,130,246,0.7)) drop-shadow(0 0 72px rgba(251,191,36,0.5))}}
+    @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+
+    .hero{position:relative;background:linear-gradient(135deg,#0a1628 0%,#1a2744 50%,#0f172a 100%);border-radius:14px;padding:36px 32px;margin-bottom:24px;overflow:hidden;border:1px solid rgba(251,191,36,0.25);min-height:200px;display:flex;align-items:center;gap:24px}
+    .heroBg{position:absolute;inset:0;opacity:.35;background:radial-gradient(circle at 80% 50%,rgba(59,130,246,0.6) 0%,transparent 40%),radial-gradient(circle at 90% 50%,rgba(251,191,36,0.4) 0%,transparent 50%);pointer-events:none}
+    .heroBall{position:absolute;right:-40px;top:50%;transform:translateY(-50%);font-size:200px;line-height:1;animation:float 4s ease-in-out infinite,glow 3s ease-in-out infinite;pointer-events:none}
+    .heroGlobe{width:84px;height:84px;border-radius:50%;background:radial-gradient(circle at 30% 30%,#60a5fa,#1e3a8a 70%);display:flex;align-items:center;justify-content:center;font-size:48px;animation:spin 30s linear infinite;flex-shrink:0;border:2px solid rgba(96,165,250,0.4);box-shadow:0 0 32px rgba(59,130,246,0.4);position:relative;z-index:1}
+    .heroContent{position:relative;z-index:1;flex:1;min-width:0}
+    .heroH1{font-size:36px;font-weight:900;color:#fbbf24;letter-spacing:1px;text-transform:uppercase;line-height:1;margin-bottom:8px}
+    .heroSub{font-size:14px;color:#cbd5e1;line-height:1.7;max-width:560px}
+    .heroSub strong{color:#fbbf24;font-weight:700}
+    @media(max-width:768px){.hero{padding:24px 20px;min-height:140px;gap:16px}.heroH1{font-size:24px;letter-spacing:.5px}.heroSub{font-size:12px}.heroBall{font-size:120px;right:-20px;opacity:.5}.heroGlobe{width:60px;height:60px;font-size:32px}}
+    @media(max-width:480px){.heroBall{display:none}.heroGlobe{width:48px;height:48px;font-size:24px}}
+
+    .confSection{margin-bottom:32px}
+    .confHeader{display:inline-flex;align-items:center;gap:14px;padding:10px 22px 10px 14px;background:rgba(15,23,42,0.7);border-radius:999px;margin-bottom:18px}
+    .confLogo{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;border:2px solid #0a0e1a;flex-shrink:0;font-weight:900;letter-spacing:.5px}
+    .confName{font-size:18px;font-weight:900;letter-spacing:2px;text-transform:uppercase;line-height:1}
+    @media(max-width:480px){.confName{font-size:14px;letter-spacing:1px}}
+
+    .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+    @media(max-width:1024px){.grid{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:480px){.grid{grid-template-columns:1fr}}
+    .card{display:flex;align-items:center;gap:14px;padding:14px 16px;background:linear-gradient(135deg,rgba(15,23,42,0.85),rgba(10,14,26,0.85));border-radius:10px;text-decoration:none;color:#e2e8f0;transition:all .2s;position:relative;overflow:hidden}
+    .card:hover{transform:translateY(-2px);text-decoration:none}
+    .card::before{content:"";position:absolute;inset:0;pointer-events:none}
+    .flagFrame{width:44px;height:54px;flex-shrink:0;display:flex;align-items:center;justify-content:center;position:relative;z-index:1}
+    .flagFrame img{width:100%;height:100%;object-fit:cover;border-radius:6px;clip-path:polygon(0 0,100% 0,100% 70%,50% 100%,0 70%);box-shadow:0 4px 12px rgba(0,0,0,0.4)}
+    .cardBody{min-width:0;flex:1;position:relative;z-index:1}
+    .cardName{font-size:18px;font-weight:900;color:#fbbf24;letter-spacing:.5px;text-transform:uppercase;line-height:1.1;margin-bottom:4px;word-break:break-word}
+    .cardNick{font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;font-weight:600;line-height:1.3}
+    @media(max-width:480px){.cardName{font-size:16px}}
+
+    .ctaCenter{display:flex;justify-content:center}
+    .cta{display:inline-flex;align-items:center;gap:10px;margin-top:18px;padding:12px 28px;background:rgba(15,23,42,0.7);border-radius:999px;color:#fff;text-decoration:none;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;transition:all .2s}
+    @media(max-width:480px){.cta{padding:10px 18px;font-size:11px}}
+
+    .footer{text-align:center;margin-top:24px;padding:16px;color:#94a3b8;font-size:13px}
+  `;
+}
+
+function escapeHtmlAttr(str) {
+  return String(str || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 router.get('/doi-tuyen', (req, res) => {
   const url = `${SITE_URL}/doi-tuyen`;
-  const title = 'Đội Tuyển Quốc Gia - 25+ Đội Bóng World Cup 2026';
-  const description = `Hồ sơ ${teams.length} đội tuyển bóng đá quốc gia hướng tới World Cup 2026: Argentina (đương kim), Brazil, Pháp, Tây Ban Nha, Đức, Anh, Bồ Đào Nha, Hà Lan, Việt Nam và nhiều đội khác.`;
+  const title = 'Đội Tuyển Bóng Đá Quốc Gia - 48 Đội World Cup 2026';
+  const description = `${teams.length} đội tuyển quốc gia tham dự World Cup 2026: lịch sử, thành tích, cầu thủ chủ chốt và HLV trưởng. Tổ chức theo 5 liên đoàn lớn của FIFA.`;
 
   const { datePublished, dateModified } = getEntityDates({});
   const og = pickOgImage({}, { alt: title });
@@ -242,30 +306,40 @@ router.get('/doi-tuyen', (req, res) => {
     })),
   };
 
-  // Group teams by confederation for the listing.
   const grouped = {};
   for (const t of teams) {
-    if (!grouped[t.confederation]) grouped[t.confederation] = [];
-    grouped[t.confederation].push(t);
+    (grouped[t.confederation] ||= []).push(t);
   }
   const confOrder = ['UEFA', 'CONMEBOL', 'CONCACAF', 'AFC', 'CAF', 'OFC'];
 
-  const sections = confOrder.filter(c => grouped[c]).map(c => `
-    <div class="conf-section">
-      <div class="conf-title">${escapeHtml(CONF_VI[c] || c)}</div>
-      <div class="grid-list">
-        ${grouped[c].map(t => `
-          <a href="/doi-tuyen/${escapeHtml(t.slug)}" class="team-card">
-            <img src="${escapeHtml(t.flag)}" alt="Cờ ${escapeHtml(t.name)}" loading="lazy">
-            <div>
-              <div class="name">${escapeHtml(t.name)}</div>
-              <div class="conf">${escapeHtml(t.nickname)}</div>
-            </div>
+  const sectionsHtml = confOrder.filter(c => grouped[c]).map(c => {
+    const palette = CONF_COLOR[c] || { c: '#94a3b8', g: 'rgba(148,163,184,0.5)' };
+    const cardsHtml = grouped[c].map(t => `
+      <a href="/doi-tuyen/${escapeHtml(t.slug)}" class="card" style="border:1.5px solid ${palette.c}55">
+        <div class="flagFrame">
+          ${t.flag ? `<img src="${escapeHtml(t.flag)}" alt="Cờ ${escapeHtml(t.name)}" loading="lazy">` : ''}
+        </div>
+        <div class="cardBody">
+          <div class="cardName">${escapeHtml(t.name)}</div>
+          <div class="cardNick">${escapeHtml(t.nickname || t.nameEn || '')}</div>
+        </div>
+      </a>
+    `).join('');
+    return `
+      <section class="confSection" id="${c.toLowerCase()}">
+        <div class="confHeader" style="border:1.5px solid ${palette.c};box-shadow:0 0 24px ${palette.g},inset 0 0 12px ${palette.g}">
+          <div class="confLogo" style="background:linear-gradient(135deg,${palette.c}88,${palette.c})">${escapeHtml(c.slice(0, 4))}</div>
+          <div class="confName" style="color:${palette.c}">${escapeHtml(CONF_VI[c] || c)}</div>
+        </div>
+        <div class="grid">${cardsHtml}</div>
+        <div class="ctaCenter">
+          <a href="#${c.toLowerCase()}" class="cta" style="border:1.5px solid ${palette.c}">
+            🏆 Xem chi tiết tất cả đội tuyển ${escapeHtml((CONF_VI[c] || c).replace(/\s*\([^)]+\)\s*/, ''))} →
           </a>
-        `).join('')}
-      </div>
-    </div>
-  `).join('');
+        </div>
+      </section>
+    `;
+  }).join('');
 
   const html = `<!DOCTYPE html>
 <html lang="vi">
@@ -274,8 +348,8 @@ router.get('/doi-tuyen', (req, res) => {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${escapeHtml(title)} | ScoreLine</title>
   <meta name="description" content="${escapeHtml(description)}">
-  <meta name="keywords" content="đội tuyển quốc gia, world cup 2026, đội tuyển bóng đá, đội tuyển argentina, brazil, pháp, đội tuyển việt nam">
-  <meta name="robots" content="index, follow">
+  <meta name="keywords" content="đội tuyển quốc gia, world cup 2026, FIFA, UEFA, CONMEBOL, CONCACAF, AFC, CAF">
+  <meta name="robots" content="index, follow, max-image-preview:large">
   <link rel="canonical" href="${url}">
   <meta property="og:type" content="website">
   <meta property="og:url" content="${url}">
@@ -286,18 +360,25 @@ router.get('/doi-tuyen', (req, res) => {
   <meta property="og:site_name" content="ScoreLine">
   <script type="application/ld+json">${JSON.stringify(breadcrumbSchema)}</script>
   <script type="application/ld+json">${JSON.stringify(itemListSchema)}</script>
-  <style>${baseStyles()}</style>
+  <style>${listStyles()}</style>
 </head>
 <body>
   ${siteHeader()}
   <div class="container">
     <nav class="breadcrumb"><a href="/">Trang chủ</a> &rsaquo; <span>Đội tuyển QG</span></nav>
-    <div class="team-hero" style="display:block;text-align:left">
-      <h1 style="font-size:24px">🌍 Đội Tuyển Quốc Gia</h1>
-      <div class="nick">Hành trình tới World Cup 2026</div>
-      <p style="color:#cbd5e1;margin-top:10px;font-size:14px">${teams.length} đội tuyển bóng đá quốc gia — lịch sử, thành tích, cầu thủ chủ chốt và HLV trưởng. Tổ chức theo 5 liên đoàn lớn của FIFA.</p>
+
+    <div class="hero">
+      <div class="heroBg"></div>
+      <div class="heroBall" aria-hidden="true">⚽</div>
+      <div class="heroGlobe" aria-hidden="true">🌍</div>
+      <div class="heroContent">
+        <h1 class="heroH1">Đội Tuyển Quốc Gia</h1>
+        <p class="heroSub"><strong>${teams.length} đội tuyển</strong> – lịch sử, thành tích, cầu thủ chủ chốt và HLV trưởng. Tổ chức theo 5 liên đoàn lớn của FIFA.</p>
+      </div>
     </div>
-    ${sections}
+
+    ${sectionsHtml}
+
     ${authorByline({ publishedIso: datePublished, modifiedIso: dateModified, icon: '🌍' })}
     <div class="footer"><a href="${SITE_URL}">ScoreLine.io</a></div>
   </div>
