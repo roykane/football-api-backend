@@ -28,32 +28,23 @@ function currentSeasonTag() {
 function baseStyles() {
   return `
     *{margin:0;padding:0;box-sizing:border-box}
-    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.6;color:#e2e8f0;background:#0a0e1a;min-height:100vh}
-    a{color:#94a3b8;text-decoration:none}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.6;color:#1e293b;background:#f1f5f9;min-height:100vh}
+    a{color:#0f172a;text-decoration:none}
     .container{max-width:1280px;margin:0 auto;padding:16px}
-    .breadcrumb{font-size:13px;color:#64748b;margin-bottom:12px}.breadcrumb a{color:#94a3b8}
+    .breadcrumb{font-size:13px;color:#64748b;margin-bottom:12px}.breadcrumb a{color:#0f172a}
 
-    /* HERO */
-    @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
-    @keyframes glow{0%,100%{filter:drop-shadow(0 0 24px rgba(59,130,246,0.5)) drop-shadow(0 0 48px rgba(251,191,36,0.3))}50%{filter:drop-shadow(0 0 36px rgba(59,130,246,0.7)) drop-shadow(0 0 72px rgba(251,191,36,0.5))}}
-    .hero{position:relative;background:linear-gradient(135deg,#0a1628 0%,#1a2744 50%,#0f172a 100%);border-radius:14px;padding:36px 32px;margin-bottom:20px;overflow:hidden;border:1px solid rgba(251,191,36,0.25);min-height:200px;display:flex;align-items:center}
-    .heroBg{position:absolute;inset:0;opacity:.35;background:radial-gradient(circle at 80% 50%,rgba(59,130,246,0.6) 0%,transparent 40%),radial-gradient(circle at 90% 50%,rgba(251,191,36,0.4) 0%,transparent 50%);pointer-events:none}
-    .heroBall{position:absolute;right:-40px;top:50%;transform:translateY(-50%);font-size:200px;line-height:1;animation:float 4s ease-in-out infinite,glow 3s ease-in-out infinite;pointer-events:none}
-    .heroContent{position:relative;z-index:1}
-    .heroIcon{display:inline-block;font-size:32px;background:linear-gradient(135deg,#fbbf24,#f59e0b);width:50px;height:50px;border-radius:8px;text-align:center;line-height:50px;margin-right:14px;vertical-align:middle}
-    .heroH1{display:inline;font-size:36px;font-weight:900;color:#fbbf24;letter-spacing:1px;text-transform:uppercase}
-    .heroSub{margin-top:14px;font-size:15px;color:#cbd5e1;line-height:1.6;max-width:560px}
-    .heroSub strong{color:#fbbf24}
-    @media(max-width:768px){.hero{padding:24px 20px;min-height:140px}.heroH1{font-size:24px;letter-spacing:.5px}.heroIcon{width:40px;height:40px;font-size:24px;line-height:40px}.heroSub{font-size:13px}.heroBall{font-size:120px;right:-20px;opacity:.5}}
-    @media(max-width:480px){.heroBall{display:none}}
+    /* Banner hero — pre-baked image */
+    .heroBanner{width:100%;border-radius:14px;overflow:hidden;margin-bottom:20px;background:#0a1628;line-height:0}
+    .heroBanner img{display:block;width:100%;height:auto}
 
-    /* LEAGUE SECTION */
-    .leagueSection{background:linear-gradient(180deg,rgba(15,23,42,0.6),rgba(10,14,26,0.6));border-radius:14px;padding:18px;margin-bottom:18px;border:1px solid rgba(99,102,241,0.18)}
-    .leagueHeader{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid rgba(99,102,241,0.2)}
+    /* LEAGUE SECTION (light) */
+    .leagueSection{background:#fff;border-radius:12px;padding:20px;margin-bottom:18px;box-shadow:0 1px 3px rgba(15,23,42,0.06);border:1px solid #e2e8f0}
+    .leagueHeader{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;padding-bottom:14px;border-bottom:2px solid #fef3c7}
     .leagueTitle{display:flex;align-items:center;gap:12px}
-    .leagueIcon{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#4f46e5);display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff;flex-shrink:0;font-weight:800}
-    .leagueName{font-size:18px;font-weight:900;color:#fff;letter-spacing:1px;text-transform:uppercase}
-    .seasonTag{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:#cbd5e1;background:rgba(15,23,42,0.6);border:1px solid rgba(99,102,241,0.3);padding:6px 12px;border-radius:6px;letter-spacing:.5px}
+    .leagueIcon{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#fbbf24,#f59e0b);display:flex;align-items:center;justify-content:center;font-size:15px;color:#fff;flex-shrink:0;font-weight:900}
+    .leagueName{font-size:18px;font-weight:900;color:#0f172a;letter-spacing:.8px;text-transform:uppercase}
+    .seasonTag{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:#64748b;background:#fef3c7;padding:6px 12px;border-radius:6px;letter-spacing:.4px;border:1px solid #fde68a}
+    @media(max-width:768px){.leagueSection{padding:14px}}
     @media(max-width:480px){.leagueHeader{flex-direction:column;align-items:flex-start}.leagueName{font-size:15px}}
 
     /* 6-card row */
@@ -61,45 +52,48 @@ function baseStyles() {
     @media(max-width:1280px){.cardsGrid{grid-template-columns:repeat(3,1fr)}}
     @media(max-width:640px){.cardsGrid{grid-template-columns:repeat(2,1fr)}}
     @media(max-width:380px){.cardsGrid{grid-template-columns:1fr}}
-    .card{background:rgba(15,23,42,0.7);border:1px solid rgba(99,102,241,0.18);border-radius:10px;padding:16px 12px;display:flex;flex-direction:column;align-items:center;text-align:center;min-height:200px;position:relative;overflow:hidden}
-    .metricIcon{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff;margin-bottom:14px}
-    .metricIcon.purple{background:linear-gradient(135deg,#a78bfaaa,#a78bfa);box-shadow:0 6px 16px rgba(167,139,250,0.4)}
-    .metricIcon.blue{background:linear-gradient(135deg,#3b82f6aa,#3b82f6);box-shadow:0 6px 16px rgba(59,130,246,0.4)}
-    .metricIcon.teal{background:linear-gradient(135deg,#14b8a6aa,#14b8a6);box-shadow:0 6px 16px rgba(20,184,166,0.4)}
-    .metricNum{font-size:36px;font-weight:900;line-height:1;letter-spacing:-1px;margin-bottom:6px}
-    .metricNum.purple{color:#a78bfa;text-shadow:0 0 24px rgba(167,139,250,0.35)}
-    .metricNum.blue{color:#3b82f6;text-shadow:0 0 24px rgba(59,130,246,0.35)}
-    .metricNum.teal{color:#14b8a6;text-shadow:0 0 24px rgba(20,184,166,0.35)}
-    .metricLabel{font-size:10px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
-    .spark{width:100%;height:32px;margin-top:auto;opacity:.5}
 
-    /* Team highlight cards */
-    .teamCard{border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:14px 12px;display:flex;flex-direction:column;align-items:center;text-align:center;min-height:200px;position:relative;overflow:hidden}
-    .teamCard.red{background:linear-gradient(135deg,#7f1d1d 0%,#991b1b 50%,#0f172a 100%)}
-    .teamCard.blue{background:linear-gradient(135deg,#1e3a8a 0%,#2563eb 50%,#0f172a 100%)}
-    .teamCard.green{background:linear-gradient(135deg,#14532d 0%,#15803d 50%,#0f172a 100%)}
-    .teamCard::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(135deg,transparent,transparent 8px,rgba(255,255,255,0.04) 8px,rgba(255,255,255,0.04) 9px);pointer-events:none}
-    .teamLogoFrame{width:64px;height:64px;display:flex;align-items:center;justify-content:center;margin-bottom:10px;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.4));position:relative;z-index:1}
+    /* Metric card (light tinted background) */
+    .metricCard{border:1px solid #e2e8f0;border-radius:10px;padding:14px 12px;display:flex;flex-direction:column;align-items:center;text-align:center;min-height:180px}
+    .metricCard.purple{background:#faf5ff}
+    .metricCard.blue{background:#eff6ff}
+    .metricCard.teal{background:#f0fdfa}
+    .metricIcon{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;margin-bottom:12px}
+    .metricIcon.purple{background:linear-gradient(135deg,#a78bfacc,#a78bfa);box-shadow:0 4px 10px rgba(167,139,250,0.2)}
+    .metricIcon.blue{background:linear-gradient(135deg,#3b82f6cc,#3b82f6);box-shadow:0 4px 10px rgba(59,130,246,0.2)}
+    .metricIcon.teal{background:linear-gradient(135deg,#14b8a6cc,#14b8a6);box-shadow:0 4px 10px rgba(20,184,166,0.2)}
+    .metricNum{font-size:32px;font-weight:900;line-height:1;letter-spacing:-.5px;margin-bottom:6px}
+    .metricNum.purple{color:#a78bfa}.metricNum.blue{color:#3b82f6}.metricNum.teal{color:#14b8a6}
+    .metricLabel{font-size:10px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.8px;margin-bottom:auto}
+    .spark{width:100%;height:32px;margin-top:10px}
+
+    /* Team highlight cards (filled gradient) */
+    .teamCard{border-radius:10px;padding:14px 12px;display:flex;flex-direction:column;align-items:center;text-align:center;min-height:180px;position:relative;overflow:hidden}
+    .teamCard.red{background:linear-gradient(135deg,#dc2626 0%,#7f1d1d 70%)}
+    .teamCard.blue{background:linear-gradient(135deg,#2563eb 0%,#1e3a8a 70%)}
+    .teamCard.green{background:linear-gradient(135deg,#16a34a 0%,#14532d 70%)}
+    .teamCard::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(135deg,transparent,transparent 8px,rgba(255,255,255,0.05) 8px,rgba(255,255,255,0.05) 9px);pointer-events:none}
+    .teamLogoFrame{width:56px;height:56px;display:flex;align-items:center;justify-content:center;margin-bottom:10px;filter:drop-shadow(0 4px 10px rgba(0,0,0,0.35));position:relative;z-index:1}
     .teamLogoFrame img{width:100%;height:100%;object-fit:contain}
-    .teamName{font-size:14px;font-weight:900;color:#fff;text-transform:uppercase;letter-spacing:.5px;line-height:1.2;margin-bottom:4px;position:relative;z-index:1;word-break:break-word}
-    .teamLabel{font-size:10px;font-weight:700;color:rgba(255,255,255,0.85);text-transform:uppercase;letter-spacing:.5px;line-height:1.3;margin-bottom:auto;position:relative;z-index:1}
-    .teamCta{margin-top:10px;display:inline-block;padding:6px 14px;background:rgba(255,255,255,0.08);color:#fff;border-radius:5px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;text-decoration:none;position:relative;z-index:1}
-    .teamCta.red{border:1px solid #fca5a5}.teamCta.red:hover{background:#fca5a5;color:#0a0e1a}
-    .teamCta.blue{border:1px solid #93c5fd}.teamCta.blue:hover{background:#93c5fd;color:#0a0e1a}
-    .teamCta.green{border:1px solid #86efac}.teamCta.green:hover{background:#86efac;color:#0a0e1a}
+    .teamName{font-size:13px;font-weight:900;color:#fff;text-transform:uppercase;letter-spacing:.4px;line-height:1.2;margin-bottom:4px;position:relative;z-index:1;word-break:break-word}
+    .teamLabel{font-size:10px;font-weight:700;color:rgba(255,255,255,0.85);text-transform:uppercase;letter-spacing:.4px;line-height:1.3;margin-bottom:auto;position:relative;z-index:1}
+    .teamCta{margin-top:10px;display:inline-block;padding:6px 14px;background:rgba(255,255,255,0.12);color:#fff;border-radius:5px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;text-decoration:none;position:relative;z-index:1}
+    .teamCta.red{border:1px solid #fca5a5}.teamCta.red:hover{background:#fca5a5;color:#0f172a}
+    .teamCta.blue{border:1px solid #93c5fd}.teamCta.blue:hover{background:#93c5fd;color:#0f172a}
+    .teamCta.green{border:1px solid #86efac}.teamCta.green:hover{background:#86efac;color:#0f172a}
 
-    /* Feature strip */
-    .features{background:linear-gradient(180deg,rgba(15,23,42,0.6),rgba(10,14,26,0.8));border-radius:14px;padding:18px 24px;margin-top:20px;border:1px solid rgba(99,102,241,0.18);display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+    /* Feature strip (light) */
+    .features{background:#fff;border-radius:12px;padding:18px 22px;margin-top:18px;border:1px solid #e2e8f0;box-shadow:0 1px 3px rgba(15,23,42,0.04);display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
     @media(max-width:768px){.features{grid-template-columns:repeat(2,1fr);padding:16px}}
     @media(max-width:380px){.features{grid-template-columns:1fr}}
     .feat{display:flex;align-items:flex-start;gap:10px}
-    .featIcon{width:32px;height:32px;border-radius:8px;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-    .featIcon.amber{background:rgba(251,191,36,0.13);border:1px solid rgba(251,191,36,0.4);color:#fbbf24}
-    .featIcon.green{background:rgba(34,197,94,0.13);border:1px solid rgba(34,197,94,0.4);color:#22c55e}
+    .featIcon{width:34px;height:34px;border-radius:8px;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .featIcon.amber{background:rgba(251,191,36,0.13);border:1px solid rgba(251,191,36,0.4);color:#d97706}
+    .featIcon.green{background:rgba(34,197,94,0.13);border:1px solid rgba(34,197,94,0.4);color:#16a34a}
     .featIcon.blue{background:rgba(59,130,246,0.13);border:1px solid rgba(59,130,246,0.4);color:#3b82f6}
     .featIcon.purple{background:rgba(167,139,250,0.13);border:1px solid rgba(167,139,250,0.4);color:#a78bfa}
-    .featTitle{font-size:11px;font-weight:800;color:#fff;text-transform:uppercase;letter-spacing:.5px;line-height:1;margin-bottom:4px}
-    .featDesc{font-size:11px;color:#94a3b8;line-height:1.4}
+    .featTitle{font-size:11px;font-weight:800;color:#0f172a;text-transform:uppercase;letter-spacing:.5px;line-height:1;margin-bottom:4px}
+    .featDesc{font-size:11px;color:#64748b;line-height:1.4}
 
     .footer{text-align:center;margin-top:24px;padding:16px;color:#94a3b8;font-size:13px}
   `;
@@ -180,19 +174,19 @@ router.get('/thong-ke', async (req, res) => {
             <span class="seasonTag">📅 Mùa giải ${seasonTag}</span>
           </div>
           <div class="cardsGrid">
-            <div class="card">
+            <div class="metricCard purple">
               <div class="metricIcon purple">🥅</div>
               <div class="metricNum purple">${matchesPlayed > 0 ? Math.round(matchesPlayed) : '-'}</div>
               <div class="metricLabel">Trận đã đấu</div>
               ${sparkSvg('#a78bfa')}
             </div>
-            <div class="card">
+            <div class="metricCard blue">
               <div class="metricIcon blue">🏆</div>
               <div class="metricNum blue">${totalGoals}</div>
               <div class="metricLabel">Tổng bàn thắng</div>
               ${barsSvg('#3b82f6')}
             </div>
-            <div class="card">
+            <div class="metricCard teal">
               <div class="metricIcon teal">⚽</div>
               <div class="metricNum teal">${avgGoals}</div>
               <div class="metricLabel">Bàn / trận</div>
@@ -253,14 +247,8 @@ router.get('/thong-ke', async (req, res) => {
   <div class="container">
     <nav class="breadcrumb"><a href="/">Trang chủ</a> &rsaquo; <span>Thống kê</span></nav>
 
-    <div class="hero">
-      <div class="heroBg"></div>
-      <div class="heroBall" aria-hidden="true">⚽</div>
-      <div class="heroContent">
-        <span class="heroIcon">📊</span>
-        <h1 class="heroH1">Thống Kê Bóng Đá</h1>
-        <p class="heroSub">Số liệu mùa giải hiện tại tại các giải đấu hàng đầu — cập nhật theo dữ liệu <strong>BXH</strong>.</p>
-      </div>
+    <div class="heroBanner">
+      <img src="/images/thong-ke.webp" alt="Thống Kê Bóng Đá" width="1200" height="300">
     </div>
 
     ${sectionsHtml}
