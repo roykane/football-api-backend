@@ -100,6 +100,23 @@ const ArticleSchema = new mongoose.Schema({
     unique: true,
   },
 
+  // Generic dedup for data-derived news (suspension/injury/lineup/streak/milestone/topscorer-race).
+  // Format example: "suspension-{playerId}-{leagueId}-{season}-{round}".
+  // Sparse + unique so each event triggers at most one article.
+  metadata: {
+    dedupKey: {
+      type: String,
+      sparse: true,
+      unique: true,
+      index: true,
+    },
+    type: {
+      type: String,
+      enum: ['suspension', 'injury', 'lineup', 'form-streak', 'milestone', 'topscorer-race'],
+      index: true,
+    },
+  },
+
   // Match context for match-report articles. Optional — only populated for source='match-report'.
   matchInfo: {
     homeTeam: {
@@ -226,6 +243,13 @@ ArticleSchema.statics.existsByOriginalTitle = async function(originalTitle) {
 ArticleSchema.statics.existsByFixtureId = async function(fixtureId) {
   if (!fixtureId) return false;
   const count = await this.countDocuments({ fixtureId });
+  return count > 0;
+};
+
+// Static method: Check if data-derived news exists (by metadata.dedupKey)
+ArticleSchema.statics.existsByDedupKey = async function(dedupKey) {
+  if (!dedupKey) return false;
+  const count = await this.countDocuments({ 'metadata.dedupKey': dedupKey });
   return count > 0;
 };
 

@@ -30,6 +30,7 @@ const connectArticlesDB = require('./config/database');
 const { startNewsScheduler } = require('./services/news-scheduler');
 const { startMatchReportScheduler } = require('./services/match-report-scheduler');
 const { startTransferNewsScheduler } = require('./services/transfer-news-scheduler');
+const { startDataDerivedNewsScheduler } = require('./services/news-data-derived/scheduler');
 const teamSync = require('./services/team-sync');
 
 const app = express();
@@ -551,6 +552,9 @@ connectMongoDB().then(async () => {
     startMatchReportScheduler();
     // Transfer news scheduler — generates articles from real /transfers data twice daily.
     startTransferNewsScheduler();
+    // Data-derived news scheduler — 6 triggers (suspension/injury/lineup/streak/milestone/topscorer-race)
+    // gated by ENABLE_DATA_DERIVED_NEWS env var, hard cap 15 articles/day, status='draft'.
+    startDataDerivedNewsScheduler(footballApi);
     teamSync.start();
   } catch (err) {
     console.error('Failed to setup Articles DB and scheduler:', err);
