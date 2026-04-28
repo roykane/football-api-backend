@@ -1830,21 +1830,43 @@ router.get('/:id/detail', async (req, res) => {
       });
 
     } else if (matchDate) {
-      // Fetch by date and search for matching timestamp
-      console.log(`   📥 Fetching fixtures for ${matchDate} from API-Sports...`);
-      const response = await footballApi.get('/fixtures', {
-        params: {
-          date: matchDate,
-          timezone: 'Asia/Bangkok'
-        }
-      });
+      // Build a 3-day UTC window around the slug timestamp.
+      //
+      // Why: the slug encodes time in UTC (matches buildMatchSlug), but
+      // API-Sports' /fixtures expects a `date` and (when paired with
+      // timezone=Asia/Bangkok) treats that date in Bangkok local time.
+      // A match at e.g. 2026-05-02 19:30 UTC is 2026-05-03 02:30 Bangkok
+      // — querying date=2026-05-02 in Bangkok TZ misses it entirely.
+      // Solution: fetch UTC date ±1 day with no timezone (API-Sports
+      // defaults to UTC) and merge. Timestamp/team-name matching then
+      // works regardless of which calendar day the fixture lands on.
+      const dayMs = 86_400_000;
+      const baseMs = new Date(matchDate + 'T00:00:00.000Z').getTime();
+      const dates = [
+        new Date(baseMs - dayMs).toISOString().split('T')[0],
+        matchDate,
+        new Date(baseMs + dayMs).toISOString().split('T')[0],
+      ];
+      console.log(`   📥 Fetching fixtures for ${dates.join(', ')} (UTC) from API-Sports...`);
 
-      if (!response.data?.response || response.data.response.length === 0) {
-        console.log(`   ❌ No fixtures found for this date`);
+      const responses = await Promise.allSettled(
+        dates.map(d => footballApi.get('/fixtures', { params: { date: d } }))
+      );
+      const fixturesById = new Map();
+      for (const r of responses) {
+        if (r.status !== 'fulfilled') continue;
+        for (const f of (r.value.data?.response || [])) {
+          if (f?.fixture?.id != null) fixturesById.set(f.fixture.id, f);
+        }
+      }
+      const allFixtures = Array.from(fixturesById.values());
+
+      if (allFixtures.length === 0) {
+        console.log(`   ❌ No fixtures found in the ±1-day window`);
         return res.status(404).json({
           success: false,
           error: 'Match not found',
-          message: `No matches found on ${matchDate}`
+          message: `No matches found around ${matchDate}`
         });
       }
 
@@ -1852,24 +1874,42 @@ router.get('/:id/detail', async (req, res) => {
       const parts = id.split('-');
       const timestamp = parseInt(parts[parts.length - 1]);
 
-      let fixture = response.data.response.find(f => {
+      let fixture = allFixtures.find(f => {
         const fixtureTimestamp = new Date(f.fixture.date).getTime();
         return fixtureTimestamp === timestamp;
       });
 
-      // Fallback: Search by team names if timestamp doesn't match
+      // Fallback: Search by team names if timestamp doesn't match.
+      // We compare in BOTH directions so a slug like "porto-vs-alverca"
+      // still matches an API-Sports fixture named "FC Porto" — the
+      // user-typed token must appear in (or contain) the API team name.
       if (!fixture) {
         console.log(`   ⚠️  No exact timestamp match, trying team name search...`);
-
-        // Extract team names from slug (before the timestamp)
         const slugWithoutTimestamp = parts.slice(0, -1).join('-');
+        const userParts = slugWithoutTimestamp.split('-vs-');
 
-        // Search for matches with similar team names
-        fixture = response.data.response.find(f => {
-          const homeSlug = (f.teams?.home?.name || '').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-          const awaySlug = (f.teams?.away?.name || '').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+        const teamMatches = (apiSlug, userToken) => {
+          if (!apiSlug || !userToken) return false;
+          if (apiSlug === userToken) return true;
+          if (apiSlug.includes(userToken) || userToken.includes(apiSlug)) return true;
+          // Token-level overlap for compound names ("real-madrid" vs "madrid").
+          const apiTokens = apiSlug.split('-').filter(t => t.length >= 4);
+          const userTokens = userToken.split('-').filter(t => t.length >= 4);
+          return apiTokens.some(at => userTokens.some(ut => at === ut));
+        };
 
-          // Check if slug contains both team names
+        const slugify = (name) =>
+          (name || '').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+
+        fixture = allFixtures.find(f => {
+          const homeSlug = slugify(f.teams?.home?.name);
+          const awaySlug = slugify(f.teams?.away?.name);
+          if (userParts.length === 2) {
+            // Try home/away in either order
+            return (teamMatches(homeSlug, userParts[0]) && teamMatches(awaySlug, userParts[1]))
+              || (teamMatches(homeSlug, userParts[1]) && teamMatches(awaySlug, userParts[0]));
+          }
+          // No '-vs-' divider — fall back to simple containment (legacy slugs).
           return slugWithoutTimestamp.includes(homeSlug) && slugWithoutTimestamp.includes(awaySlug);
         });
       }
