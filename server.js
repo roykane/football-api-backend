@@ -256,6 +256,13 @@ app.use('/stadium-images', express.static(path.join(__dirname, 'public', 'stadiu
   immutable: true,
 }));
 
+// Stadium photos — manual upload set (slug-named .webp).
+// Used by data/stadiums.js → image: "/sanvandong/<slug>.webp".
+app.use('/sanvandong', express.static(path.join(__dirname, 'public', 'sanvandong'), {
+  maxAge: '30d',
+  immutable: true,
+}));
+
 // Trophy / award images — populated by scripts/download-trophy-images.js.
 app.use('/trophy-images', express.static(path.join(__dirname, 'public', 'trophy-images'), {
   maxAge: '30d',

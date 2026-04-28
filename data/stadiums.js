@@ -20,7 +20,7 @@ const stadiums = [
     opened: 1957,
     architect: 'Francesc Mitjans',
     surface: 'Cỏ tự nhiên',
-    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Camp_Nou_aerial.jpg/1280px-Camp_Nou_aerial.jpg',
+    image: '/sanvandong/camp-nou.webp',
     bio: 'Camp Nou là sân vận động lớn nhất Châu Âu (99,354 chỗ), nhà của FC Barcelona từ 1957. Đây là nơi chứng kiến nhiều khoảnh khắc lịch sử của Lionel Messi, Johan Cruyff và Pep Guardiola. Đang trong quá trình đại tu (2023-2026) để nâng sức chứa lên 105,000.',
     famousMatches: [
       'Champions League 2008/09 vs Chelsea (Iniesta phút 90+3)',
@@ -41,7 +41,7 @@ const stadiums = [
     opened: 1947,
     architect: 'Manuel Muñoz Monasterio',
     surface: 'Cỏ tự nhiên (có thể rút gọn để chuyển concert)',
-    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Santiago_Bernabeu_2023.jpg/1280px-Santiago_Bernabeu_2023.jpg',
+    image: '/sanvandong/santiago-bernabeu.webp',
     bio: 'Santiago Bernabéu là sân nhà của Real Madrid từ 1947, mang tên chủ tịch huyền thoại Santiago Bernabéu Yeste. Mới đại tu hoàn thành 2023 với mái che di động và mặt cỏ "lift" có thể giấu để tổ chức concert.',
     famousMatches: [
       'Chung kết Champions League 1957, 1969, 1980, 2010',
@@ -62,7 +62,7 @@ const stadiums = [
     opened: 1910,
     architect: 'Archibald Leitch',
     surface: 'Cỏ tự nhiên',
-    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/Old_Trafford_inside_20060726_1.jpg/1280px-Old_Trafford_inside_20060726_1.jpg',
+    image: '/sanvandong/old-trafford.webp',
     bio: 'Old Trafford được Sir Bobby Charlton gọi là "Sân Khấu Của Những Giấc Mơ" — sân nhà Manchester United từ 1910. Đây là sân vận động CLB lớn nhất Anh (74,310 chỗ).',
     famousMatches: [
       'Chung kết FA Cup 1915, 1939, 1946 — sân chính thay Wembley',
@@ -83,7 +83,7 @@ const stadiums = [
     opened: 2007,
     architect: 'Foster + Partners + Populous',
     surface: 'Cỏ tự nhiên',
-    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Wembley_Stadium_interior.jpg/1280px-Wembley_Stadium_interior.jpg',
+    image: '/sanvandong/wembley.webp',
     bio: 'Wembley là sân nhà của ĐT Anh và là sân vận động lớn thứ 2 Châu Âu (90,000 chỗ) sau Camp Nou. Sân hiện đại khánh thành 2007, thay thế Wembley cũ (vô địch World Cup 1966 ở đây).',
     famousMatches: [
       'Chung kết World Cup 1966 (Anh 4-2 Tây Đức)',
@@ -104,7 +104,7 @@ const stadiums = [
     opened: 2005,
     architect: 'Herzog & de Meuron',
     surface: 'Cỏ tự nhiên',
-    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Allianz_Arena_Sept_2014.jpg/1280px-Allianz_Arena_Sept_2014.jpg',
+    image: '/sanvandong/allianz-arena.webp',
     bio: 'Allianz Arena nổi tiếng với mặt ngoài bằng các tấm ETFE phát sáng đổi màu (đỏ Bayern, trắng ĐT Đức). Khánh thành 2005, là 1 trong 12 sân tổ chức UEFA Euro 2024.',
     famousMatches: [
       'Chung kết UEFA Champions League 2012 (Bayern thua Chelsea luân lưu)',
@@ -125,7 +125,7 @@ const stadiums = [
     opened: 1926,
     architect: 'Ulisse Stacchini & Alberto Cugini',
     surface: 'Cỏ tự nhiên',
-    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/San_Siro_panoramic.jpg/1280px-San_Siro_panoramic.jpg',
+    image: '/sanvandong/san-siro.webp',
     bio: 'San Siro là sân chung của hai gã khổng lồ AC Milan và Inter Milan — duy nhất ở Châu Âu. Khánh thành 1926, mang tên Giuseppe Meazza (huyền thoại bóng đá Ý) sau 1980.',
     famousMatches: [
       'Chung kết UEFA Champions League 1965, 1970, 2001, 2016',
@@ -146,7 +146,7 @@ const stadiums = [
     opened: 1884,
     architect: 'Archibald Leitch (Kop stand 1906)',
     surface: 'Cỏ tự nhiên',
-    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/76/Anfield_2018.jpg/1280px-Anfield_2018.jpg',
+    image: '/sanvandong/anfield.webp',
     bio: 'Anfield là sân nhà Liverpool từ 1892, nổi tiếng với khán đài The Kop và bài hát "You\'ll Never Walk Alone" trước trận. Đêm Champions League ở Anfield là không khí huyền thoại nhất bóng đá Anh.',
     famousMatches: [
       'Liverpool 4-0 Barcelona bán kết UCL 2018/19 (lội ngược dòng từ thua 0-3)',
@@ -165,7 +165,7 @@ const stadiums = [
     opened: 1950,
     architect: 'Pedro Paulo Bernardes Bastos & cộng sự',
     surface: 'Cỏ tự nhiên',
-    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/Maracana_Stadium.jpg/1280px-Maracana_Stadium.jpg',
+    image: '/sanvandong/maracana.webp',
     bio: 'Maracanã là sân vận động lịch sử của Brazil, từng tổ chức 2 chung kết World Cup (1950, 2014). Tại đây xảy ra "Maracanazo" 1950 — Brazil thua Uruguay 1-2 trên sân nhà, 200,000 fan im lặng.',
     famousMatches: [
       'Chung kết World Cup 1950 (Uruguay 2-1 Brazil) — "Maracanazo"',
@@ -184,7 +184,7 @@ const stadiums = [
     opened: 2021,
     architect: 'Foster + Partners',
     surface: 'Cỏ tự nhiên + hệ thống làm mát',
-    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/Lusail_Stadium.jpg/1280px-Lusail_Stadium.jpg',
+    image: '/sanvandong/lusail-stadium.webp',
     bio: 'Lusail Stadium là sân vận động chính của World Cup 2022, nơi diễn ra chung kết huyền thoại Argentina vs Pháp (3-3, 4-2 luân lưu). Thiết kế hình bát đồng cách điệu đặc trưng văn hóa Ả Rập.',
     famousMatches: [
       'Chung kết FIFA World Cup 2022 (Argentina 3-3 Pháp, 4-2 luân lưu) — Messi vô địch',
@@ -205,7 +205,7 @@ const stadiums = [
     opened: 1972,
     architect: 'Roger Taillibert',
     surface: 'Cỏ tự nhiên',
-    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Parc_des_Princes_2017.jpg/1280px-Parc_des_Princes_2017.jpg',
+    image: '/sanvandong/parc-des-princes.webp',
     bio: 'Parc des Princes là sân nhà Paris Saint-Germain từ 1973. Trong giai đoạn Mbappé-Neymar-Messi (2021-2024), đây là sân thu hút quốc tế. Cũng là sân chính của ĐT Pháp đến khi Stade de France xây 1998.',
     famousMatches: [
       'Chung kết UEFA Cup Winners\' Cup 1995 (PSG)',
@@ -225,7 +225,7 @@ const stadiums = [
     opened: 1966,
     architect: 'Pedro Ramírez Vázquez',
     surface: 'Cỏ tự nhiên',
-    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/Estadio_Azteca_2007.jpg/1280px-Estadio_Azteca_2007.jpg',
+    image: '/sanvandong/estadio-azteca.webp',
     bio: 'Estadio Azteca là sân vận động duy nhất tổ chức 2 chung kết World Cup (1970 - Brazil; 1986 - Argentina). Sẽ là sân tổ chức trận khai mạc World Cup 2026 — World Cup thứ 3 tại đây.',
     famousMatches: [
       'Chung kết World Cup 1970 (Brazil 4-1 Italy) — Pelé vô địch lần 3',
@@ -246,7 +246,7 @@ const stadiums = [
     opened: 2006,
     architect: 'Populous',
     surface: 'Cỏ tự nhiên',
-    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f0/Arsenal_emirates_stadium.jpg/1280px-Arsenal_emirates_stadium.jpg',
+    image: '/sanvandong/emirates-stadium.webp',
     bio: 'Emirates Stadium là sân nhà Arsenal từ 2006, thay thế Highbury lịch sử. Tên có hợp đồng tài trợ với hãng hàng không Emirates đến 2028.',
     famousMatches: [
       'Arsenal 5-1 Chelsea Premier League 2007',
@@ -267,7 +267,7 @@ const stadiums = [
     opened: 1877,
     architect: 'Archibald Leitch (1905 stands)',
     surface: 'Cỏ tự nhiên',
-    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Stamford_Bridge_pitch_2013.jpg/1280px-Stamford_Bridge_pitch_2013.jpg',
+    image: '/sanvandong/stamford-bridge.webp',
     bio: 'Stamford Bridge là sân nhà Chelsea từ 1905. Một trong những sân lâu đời nhất Premier League, từng là sân chính của Hiệp hội bóng đá Anh thập niên 1920 (chung kết FA Cup).',
     famousMatches: [
       'Chelsea 6-1 Wolves Premier League 2010 — Drogba hattrick',
@@ -288,7 +288,7 @@ const stadiums = [
     opened: 2002,
     architect: 'Arup Sport',
     surface: 'Cỏ tự nhiên',
-    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/01/Etihad_Stadium_2010.jpg/1280px-Etihad_Stadium_2010.jpg',
+    image: '/sanvandong/etihad-stadium.webp',
     bio: 'Etihad Stadium ban đầu xây cho Commonwealth Games 2002, sau đó Manchester City chuyển vào năm 2003. Đặt tên theo nhà tài trợ Etihad Airways từ 2011.',
     famousMatches: [
       'Manchester City 6-0 Chelsea Premier League 2019',
@@ -309,7 +309,7 @@ const stadiums = [
     opened: 2019,
     architect: 'Populous',
     surface: 'Cỏ tự nhiên + sân nhân tạo NFL phía dưới',
-    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/Tottenham_Hotspur_Stadium_2019.jpg/1280px-Tottenham_Hotspur_Stadium_2019.jpg',
+    image: '/sanvandong/tottenham-hotspur-stadium.webp',
     bio: 'Tottenham Hotspur Stadium là sân vận động hiện đại nhất Anh khánh thành 2019, có mặt cỏ trượt để đổi giữa cỏ bóng đá và sân nhân tạo NFL phía dưới — duy nhất thế giới.',
     famousMatches: [
       'Spurs 1-0 Manchester City Premier League 2019',
@@ -330,7 +330,7 @@ const stadiums = [
     opened: 1974,
     architect: 'Planungsgruppe Drahtler',
     surface: 'Cỏ tự nhiên',
-    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/Westfalenstadion_2011.jpg/1280px-Westfalenstadion_2011.jpg',
+    image: '/sanvandong/signal-iduna-park.webp',
     bio: 'Signal Iduna Park (Westfalenstadion) là sân của Borussia Dortmund, nổi tiếng với "Yellow Wall" — khán đài Sud Tribune sức chứa 25,000 fan đứng — lớn nhất Châu Âu.',
     famousMatches: [
       'Bán kết UCL 2012/13 vs Real Madrid (BVB 4-1)',
@@ -351,7 +351,7 @@ const stadiums = [
     opened: 2017,
     architect: 'Antonio Cruz & Antonio Ortiz',
     surface: 'Cỏ tự nhiên',
-    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5d/Wanda_Metropolitano.jpg/1280px-Wanda_Metropolitano.jpg',
+    image: '/sanvandong/metropolitano.webp',
     bio: 'Atlético Madrid chuyển từ Vicente Calderón sang Metropolitano năm 2017. Tổ chức chung kết UCL 2018/19 (Liverpool 2-0 Tottenham).',
     famousMatches: [
       'Chung kết UEFA Champions League 2018/19 (Liverpool 2-0 Tottenham)',
@@ -371,7 +371,7 @@ const stadiums = [
     opened: 1940,
     architect: 'José Luis Delpini, Viktor Sulčič, Raúl Bes',
     surface: 'Cỏ tự nhiên',
-    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/La_Bombonera.jpg/1280px-La_Bombonera.jpg',
+    image: '/sanvandong/la-bombonera.webp',
     bio: 'La Bombonera ("Cái Hộp Sô-cô-la") là sân huyền thoại của Boca Juniors, hình dạng độc đáo với 3 khán đài thẳng và 1 khán đài phẳng. Maradona là biểu tượng vĩnh cửu của sân.',
     famousMatches: [
       'Superclasico Boca Juniors vs River Plate (derby Argentina nóng nhất)',
@@ -391,7 +391,7 @@ const stadiums = [
     opened: 1922,
     architect: 'Myron Hunt',
     surface: 'Cỏ tự nhiên',
-    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Rose_Bowl_aerial.jpg/1280px-Rose_Bowl_aerial.jpg',
+    image: '/sanvandong/rose-bowl.webp',
     bio: 'Rose Bowl tổ chức chung kết World Cup 1994 (Brazil 0-0 Italy, Brazil thắng luân lưu 3-2). Là sân biểu tượng của bóng đá Mỹ và đã được chọn cho World Cup 2026.',
     famousMatches: [
       'Chung kết FIFA World Cup 1994 (Brazil 0-0 Italy, 3-2 luân lưu)',
@@ -412,7 +412,7 @@ const stadiums = [
     opened: 1998,
     architect: 'Michel Macary, Aymeric Zublena',
     surface: 'Cỏ tự nhiên',
-    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Stade_de_France_aerial.jpg/1280px-Stade_de_France_aerial.jpg',
+    image: '/sanvandong/stade-de-france.webp',
     bio: 'Stade de France là sân vận động quốc gia Pháp, xây cho World Cup 1998 — nơi Pháp vô địch World Cup đầu tiên trong lịch sử. Cũng tổ chức chung kết Champions League 2022.',
     famousMatches: [
       'Chung kết FIFA World Cup 1998 (Pháp 3-0 Brazil)',
