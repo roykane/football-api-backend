@@ -210,9 +210,7 @@ function buildArticleBody(content) {
     content.teamAnalysis,
     content.h2hHistory,
     content.formAnalysis,
-    content.oddsAnalysis,
     content.prediction,
-    content.bettingTips,
   ].filter(Boolean);
   return plainTextFromMd(parts.join('\n\n'), 5000);
 }
@@ -312,14 +310,6 @@ function renderSoiKeoHtml(article, thumbnailUrl) {
       "@type": "SportsOrganization",
       "name": leagueNameRaw || 'Scoreline.io',
       "url": SITE_URL
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": url,
-      "price": "0",
-      "priceCurrency": "VND",
-      "availability": "https://schema.org/InStock",
-      "validFrom": matchInfo?.matchDate
     }
   };
 
@@ -369,25 +359,11 @@ function renderSoiKeoHtml(article, thumbnailUrl) {
         ${renderBody(content.formAnalysis)}
       </div>`);
   }
-  if (content?.oddsAnalysis) {
-    sections.push(`
-      <div class="section-card">
-        <h2><span class="section-icon">💹</span> Nhận định kèo ${homeName} vs ${awayName}</h2>
-        ${renderBody(content.oddsAnalysis)}
-      </div>`);
-  }
   if (content?.prediction) {
     sections.push(`
       <div class="section-card prediction-card">
         <h2><span class="section-icon">🎯</span> Dự đoán kết quả ${homeName} vs ${awayName}</h2>
         ${renderBody(content.prediction)}
-      </div>`);
-  }
-  if (content?.bettingTips) {
-    sections.push(`
-      <div class="section-card tips-card">
-        <h2><span class="section-icon">🔥</span> Kèo khuyên chọn ${homeName} vs ${awayName}</h2>
-        ${renderBody(content.bettingTips)}
       </div>`);
   }
 

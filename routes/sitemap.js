@@ -43,7 +43,6 @@ const STATIC_PAGES = [
   { path: '/lich-thi-dau', priority: '0.9', changefreq: 'daily' },
   { path: '/ket-qua-bong-da', priority: '0.9', changefreq: 'hourly' },
   { path: '/bang-xep-hang', priority: '0.8', changefreq: 'daily' },
-  { path: '/ty-le-keo', priority: '0.6', changefreq: 'weekly' },
   { path: '/about', priority: '0.5', changefreq: 'monthly' },
   { path: '/help', priority: '0.5', changefreq: 'monthly' },
   { path: '/privacy', priority: '0.3', changefreq: 'yearly' },

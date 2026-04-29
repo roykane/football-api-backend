@@ -870,14 +870,6 @@ router.get('/doi-dau/:slug', async (req, res) => {
         name: leagueNameSe || 'Scoreline.io',
         url: SITE_URL,
       },
-      offers: {
-        '@type': 'Offer',
-        url: url,
-        price: '0',
-        priceCurrency: 'VND',
-        availability: 'https://schema.org/InStock',
-        validFrom: matchInfo?.matchDate,
-      },
       homeTeam: { '@type': 'SportsTeam', name: homeName, image: homeLogo },
       awayTeam: { '@type': 'SportsTeam', name: awayName, image: awayLogo },
     };
@@ -1031,7 +1023,7 @@ router.get('/lich-thi-dau/:leagueSlug', async (req, res) => {
         '@context': 'https://schema.org',
         '@type': 'SportsEvent',
         name: `${hName} vs ${aName}`,
-        description: `${hName} vs ${aName} tại giải ${league.name}. Xem lịch thi đấu, tỷ lệ kèo và livescore trên Scoreline.io.`,
+        description: `${hName} vs ${aName} tại giải ${league.name}. Xem lịch thi đấu, kết quả và livescore trên Scoreline.io.`,
         image: hLogo || `${SITE_URL}/og-image.jpg`,
         sport: 'Soccer',
         startDate: fDate,
@@ -1052,14 +1044,6 @@ router.get('/lich-thi-dau/:leagueSlug', async (req, res) => {
           '@type': 'SportsOrganization',
           name: league.name,
           url: SITE_URL,
-        },
-        offers: {
-          '@type': 'Offer',
-          url: matchUrl,
-          price: '0',
-          priceCurrency: 'VND',
-          availability: 'https://schema.org/InStock',
-          validFrom: fDate,
         },
       };
     });
@@ -1583,14 +1567,6 @@ router.get('/ket-qua/:dateSlug', async (req, res) => {
             url: SITE_URL,
           },
         }),
-        offers: {
-          '@type': 'Offer',
-          url: matchUrl,
-          price: '0',
-          priceCurrency: 'VND',
-          availability: 'https://schema.org/InStock',
-          validFrom: fDate,
-        },
       };
     });
 

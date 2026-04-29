@@ -6,8 +6,6 @@
  *   GET /privacy   — privacy policy (E-E-A-T trust signal)
  *   GET /terms     — terms of service
  *   GET /help      — help / FAQ
- *   GET /ty-le-keo — odds page hub (no longer in robots disallow list,
- *                    needs real content body to rank)
  *
  * Browsers fall through to the SPA via nginx; bots get this HTML.
  */
@@ -369,79 +367,13 @@ router.get('/help', (req, res) => {
   }));
 });
 
-// ===== /ty-le-keo =====
-// Note: this is a content overview page, NOT a betting/gambling page —
-// the user explicitly removed AdSense and gambling-related content. Title
-// and content stick to "tỷ lệ" (rates/odds as data points) and never
-// promote betting.
+// /ty-le-keo permanently removed (gambling cleanup 2026-04-29). Returns
+// 410 Gone so Google de-indexes faster than 404. Internal links to this
+// path were stripped in the same pass.
 router.get('/ty-le-keo', (req, res) => {
-  const url = `${SITE_URL}/ty-le-keo`;
-  const dates = getEntityDates({});
-
-  const body = `
-  <div class="container">
-    <nav class="breadcrumb"><a href="/">Trang chủ</a> &rsaquo; <span>Tỷ lệ bóng đá</span></nav>
-    <div class="hero">
-      <h1>📈 Tỷ Lệ Bóng Đá</h1>
-      <div class="meta">Bảng so sánh tỷ lệ các trận đấu sắp diễn ra — dữ liệu tham khảo, không phải lời khuyên cá cược.</div>
-    </div>
-    <div class="card">
-      <h2>Tỷ lệ là gì và đọc thế nào?</h2>
-      <p>Tỷ lệ (odds) là con số phản ánh xác suất một kết quả xảy ra theo đánh giá của thị trường. Trên ScoreLine, chúng tôi hiển thị 3 dạng tỷ lệ phổ biến:</p>
-      <ul>
-        <li><strong>Tỷ lệ 1X2:</strong> ba cột tương ứng đội nhà thắng (1), hòa (X), đội khách thắng (2). Số càng nhỏ → khả năng xảy ra càng cao theo đánh giá thị trường.</li>
-        <li><strong>Tài/Xỉu (Over/Under):</strong> dự đoán tổng số bàn thắng cả trận sẽ trên hay dưới một mức nhất định (thường 2.5 bàn).</li>
-        <li><strong>Châu Á (Asian Handicap):</strong> đội mạnh hơn được "chấp" bàn thắng để cân bằng — đây là dạng tỷ lệ phổ biến nhất tại châu Á.</li>
-      </ul>
-
-      <h2>Tỷ lệ trên ScoreLine có ý nghĩa gì?</h2>
-      <p>Tỷ lệ chúng tôi hiển thị là <strong>dữ liệu tham khảo</strong> được tổng hợp từ thị trường công khai. Mục đích duy nhất là:</p>
-      <ul>
-        <li>So sánh giữa các trận trong cùng một vòng đấu.</li>
-        <li>Theo dõi sự thay đổi tỷ lệ trước giờ bóng lăn (vốn phản ánh nhận định mới về phong độ, lineup).</li>
-        <li>Hỗ trợ đọc bài nhận định: tỷ lệ + dữ liệu phong độ giúp bạn đánh giá độ tin cậy của dự đoán.</li>
-      </ul>
-
-      <h2>Cách phân tích tỷ lệ kèm phong độ</h2>
-      <p>Một tỷ lệ chỉ thực sự có giá trị khi đặt vào ngữ cảnh:</p>
-      <ol>
-        <li><strong>So sánh phong độ:</strong> đội tỷ lệ thấp (được đánh giá cao) có đang thực sự chạy tốt 5 trận gần nhất? Xem mục Phong Độ trên trang BXH.</li>
-        <li><strong>Lịch sử đối đầu (H2H):</strong> hai đội đối đầu nhau ra sao trong 5 lần gặp gần nhất? Có yếu tố sân nhà/sân khách rõ rệt không?</li>
-        <li><strong>Lineup:</strong> ngôi sao chấn thương / treo giò có thể đảo ngược nhận định ban đầu của thị trường.</li>
-        <li><strong>Bối cảnh trận đấu:</strong> trận hệ trọng (chung kết, derby) khác hẳn trận thủ tục cuối mùa.</li>
-      </ol>
-
-      <h2>Lưu ý quan trọng</h2>
-      <p>ScoreLine cung cấp dữ liệu tỷ lệ với mục đích <strong>thông tin báo chí và tham khảo</strong>. Chúng tôi:</p>
-      <ul>
-        <li>Không cung cấp dịch vụ cá cược, không kết nối tới nhà cái, không nhận tiền từ bất kỳ tổ chức cá cược nào.</li>
-        <li>Không đảm bảo độ chính xác tuyệt đối của tỷ lệ — chúng có thể thay đổi liên tục theo thị trường.</li>
-        <li>Khuyên người dùng dưới 18 tuổi không tham gia bất kỳ hoạt động cá cược nào.</li>
-        <li>Khuyến nghị mọi người dùng đặt giới hạn nghiêm cho bản thân và tìm hỗ trợ khi cần (xem phần "Cờ bạc có trách nhiệm" tại các tổ chức y tế công cộng).</li>
-      </ul>
-
-      <h2>Truy cập nhanh</h2>
-      <ul>
-        <li><a href="/lich-thi-dau">Lịch thi đấu — xem các trận sắp diễn ra</a></li>
-        <li><a href="/bang-xep-hang">Bảng xếp hạng — phân tích phong độ đội bóng</a></li>
-        <li><a href="/nhan-dinh">Nhận định bóng đá — phân tích chuyên sâu từng trận</a></li>
-        <li><a href="/kien-thuc-bong-da">Kiến thức bóng đá — học cách đọc thống kê và chiến thuật</a></li>
-      </ul>
-    </div>
-  </div>`;
-
-  res.set('Content-Type', 'text/html; charset=utf-8');
-  res.set('Cache-Control', 'public, max-age=14400'); // 4h
-  res.send(shellHtml({
-    title: 'Tỷ Lệ Bóng Đá - Hướng Dẫn Đọc Tỷ Lệ Và Phân Tích Phong Độ',
-    description: 'Hướng dẫn đọc tỷ lệ 1X2, tài xỉu, châu Á và cách kết hợp với phong độ, lineup, lịch sử đối đầu để đánh giá trận đấu.',
-    canonical: url,
-    jsonLd: [breadcrumbSchema([
-      { name: 'Trang chủ', url: SITE_URL },
-      { name: 'Tỷ lệ bóng đá', url },
-    ])],
-    body, contentDates: dates,
-  }));
+  res.status(410).set('Content-Type', 'text/html; charset=utf-8').send(
+    '<!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8"><title>410 Gone</title><meta name="robots" content="noindex"></head><body><h1>410 Gone</h1><p>Trang này đã bị gỡ bỏ vĩnh viễn.</p><p><a href="/nhan-dinh">Xem nhận định bóng đá</a></p></body></html>'
+  );
 });
 
 // ===== /404 =====

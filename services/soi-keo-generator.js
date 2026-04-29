@@ -390,7 +390,7 @@ class SoiKeoGenerator {
   /**
    * Build AI prompt for article generation (style: giovang.org)
    */
-  buildPrompt(matchData, oddsData, h2hData, homeForm, awayForm) {
+  buildPrompt(matchData, h2hData, homeForm, awayForm) {
     const { fixture, teams, league } = matchData;
 
     const matchTime = new Date(fixture.date).toLocaleString('vi-VN', {
@@ -406,14 +406,6 @@ class SoiKeoGenerator {
       year: 'numeric',
       timeZone: 'Asia/Ho_Chi_Minh'
     });
-
-    let oddsInfo = 'Chưa có tỷ lệ kèo.';
-    if (oddsData) {
-      oddsInfo = `
-- Kèo Châu Âu (1X2): Chủ ${oddsData.homeWin || '-'} | Hòa ${oddsData.draw || '-'} | Khách ${oddsData.awayWin || '-'}
-- Kèo Châu Á: Chấp ${oddsData.handicap.line || '0'} (Chủ ${oddsData.handicap.home || '-'} / Khách ${oddsData.handicap.away || '-'})
-- Tài/Xỉu: Mốc 2.5 - Tài ${oddsData.overUnder.over || '-'} | Xỉu ${oddsData.overUnder.under || '-'}`;
-    }
 
     // Randomize writing style for each article to avoid template spam
     const writingStyles = [
@@ -436,7 +428,7 @@ class SoiKeoGenerator {
 
     const structureVariants = [
       'Gộp phân tích 2 đội thành so sánh song song (không tách riêng từng đội). Đan xen H2H vào phân tích đội.',
-      'Bắt đầu từ kèo ngược lên — phân tích odds trước, rồi giải thích bằng phong độ và H2H.',
+      'Bắt đầu từ phong độ — đội nào đang nóng, đội nào đang nguội — rồi giải thích bằng H2H.',
       'Kể theo timeline — từ lịch sử đối đầu xa → gần → phong độ hiện tại → dự đoán.',
       'Chia theo chủ đề: tấn công, phòng ngự, bóng chết, yếu tố tâm lý — thay vì chia theo đội.',
       'Viết dạng Q&A — mỗi section trả lời một câu hỏi mà người đọc thắc mắc.',
@@ -455,7 +447,7 @@ class SoiKeoGenerator {
       `Nhận định ${teams.home.name} vs ${teams.away.name} ${matchDateStr} | ${league.name}`,
       `${league.name}: ${teams.home.name} có đánh bại được ${teams.away.name}?`,
       `Trước trận ${teams.home.name} - ${teams.away.name}: Phân tích từ chuyên gia`,
-      `Dự đoán ${teams.home.name} vs ${teams.away.name} — Tỷ số, kèo & phong độ`,
+      `Dự đoán ${teams.home.name} vs ${teams.away.name} — Tỷ số & phong độ hiện tại`,
       `${teams.home.name} vs ${teams.away.name} ${matchTime} ngày ${matchDateStr}: Phân tích chi tiết`,
     ];
     const titleSuggestion = titleTemplates[Math.floor(Math.random() * titleTemplates.length)];
@@ -471,9 +463,6 @@ ${structure}
 - ${teams.home.name} vs ${teams.away.name}
 - ${league.name} (${league.country}) — ${matchTime} ngày ${matchDateStr}
 - Sân: ${fixture.venue?.name || 'Chưa xác định'}
-
-**TỶ LỆ KÈO:**
-${oddsInfo}
 
 **H2H (10 trận):**
 ${h2hData}
@@ -498,18 +487,16 @@ ${h2hData}
 
 5. TỶ SỐ DỰ ĐOÁN — phải PHÙ HỢP với data. Nếu H2H trung bình 1.5 bàn → không dự đoán 3-2. Nếu cả 2 đội form tệ → có thể 0-0 hoặc 1-0.
 
-6. KHÔNG DÙNG "soi kèo" — thay bằng "nhận định", "phân tích", "đánh giá". Tuyệt đối không dùng "cược", "nhà cái", "đặt cược" trong title/excerpt.
+6. KHÔNG DÙNG từ ngữ liên quan cá cược: "soi kèo", "kèo", "tỷ lệ kèo", "Tài/Xỉu", "Kèo Châu Á", "Kèo Châu Âu", "cược", "nhà cái", "đặt cược", "bet", "odds", "1X2", "handicap", "chấp", "bookmaker". Thay bằng "nhận định", "phân tích", "dự đoán", "đánh giá". KHÔNG quote số odds cụ thể (1.85, 2.50, 3.40...). KHÔNG đề xuất bet (không nói "Bet X có giá trị", "Tránh Bet Y").
 
 7. TRÁNH BOLD SPAM — chỉ bold tên đội lần đầu xuất hiện trong mỗi section. Không bold mỗi lần nhắc tên đội.
 
-**7 PHẦN BẮT BUỘC (tự do đặt tên heading):**
+**5 PHẦN BẮT BUỘC (tự do đặt tên heading):**
 1. introduction (150-200 từ)
 2. teamAnalysis (400-500 từ) — so sánh 2 đội, KHÔNG tách riêng rồi nói giống nhau
 3. h2hHistory (200-250 từ) — chỉ highlight insight quan trọng, không liệt kê từng trận
 4. formAnalysis (200-300 từ) — tóm tắt xu hướng, không lặp lại số liệu đã nêu
-5. oddsAnalysis (200-300 từ) — phân tích kèo ngắn gọn, có quan điểm rõ ràng
-6. prediction (150-200 từ) — tỷ số dự đoán + 3 LÝ DO CỤ THỂ có dẫn chứng số liệu (phong độ, H2H, kèo); mỗi lý do 1-2 câu
-7. bettingTips (100 từ) — bullet points ngắn
+5. prediction (150-200 từ) — tỷ số dự đoán + 3 LÝ DO CỤ THỂ có dẫn chứng số liệu (phong độ, H2H); mỗi lý do 1-2 câu
 
 **TITLE GỢI Ý (chọn 1 hoặc tự sáng tạo):**
 "${titleSuggestion}"
@@ -522,9 +509,7 @@ Format JSON:
   "teamAnalysis": "[400-500 từ]",
   "h2hHistory": "[200-250 từ]",
   "formAnalysis": "[200-300 từ]",
-  "oddsAnalysis": "[200-300 từ]",
   "prediction": "[150-200 từ, gồm tỷ số + 3 lý do cụ thể]",
-  "bettingTips": "[bullet points ngắn]",
   "tags": ["${teams.home.name}", "${teams.away.name}", "${league.name}", "nhận định bóng đá", "phân tích trận đấu"]
 }
 
@@ -617,8 +602,7 @@ KHÔNG bịa chấn thương cầu thủ. Trả về ĐÚNG JSON.`;
       // Get data in parallel where possible
       console.log(`   Fetching data...`);
 
-      const [oddsData, h2hData, homeForm, awayForm] = await Promise.all([
-        this.getOddsForFixture(fixture.id, fixtureData),
+      const [h2hData, homeForm, awayForm] = await Promise.all([
         this.getH2H(teams.home.id, teams.away.id),
         this.getTeamForm(teams.home.id),
         this.getTeamForm(teams.away.id)
@@ -628,19 +612,10 @@ KHÔNG bịa chấn thương cầu thủ. Trả về ĐÚNG JSON.`;
 
       // Build prompt and generate content
       console.log(`   Generating AI content...`);
-      const prompt = this.buildPrompt(fixtureData, oddsData, h2hData, homeForm, awayForm);
+      const prompt = this.buildPrompt(fixtureData, h2hData, homeForm, awayForm);
       const aiContent = await this.generateAIContent(prompt);
       console.log(`   ✓ AI content generated`);
 
-      // Ensure bettingTips is a string (AI sometimes returns an array)
-      let bettingTips = aiContent.bettingTips;
-      if (Array.isArray(bettingTips)) {
-        bettingTips = bettingTips.join('\n');
-      }
-
-      // Runtime validation — reject batches where Haiku slipped a banned
-      // phrase into prose or under-delivered on word count. Falls back to a
-      // logged skip rather than throwing so the scheduler can move on.
       const validationIssues = validateContent({
         title: aiContent.title,
         description: aiContent.excerpt,
@@ -649,9 +624,7 @@ KHÔNG bịa chấn thương cầu thủ. Trả về ĐÚNG JSON.`;
           teamAnalysis: aiContent.teamAnalysis,
           h2hHistory: aiContent.h2hHistory,
           formAnalysis: aiContent.formAnalysis,
-          oddsAnalysis: aiContent.oddsAnalysis,
           prediction: aiContent.prediction,
-          bettingTips: bettingTips,
         },
       }, {
         minTotalWords: 1200,
@@ -685,7 +658,6 @@ KHÔNG bịa chấn thương cầu thủ. Trả về ĐÚNG JSON.`;
           matchDate: new Date(fixture.date),
           venue: fixture.venue?.name || null,
         },
-        oddsData: oddsData || {},
         title: aiContent.title,
         excerpt: aiContent.excerpt,
         content: {
@@ -693,9 +665,7 @@ KHÔNG bịa chấn thương cầu thủ. Trả về ĐÚNG JSON.`;
           teamAnalysis: aiContent.teamAnalysis,
           h2hHistory: aiContent.h2hHistory,
           formAnalysis: aiContent.formAnalysis,
-          oddsAnalysis: aiContent.oddsAnalysis,
           prediction: aiContent.prediction,
-          bettingTips: bettingTips,
         },
         thumbnail: FOOTBALL_IMAGES[Math.floor(Math.random() * FOOTBALL_IMAGES.length)],
         tags: aiContent.tags || [teams.home.name, teams.away.name, league.name],
@@ -728,16 +698,10 @@ KHÔNG bịa chấn thương cầu thủ. Trả về ĐÚNG JSON.`;
           article.thumbnail = heroUrl;
           console.log(`   🎨 Hero: ${heroUrl}`);
         }
-        if (variantUrl) {
-          const alt = `Phân tích kèo ${homeName} vs ${awayName}`;
-          // Prefer inserting before form analysis; fallback to odds analysis.
-          const target = article.content?.formAnalysis ? 'formAnalysis'
-            : article.content?.oddsAnalysis ? 'oddsAnalysis'
-            : null;
-          if (target && article.content[target]) {
-            article.content[target] = `![${alt}](${variantUrl})\n\n${article.content[target]}`;
-            console.log(`   🎨 Variant: ${variantUrl} (into ${target})`);
-          }
+        if (variantUrl && article.content?.formAnalysis) {
+          const alt = `Phân tích ${homeName} vs ${awayName}`;
+          article.content.formAnalysis = `![${alt}](${variantUrl})\n\n${article.content.formAnalysis}`;
+          console.log(`   🎨 Variant: ${variantUrl} (into formAnalysis)`);
         }
         if (heroUrl || variantUrl) {
           // Mongoose: mark the mixed/nested content path dirty before save
